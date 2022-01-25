@@ -21,7 +21,9 @@ const Weather = ({ weatherData }) => (
 
       {/* <p className="text-right">Humidity: {weatherData.main.humidity} %</p> */}
     </div>
-    <div class="col-span-2">___________________________________________</div>
+    <div class="col-span-2">
+      <div class="divider"></div>
+    </div>
 
     <div>
       <p className="text-left align-bottom">
@@ -44,7 +46,9 @@ const Weather = ({ weatherData }) => (
       {" "}
       <FiSunset className="text-6xl" />
     </div>
-
+    <div class="col-span-2">
+      <div class="divider"></div>
+    </div>
     <button className="btn btn-tiny" onClick={refresh}>
       refresh
     </button>
