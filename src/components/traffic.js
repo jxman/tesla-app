@@ -10,6 +10,7 @@ function Traffic({ lat, long }) {
         src={wazeUrl}
         width="100%"
         height="450"
+        title="wazeFrame"
         // allowFullScreen
       ></iframe>
     </div>
