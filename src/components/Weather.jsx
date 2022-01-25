@@ -2,12 +2,12 @@ import React from "react";
 import moment from "moment";
 import { FiSunrise, FiSunset } from "react-icons/fi";
 
-// Functino to initiate a reload and refresh of data for the component
+// Function to initiate a reload and refresh of data for the component
 const refresh = () => {
   window.location.reload();
 };
 
-const WeatherCard = ({ weatherData }) => (
+const Weather = ({ weatherData }) => (
   <div className="grid grid-cols-2 gap-4 auto-rows-max	">
     <div>
       {moment().format("dddd")}, <span>{moment().format("LL")}</span>
@@ -51,4 +51,4 @@ const WeatherCard = ({ weatherData }) => (
   </div>
 );
 
-export default WeatherCard;
+export default Weather;

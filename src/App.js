@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import Weather from "./components/weather";
-import Traffic from "./components/traffic";
-import News from "./components/news";
+import Weather from "./components/Weather";
+import Traffic from "./components/Traffic";
+import News from "./components/News";
+import Yelp from "./components/Yelp";
 
 function App() {
   const [lat, setLat] = useState([]);
@@ -47,9 +48,14 @@ function App() {
         </div>
       </div>
       <div className="flex flex-row">
-        <div className="flex-auto card shadow-lg card-bordered	">
+        <div className="basis-3/4 card shadow-lg card-bordered	">
           <div className="card-body">
             <News />
+          </div>
+        </div>
+        <div className="basis-1/4 card shadow-lg card-bordered	">
+          <div className="card-body">
+            <Yelp />
           </div>
         </div>
       </div>

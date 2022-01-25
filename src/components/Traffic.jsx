@@ -6,7 +6,6 @@ function Traffic({ lat, long }) {
   return (
     <div>
       <iframe
-        // src="https://embed.waze.com/iframe?zoom=11&lat=42.204870&lon=-71.239128&ct=livemap"
         src={wazeUrl}
         width="100%"
         height="450"
