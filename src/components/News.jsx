@@ -1,5 +1,5 @@
 import React from "react";
-import { FaNewspaper, FaYelp } from "react-icons/fa";
+import { FaNewspaper } from "react-icons/fa";
 
 function News() {
   return (
