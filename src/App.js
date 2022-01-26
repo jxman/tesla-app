@@ -5,18 +5,24 @@ import News from "./components/News";
 import Yelp from "./components/Yelp";
 
 function App() {
-  const [long, setLong] = useState([-71.038887]);
-  const [lat, setLat] = useState([42.364506]);
+  const [long, setLong] = useState([]);
+  const [lat, setLat] = useState([]);
   const [data, setData] = useState([]);
 
   // Get current coordinates and then call Weather API with log and lat
   useEffect(() => {
     const fetchData = async () => {
-      navigator.geolocation.getCurrentPosition(function (position) {
-        setLat(position.coords.latitude);
-        setLong(position.coords.longitude);
-      });
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function (position) {
+          setLat(position.coords.latitude);
+          setLong(position.coords.longitude);
+        });
+      } else {
+        setLong([-71.038887]);
+        setLat([42.364506]);
+      }
 
+      console.log(long);
       await fetch(
         `${process.env.REACT_APP_API_URL}/weather/?lat=${lat}&lon=${long}&units=metric&APPID=${process.env.REACT_APP_API_KEY}`
       )
