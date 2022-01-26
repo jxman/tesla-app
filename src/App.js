@@ -5,8 +5,8 @@ import News from "./components/News";
 import Yelp from "./components/Yelp";
 
 function App() {
-  const [lat, setLat] = useState([]);
-  const [long, setLong] = useState([]);
+  const [long, setLong] = useState([-71.038887]);
+  const [lat, setLat] = useState([42.364506]);
   const [data, setData] = useState([]);
 
   // Get current coordinates and then call Weather API with log and lat
