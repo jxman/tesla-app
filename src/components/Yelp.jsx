@@ -5,7 +5,7 @@ function Yelp() {
   return (
     <div>
       <div className="hero mb-5 text-5xl font-bold">
-        Placeholder for Yelp Links
+        Yelp Links
         <FaYelp />
       </div>
     </div>

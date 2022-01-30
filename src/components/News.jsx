@@ -5,7 +5,7 @@ function News() {
   return (
     <div>
       <div className="hero mb-5 text-5xl font-bold">
-        Placeholder for News Section
+        News Sectoin
         <FaNewspaper />
       </div>
     </div>

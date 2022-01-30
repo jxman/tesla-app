@@ -1,6 +1,8 @@
-import React from "react";
+import { useContext } from "react";
+import TeslaAppContext from "../context/TeslaAppContext";
 
-function Traffic({ lat, long }) {
+function Traffic() {
+  const { lat, long } = useContext(TeslaAppContext);
   const wazeUrl = `https://embed.waze.com/iframe?zoom=10&lat=${lat}&lon=${long}&pin=1&desc=1&ct=livemap`;
 
   return (
