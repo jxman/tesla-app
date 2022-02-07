@@ -6,18 +6,18 @@ const OW_API_KEY = process.env.REACT_APP_API_KEY;
 const TeslaAppContext = createContext();
 
 export const TeslaAppProvider = ({ children }) => {
-  const [long, setLong] = useState([]);
-  const [lat, setLat] = useState([]);
+  const [long, setLong] = useState([-71.038887]);
+  const [lat, setLat] = useState([42.364506]);
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchCoords();
-  });
+  }, [long, lat]);
 
   // Function to get location
   const fetchCoords = async () => {
-    navigator.geolocation.getCurrentPosition(success, handleError);
+    navigator.geolocation.getCurrentPosition(success, error);
   };
 
   // If succesfful call other functions
@@ -26,13 +26,23 @@ export const TeslaAppProvider = ({ children }) => {
     setLat(coords.latitude);
     setLong(coords.longitude);
     fetchWeather(coords);
+
+    // if (position.length !== 0) {
+    //   console.log(`check position ${position}`);
+    //   fetchWeather(coords);
+    // }
   }
 
   // Default to Boston if geolocation is denied or not available
-  function handleError(error) {
+  function error(error) {
     console.log(error);
     setLong(-71.038887);
     setLat(42.364506);
+    const { coords } = {
+      "coords.latitude": 42.364506,
+      "coords.longitude": -71.038887,
+    };
+    fetchWeather(coords);
   }
 
   // Weather Function
@@ -45,7 +55,6 @@ export const TeslaAppProvider = ({ children }) => {
     setData(data);
     setIsLoading(false);
   }
-  console.log(data);
   return (
     <TeslaAppContext.Provider
       value={{

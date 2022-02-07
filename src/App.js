@@ -2,11 +2,13 @@ import Weather from "./components/Weather";
 import Traffic from "./components/Traffic";
 import News from "./components/News";
 import Yelp from "./components/Yelp";
+import LocationSelector from "./components/LocationSelector";
 import { TeslaAppProvider } from "./context/TeslaAppContext";
 
 function App() {
   return (
     <TeslaAppProvider>
+      <LocationSelector />
       <div>
         <div className="flex flex-row">
           <div className="basis-1/3 card shadow-lg card-bordered	">

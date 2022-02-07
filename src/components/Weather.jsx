@@ -11,10 +11,9 @@ const refresh = () => {
 
 function Weather() {
   const { data, isLoading } = useContext(TeslaAppContext);
-  console.log({ data });
 
   if (!isLoading && (!data || data.length === 0)) {
-    return <p>Loading....</p>;
+    return <p>No Data Yet</p>;
   }
 
   return isLoading ? (
@@ -31,8 +30,8 @@ function Weather() {
         </p>
         <p className="text-center"> {data.weather[0].main}</p>
       </div>
-      <div class="col-span-2">
-        <div class="divider"></div>
+      <div className="col-span-2">
+        <div className="divider"></div>
       </div>
 
       <div>
@@ -55,8 +54,8 @@ function Weather() {
         {" "}
         <FiSunset className="text-6xl" />
       </div>
-      <div class="col-span-2">
-        <div class="divider"></div>
+      <div className="col-span-2">
+        <div className="divider"></div>
       </div>
       <button className="btn btn-tiny" onClick={refresh}>
         refresh
