@@ -13,7 +13,7 @@ export const TeslaAppProvider = ({ children }) => {
 
   useEffect(() => {
     fetchCoords();
-  }, [long, lat]);
+  });
 
   // Function to get location
   const fetchCoords = async () => {
