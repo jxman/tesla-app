@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { FaMapMarkerAlt, FaExclamationTriangle } from "react-icons/fa";
+import { FaMapMarkerAlt } from "react-icons/fa";
 import TeslaAppContext from "../context/TeslaAppContext";
 
 function Traffic() {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { FaNewspaper, FaSync, FaExclamationTriangle, FaClock } from "react-icons/fa";
 import { BiRefresh } from "react-icons/bi";
 
@@ -20,8 +20,8 @@ function News() {
     { id: 'science', name: 'Science', icon: '🔬' }
   ];
 
-  // Fetch news articles
-  const fetchNews = async (selectedCategory = category) => {
+  // Fetch news articles - memoized to prevent infinite re-renders
+  const fetchNews = useCallback(async (selectedCategory = category) => {
     if (!NEWS_API_KEY) {
       setError('News API key not configured');
       setIsLoading(false);
@@ -55,12 +55,12 @@ function News() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [category]);
 
   // Load news on component mount
   useEffect(() => {
     fetchNews();
-  }, []);
+  }, [fetchNews]);
 
   // Handle category change
   const handleCategoryChange = (newCategory) => {
