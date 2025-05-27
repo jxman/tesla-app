@@ -22,8 +22,23 @@ function News() {
 
   // Fetch news articles - memoized to prevent infinite re-renders
   const fetchNews = useCallback(async (selectedCategory = category) => {
+    // Debug logging for deployment
+    console.log('News API Debug:', {
+      NEWS_API_KEY: NEWS_API_KEY ? 'Present' : 'Missing',
+      NEWS_API_URL: NEWS_API_URL || 'Missing',
+      selectedCategory
+    });
+    
     if (!NEWS_API_KEY) {
+      console.error('NEWS_API_KEY is not configured');
       setError('News API key not configured');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!NEWS_API_URL) {
+      console.error('NEWS_API_URL is not configured');
+      setError('News API URL not configured');
       setIsLoading(false);
       return;
     }
@@ -32,11 +47,15 @@ function News() {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${NEWS_API_URL}/top-headlines?country=us&category=${selectedCategory}&pageSize=8&apiKey=${NEWS_API_KEY}`
-      );
+      const apiUrl = `${NEWS_API_URL}/top-headlines?country=us&category=${selectedCategory}&pageSize=8&apiKey=${NEWS_API_KEY}`;
+      console.log('Fetching news from:', apiUrl.replace(NEWS_API_KEY, 'API_KEY_HIDDEN'));
+      
+      const response = await fetch(apiUrl);
+      
+      console.log('News API Response status:', response.status);
       
       const data = await response.json();
+      console.log('News API Response data:', data);
       
       if (!response.ok) {
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
@@ -45,6 +64,7 @@ function News() {
       if (data.status === 'ok') {
         setArticles(data.articles || []);
         setLastUpdated(new Date());
+        console.log('News articles loaded:', data.articles?.length || 0);
       } else {
         throw new Error(data.message || 'Failed to fetch news');
       }
