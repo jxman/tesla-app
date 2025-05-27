@@ -8,30 +8,32 @@ import { TeslaAppProvider } from "./context/TeslaAppContext";
 function App() {
   return (
     <TeslaAppProvider>
-      <LocationSelector />
-      <div>
-        <div className="flex flex-row">
-          <div className="basis-1/3 card shadow-lg card-bordered	">
-            <div className="card-body">
-              <Weather />
+      <div className="min-h-screen bg-gray-900 text-white p-4">
+        <LocationSelector />
+        <div className="space-y-3">
+          <div className="flex flex-row gap-4">
+            <div className="flex-1 card shadow-xl bg-gray-800 border border-gray-700">
+              <div className="card-body p-5">
+                <Weather />
+              </div>
             </div>
-          </div>
 
-          <div className="basis-2/3 card shadow-lg card-bordered	">
-            <div className="card-body">
-              <Traffic />
+            <div className="flex-[2] card shadow-xl bg-gray-800 border border-gray-700">
+              <div className="card-body p-5">
+                <Traffic />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex flex-row">
-          <div className="basis-3/4 card shadow-lg card-bordered	">
-            <div className="card-body">
-              <News />
+          <div className="flex flex-row gap-4">
+            <div className="flex-[3] card shadow-xl bg-gray-800 border border-gray-700">
+              <div className="card-body p-5">
+                <News />
+              </div>
             </div>
-          </div>
-          <div className="basis-1/4 card shadow-lg card-bordered	">
-            <div className="card-body">
-              <Yelp />
+            <div className="flex-1 card shadow-xl bg-gray-800 border border-gray-700">
+              <div className="card-body p-5">
+                <Yelp />
+              </div>
             </div>
           </div>
         </div>
