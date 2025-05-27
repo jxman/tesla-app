@@ -2,6 +2,8 @@
 
 A comprehensive React-based dashboard designed for Tesla vehicle browsers, providing location-based weather, traffic conditions, news updates, and nearby points of interest. Originally created as a Tesla in-vehicle homepage replacement.
 
+🌐 **[Live Demo](https://teslaweather.netlify.app/)** | 📱 Mobile Friendly | ⚡ Tesla Optimized
+
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.17-blue.svg)](https://tailwindcss.com/)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/ed22f193-b096-456c-b646-b7812700afb1/deploy-status)](https://app.netlify.com/projects/teslaweather/deploys)
@@ -167,6 +169,9 @@ This app was designed as a homepage replacement for Tesla vehicle browsers, prov
 4. Bookmark for easy access
 
 ## 🚀 Deployment
+
+### 🌐 Live Demo
+**Access the app now: [https://teslaweather.netlify.app/](https://teslaweather.netlify.app/)**
 
 ### Netlify (Recommended)
 1. Build the project: `npm run build`
