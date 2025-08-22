@@ -8,6 +8,7 @@ export const TeslaAppProvider = ({ children }) => {
   const [long, setLong] = useState(-71.038887);
   const [lat, setLat] = useState(42.364506);
   const [data, setData] = useState([]);
+  const [forecastData, setForecastData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentLocation, setCurrentLocation] = useState('Boston, MA');
 
@@ -46,18 +47,29 @@ export const TeslaAppProvider = ({ children }) => {
     // Weather Function (defined here for the initial load)
     async function fetchWeatherInitial(coords) {
       try {
-        const response = await fetch(
+        // Fetch current weather
+        const currentResponse = await fetch(
           `${OW_API_URL}/weather/?lat=${coords.latitude}&lon=${coords.longitude}&units=metric&APPID=${OW_API_KEY}`
         );
-        const data = await response.json();
+        const currentData = await currentResponse.json();
         
-        console.log('API Response:', data);
+        console.log('Current Weather API Response:', currentData);
         
-        setData(data);
+        // Fetch 5-day forecast (includes 3-hour intervals)
+        const forecastResponse = await fetch(
+          `${OW_API_URL}/forecast?lat=${coords.latitude}&lon=${coords.longitude}&units=metric&appid=${OW_API_KEY}`
+        );
+        const forecastData = await forecastResponse.json();
+        
+        console.log('Forecast API Response:', forecastData);
+        
+        setData(currentData);
+        setForecastData(forecastData);
         setIsLoading(false);
       } catch (error) {
         console.error('Weather API Error:', error);
         setData({ error: 'Failed to fetch weather data', message: error.message });
+        setForecastData([]);
         setIsLoading(false);
       }
     }
@@ -122,18 +134,29 @@ export const TeslaAppProvider = ({ children }) => {
   // Extracted weather fetching function for reuse
   const fetchWeatherByCoords = async (coords) => {
     try {
-      const response = await fetch(
+      // Fetch current weather
+      const currentResponse = await fetch(
         `${OW_API_URL}/weather/?lat=${coords.latitude}&lon=${coords.longitude}&units=metric&APPID=${OW_API_KEY}`
       );
-      const data = await response.json();
+      const currentData = await currentResponse.json();
       
-      console.log('API Response:', data);
+      console.log('Current Weather API Response:', currentData);
       
-      setData(data);
+      // Fetch 5-day forecast (includes 3-hour intervals)
+      const forecastResponse = await fetch(
+        `${OW_API_URL}/forecast?lat=${coords.latitude}&lon=${coords.longitude}&units=metric&appid=${OW_API_KEY}`
+      );
+      const forecastData = await forecastResponse.json();
+      
+      console.log('Forecast API Response:', forecastData);
+      
+      setData(currentData);
+      setForecastData(forecastData);
       setIsLoading(false);
     } catch (error) {
       console.error('Weather API Error:', error);
       setData({ error: 'Failed to fetch weather data', message: error.message });
+      setForecastData([]);
       setIsLoading(false);
     }
   };
@@ -151,6 +174,7 @@ export const TeslaAppProvider = ({ children }) => {
         long,
         lat,
         data,
+        forecastData,
         isLoading,
         currentLocation,
         searchByZipCode,
