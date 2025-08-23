@@ -24,23 +24,23 @@ function App() {
       <div className="min-h-screen bg-gray-900 text-white p-4">
         <LocationSelector />
         
-        {/* Tab Navigation - Enhanced with DaisyUI 5.0 */}
-        <div className="tabs tabs-boxed tabs-xl bg-gray-800 border border-gray-700 mb-4 p-1">
+        {/* Tab Navigation - Fixed DaisyUI 5.0 styling */}
+        <div className="tabs tabs-boxed bg-gray-800 border border-gray-700 mb-4 p-2 rounded-xl">
           {tabs.map((tab) => {
             const IconComponent = tab.icon;
             return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`tab tab-xl flex-1 gap-3 transition-all duration-200 ${
+                className={`tab flex-1 h-14 px-4 gap-2 transition-all duration-200 rounded-lg ${
                   activeTab === tab.id
-                    ? 'tab-active bg-blue-600 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                    ? 'tab-active bg-blue-600 text-white shadow-lg font-semibold'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                 }`}
                 tabIndex="0"
               >
-                <IconComponent className="w-6 h-6" />
-                <span className="font-medium text-sm md:text-base">{tab.name}</span>
+                <IconComponent className="w-5 h-5" />
+                <span className="font-medium text-sm">{tab.name}</span>
               </button>
             );
           })}
