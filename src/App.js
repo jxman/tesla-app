@@ -24,31 +24,30 @@ function App() {
       <div className="min-h-screen bg-gray-900 text-white p-4">
         <LocationSelector />
         
-        {/* Tab Navigation */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700 mb-4 overflow-hidden">
-          <div className="flex">
-            {tabs.map((tab) => {
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 flex items-center justify-center space-x-2 py-4 px-6 transition-all duration-200 ${
-                    activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700'
-                  }`}
-                >
-                  <IconComponent className="w-5 h-5" />
-                  <span className="font-medium">{tab.name}</span>
-                </button>
-              );
-            })}
-          </div>
+        {/* Tab Navigation - Enhanced with DaisyUI 5.0 */}
+        <div className="tabs tabs-boxed tabs-xl bg-gray-800 border border-gray-700 mb-4 p-1">
+          {tabs.map((tab) => {
+            const IconComponent = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`tab tab-xl flex-1 gap-3 transition-all duration-200 ${
+                  activeTab === tab.id
+                    ? 'tab-active bg-blue-600 text-white shadow-lg'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+                }`}
+                tabIndex="0"
+              >
+                <IconComponent className="w-6 h-6" />
+                <span className="font-medium text-sm md:text-base">{tab.name}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Active Tab Content */}
-        <div className="card shadow-xl bg-gray-800 border border-gray-700 h-[calc(100vh-200px)]">
+        {/* Active Tab Content - Enhanced with DaisyUI 5.0 */}
+        <div className="card card-xl card-border shadow-xl bg-gray-800 border border-gray-700 h-[calc(100vh-200px)]">
           <div className="card-body p-6 h-full overflow-hidden">
             <ActiveComponent />
           </div>

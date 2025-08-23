@@ -249,26 +249,30 @@ function Places() {
         <button
           onClick={handleRefresh}
           disabled={isLoading}
-          className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-all duration-200 group"
+          className={`btn btn-xl p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-all duration-200 group ${
+            isLoading ? 'btn-disabled opacity-50' : 'btn-soft hover:shadow-lg'
+          }`}
           title="Refresh Places"
+          tabIndex="0"
         >
           <BiRefresh className={`w-4 h-4 text-gray-300 group-hover:text-white transition-colors ${isLoading ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-300`} />
         </button>
       </div>
 
-      {/* Category Tabs */}
+      {/* Category Tabs - Enhanced */}
       <div className="flex space-x-2 overflow-x-auto pb-2 flex-shrink-0">
         {categories.map((category) => (
           <button
             key={category.id}
             onClick={() => handleCategoryChange(category.id)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center space-x-1 ${
+            className={`btn btn-xl px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center space-x-2 ${
               selectedCategory === category.id
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                ? 'btn-active bg-blue-600 text-white shadow-lg btn-soft'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white btn-ghost hover:shadow-md'
             }`}
+            tabIndex="0"
           >
-            <span>{category.icon}</span>
+            <span className="text-lg">{category.icon}</span>
             <span>{category.name}</span>
           </button>
         ))}
@@ -283,7 +287,8 @@ function Places() {
             <p className="text-sm text-gray-400 mb-4">{error}</p>
             <button
               onClick={handleRefresh}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+              className="btn btn-xl px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 btn-soft hover:shadow-lg"
+              tabIndex="0"
             >
               Try Again
             </button>
@@ -324,8 +329,10 @@ function Places() {
               {places.map((place) => (
                 <div 
                   key={place.id}
-                  className="flex-shrink-0 bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 min-w-[250px] cursor-pointer hover:bg-gray-800/50 transition-colors select-none pointer-events-auto"
+                  className="card card-xl card-border flex-shrink-0 bg-gray-800/30 rounded-lg p-5 border border-gray-700/50 min-w-[280px] cursor-pointer hover:bg-gray-800/50 hover:shadow-lg transition-all duration-200 select-none pointer-events-auto"
                   onClick={() => handlePlaceClick(place)}
+                  tabIndex="0"
+                  onKeyDown={(e) => e.key === 'Enter' && handlePlaceClick(place)}
                 >
                   <div className="space-y-2">
                     <div className="flex justify-between items-start">

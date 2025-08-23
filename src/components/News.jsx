@@ -134,26 +134,30 @@ function News() {
         <button
           onClick={handleRefresh}
           disabled={isLoading}
-          className="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-all duration-200 group"
+          className={`btn btn-xl p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-all duration-200 group ${
+            isLoading ? 'btn-disabled opacity-50' : 'btn-soft hover:shadow-lg'
+          }`}
           title="Refresh News"
+          tabIndex="0"
         >
           <BiRefresh className={`w-4 h-4 text-gray-300 group-hover:text-white transition-colors ${isLoading ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-300`} />
         </button>
       </div>
 
-      {/* Category Tabs */}
+      {/* Category Tabs - Enhanced */}
       <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
         {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => handleCategoryChange(cat.id)}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center space-x-1 ${
+            className={`btn btn-xl px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center space-x-2 ${
               category === cat.id
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white'
+                ? 'btn-active bg-blue-600 text-white shadow-lg btn-soft'
+                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white btn-ghost hover:shadow-md'
             }`}
+            tabIndex="0"
           >
-            <span>{cat.icon}</span>
+            <span className="text-lg">{cat.icon}</span>
             <span>{cat.name}</span>
           </button>
         ))}
@@ -168,7 +172,8 @@ function News() {
             <p className="text-sm text-gray-400 mb-4">{error}</p>
             <button
               onClick={handleRefresh}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+              className="btn btn-xl px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 btn-soft hover:shadow-lg"
+              tabIndex="0"
             >
               Try Again
             </button>
@@ -186,15 +191,18 @@ function News() {
         </div>
       )}
 
-      {/* News Articles */}
+      {/* News Articles - Enhanced List */}
       {!isLoading && !error && articles.length > 0 && (
-        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-          {articles.map((article, index) => (
-            <div
-              key={index}
-              className="bg-gray-800/50 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-all duration-200 cursor-pointer group"
-              onClick={() => window.open(article.url, '_blank')}
-            >
+        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <ul className="list space-y-2">
+            {articles.map((article, index) => (
+              <li
+                key={index}
+                className="list-item card card-xl card-border bg-gray-800/50 rounded-lg p-5 border border-gray-700 hover:border-gray-600 hover:shadow-lg transition-all duration-200 cursor-pointer group"
+                onClick={() => window.open(article.url, '_blank')}
+                tabIndex="0"
+                onKeyDown={(e) => e.key === 'Enter' && window.open(article.url, '_blank')}
+              >
               <div className="flex space-x-3">
                 {/* Article Image */}
                 {article.urlToImage && (
@@ -228,8 +236,9 @@ function News() {
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

@@ -172,33 +172,36 @@ function Weather() {
           )}
         </div>
         <div className="flex items-center space-x-2">
-          {/* Hourly/Daily Toggle */}
-          <div className="flex bg-gray-700 rounded-lg p-1">
+          {/* Hourly/Daily Toggle - Enhanced */}
+          <div className="btn-group bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => setShowHourly(false)}
-              className={`px-3 py-1 text-xs rounded-md transition-all ${
-                !showHourly ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white'
+              className={`btn btn-sm px-3 py-1 text-xs rounded-md transition-all ${
+                !showHourly ? 'btn-active bg-blue-600 text-white btn-soft' : 'text-gray-300 hover:text-white btn-ghost'
               }`}
+              tabIndex="0"
             >
               Daily
             </button>
             <button
               onClick={() => setShowHourly(true)}
-              className={`px-3 py-1 text-xs rounded-md transition-all ${
-                showHourly ? 'bg-blue-600 text-white' : 'text-gray-300 hover:text-white'
+              className={`btn btn-sm px-3 py-1 text-xs rounded-md transition-all ${
+                showHourly ? 'btn-active bg-blue-600 text-white btn-soft' : 'text-gray-300 hover:text-white btn-ghost'
               }`}
+              tabIndex="0"
             >
               Hourly
             </button>
           </div>
           
           <button 
-            className={`btn btn-sm bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300 transition-all duration-200 ${
-              isRefreshing ? 'opacity-50 cursor-not-allowed' : ''
+            className={`btn btn-xl bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300 transition-all duration-200 ${
+              isRefreshing ? 'opacity-50 cursor-not-allowed btn-disabled' : 'btn-soft hover:shadow-lg'
             }`}
             onClick={handleRefresh}
             disabled={isRefreshing}
             title="Refresh Weather Data"
+            tabIndex="0"
           >
             <svg 
               className={`w-4 h-4 mr-1 transition-transform duration-300 ${
