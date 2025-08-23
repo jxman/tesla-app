@@ -259,21 +259,21 @@ function Places() {
         </button>
       </div>
 
-      {/* Category Tabs - Enhanced */}
-      <div className="flex space-x-2 overflow-x-auto pb-2 flex-shrink-0">
+      {/* Category Tabs - Even width buttons */}
+      <div className="grid grid-cols-7 gap-2 flex-shrink-0">
         {categories.map((category) => (
           <button
             key={category.id}
             onClick={() => handleCategoryChange(category.id)}
-            className={`btn btn-xl px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center space-x-2 ${
+            className={`btn btn-xl px-2 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex flex-col items-center justify-center space-y-1 h-16 ${
               selectedCategory === category.id
                 ? 'btn-active bg-blue-600 text-white shadow-lg btn-soft'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white btn-ghost hover:shadow-md'
             }`}
             tabIndex="0"
           >
-            <span className="text-lg">{category.icon}</span>
-            <span>{category.name}</span>
+            <span className="text-xl">{category.icon}</span>
+            <span className="text-xs leading-tight">{category.name}</span>
           </button>
         ))}
       </div>
