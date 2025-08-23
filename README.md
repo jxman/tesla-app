@@ -1,6 +1,6 @@
 # 🚗 Tesla Dashboard - React Web App
 
-A comprehensive React-based dashboard designed for Tesla vehicle browsers, providing location-based weather, traffic conditions, news updates, and nearby points of interest. Originally created as a Tesla in-vehicle homepage replacement.
+A modern React-based dashboard with tabbed navigation designed for Tesla vehicle browsers, providing location-based weather with hourly/daily forecasts, traffic conditions, news updates, and nearby points of interest. Features a sleek single-tab interface optimized for touch interaction.
 
 🌐 **[Live Demo](https://teslaweather.netlify.app/)** | 📱 Mobile Friendly | ⚡ Tesla Optimized
 
@@ -12,17 +12,20 @@ A comprehensive React-based dashboard designed for Tesla vehicle browsers, provi
 ## 🌟 Features
 
 ### ✅ Currently Working
-- **🌤️ Real-time Weather** - Location-based weather with detailed conditions, forecasts, and smart refresh
+- **🌤️ Enhanced Weather** - 12-hour and 10-day forecasts with horizontal scrolling, drag/touch support
 - **📰 Live News Feed** - Categorized news (Headlines, Tech, Business, Science) with refresh functionality  
 - **🚗 Traffic Conditions** - Live traffic view via Waze integration with current location
+- **🗺️ Places Integration** - OpenStreetMap-based nearby places with 7 categories and real location data
+- **📱 Tabbed Interface** - Single-tab navigation optimized for Tesla touchscreens
 - **📍 Location Services** - GPS location detection with zip code fallback search
 - **🎨 Tesla-themed UI** - Dark theme with Tesla-inspired design elements
-- **📱 Responsive Design** - Works on desktop, tablet, and mobile devices
+- **👆 Touch Optimized** - Drag scrolling, large touch targets, mobile-first design
 
 ### 🚧 In Development
-- **🍽️ Places Integration** - Currently placeholder (Yelp integration being replaced with Google Maps)
+- **🍽️ Premium Places** - Google Places API integration for enhanced data (ratings, hours, photos)
 - **⚡ Tesla Supercharger Locations** - Real-time charging station data
 - **🔋 EV-Optimized Routes** - Range-aware navigation planning
+- **🔄 Background Updates** - Auto-refresh for weather and places data
 
 ## 🚀 Quick Start
 
@@ -131,16 +134,16 @@ tesla-app/
 ├── src/
 │   ├── components/
 │   │   ├── LocationSelector.jsx    # Location input and current location
-│   │   ├── Weather.jsx             # Weather display with refresh
+│   │   ├── Weather.jsx             # Enhanced weather with forecasts
 │   │   ├── Traffic.jsx             # Waze traffic integration
 │   │   ├── News.jsx                # News feed with categories
-│   │   └── Yelp.jsx               # Places placeholder (being updated)
+│   │   └── Places.jsx              # OpenStreetMap places integration
 │   ├── context/
-│   │   └── TeslaAppContext.js     # Global state management
+│   │   └── TeslaAppContext.js     # Global state management with forecast data
 │   ├── shared/
 │   │   └── Spinner.jsx            # Loading component
 │   ├── assets/                    # Images and static files
-│   ├── App.js                     # Main app component
+│   ├── App.js                     # Tabbed interface main component
 │   ├── index.js                   # App entry point
 │   └── index.css                  # Global styles
 ├── .env.example                   # Environment variables template
@@ -198,22 +201,24 @@ The app uses Tesla-inspired colors defined in Tailwind config:
 - **Light Gray**: `#9ca3af` - Secondary text
 
 ### Layout Modifications
-Edit `src/App.js` to modify the grid layout:
+Edit `src/App.js` to modify the tabbed interface:
 ```javascript
-// Current layout: Weather + Traffic top, News + Places bottom
-<div className="flex flex-row gap-4">
-  <div className="flex-1">Weather</div>
-  <div className="flex-[2]">Traffic</div>
-</div>
+// Current layout: Single-tab interface with 4 tabs
+const tabs = [
+  { id: 'weather', name: 'Weather', icon: FiCloud, component: Weather },
+  { id: 'traffic', name: 'Traffic', icon: FiNavigation, component: Traffic },
+  { id: 'news', name: 'News', icon: FiRss, component: News },
+  { id: 'places', name: 'Places', icon: FiMapPin, component: Places }
+];
 ```
 
 ## 🔮 Roadmap
 
 ### Short Term (Next Release)
-- [ ] Replace Waze with Google Maps integration
-- [ ] Add Tesla Supercharger location finder
-- [ ] Implement EV charging station search
-- [ ] Enhanced mobile responsive design
+- [ ] Google Places API integration for premium place data
+- [ ] Background auto-refresh for weather and places
+- [ ] Enhanced Tesla Supercharger location finder
+- [ ] Save favorite locations and preferences
 
 ### Medium Term
 - [ ] Tesla vehicle API integration (if available)
@@ -278,9 +283,10 @@ Contributions are welcome! Here's how you can help:
 - **Minimal Bundle** - Only necessary dependencies included
 
 ### Analytics
-- Built bundle size: ~73KB (gzipped)
+- Built bundle size: ~76KB (gzipped)
 - Load time: <2 seconds on 3G
 - Lighthouse score: 95+ (Performance, Accessibility, Best Practices)
+- Touch-optimized for Tesla and mobile browsers
 
 ## 📄 License
 
