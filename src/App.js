@@ -24,26 +24,28 @@ function App() {
       <div className="min-h-screen bg-gray-900 text-white p-4">
         <LocationSelector />
         
-        {/* Tab Navigation - Fixed DaisyUI 5.0 styling */}
-        <div className="tabs tabs-boxed bg-gray-800 border border-gray-700 mb-4 p-2 rounded-xl">
-          {tabs.map((tab) => {
-            const IconComponent = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`tab flex-1 h-14 px-4 gap-2 transition-all duration-200 rounded-lg ${
-                  activeTab === tab.id
-                    ? 'tab-active bg-blue-600 text-white shadow-lg font-semibold'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                }`}
-                tabIndex="0"
-              >
-                <IconComponent className="w-5 h-5" />
-                <span className="font-medium text-sm">{tab.name}</span>
-              </button>
-            );
-          })}
+        {/* Tab Navigation - Enhanced spacing */}
+        <div className="bg-gray-800 border border-gray-700 mb-4 p-3 rounded-xl">
+          <div className="flex space-x-3">
+            {tabs.map((tab) => {
+              const IconComponent = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 h-16 px-6 gap-3 flex items-center justify-center transition-all duration-200 rounded-xl ${
+                    activeTab === tab.id
+                      ? 'bg-blue-600 text-white shadow-lg font-semibold'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                  tabIndex="0"
+                >
+                  <IconComponent className="w-5 h-5" />
+                  <span className="font-medium text-sm">{tab.name}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Active Tab Content - Enhanced with DaisyUI 5.0 */}
