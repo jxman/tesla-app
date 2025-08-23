@@ -171,12 +171,12 @@ function Weather() {
             <p className="text-sm text-blue-400 italic mt-1">{currentLocation}</p>
           )}
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-3">
           {/* Hourly/Daily Toggle - Enhanced */}
           <div className="btn-group bg-gray-700 rounded-lg p-1">
             <button
               onClick={() => setShowHourly(false)}
-              className={`btn btn-sm px-3 py-1 text-xs rounded-md transition-all ${
+              className={`btn btn-sm px-3 py-2 text-xs rounded-md transition-all ${
                 !showHourly ? 'btn-active bg-blue-600 text-white btn-soft' : 'text-gray-300 hover:text-white btn-ghost'
               }`}
               tabIndex="0"
@@ -185,7 +185,7 @@ function Weather() {
             </button>
             <button
               onClick={() => setShowHourly(true)}
-              className={`btn btn-sm px-3 py-1 text-xs rounded-md transition-all ${
+              className={`btn btn-sm px-3 py-2 text-xs rounded-md transition-all ${
                 showHourly ? 'btn-active bg-blue-600 text-white btn-soft' : 'text-gray-300 hover:text-white btn-ghost'
               }`}
               tabIndex="0"
@@ -195,7 +195,7 @@ function Weather() {
           </div>
           
           <button 
-            className={`btn btn-xl bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300 transition-all duration-200 ${
+            className={`btn btn-sm px-4 py-2 bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
               isRefreshing ? 'opacity-50 cursor-not-allowed btn-disabled' : 'btn-soft hover:shadow-lg'
             }`}
             onClick={handleRefresh}

@@ -110,8 +110,8 @@ function LocationSelector() {
               </div>
             </form>
             
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-3">
+            {/* Action Buttons - Fixed spacing */}
+            <div className="flex items-center space-x-4">
               {/* Current Location Button - Enhanced */}
               <button 
                 className={`btn btn-xl h-12 px-4 bg-gray-700 hover:bg-gray-600 border border-gray-600 text-white rounded-xl transition-all duration-200 flex items-center space-x-2 hover:shadow-lg group ${
@@ -140,8 +140,11 @@ function LocationSelector() {
                 </svg>
               </button>
               
-              {/* Enhanced Status Indicators */}
-              <div className="flex items-center space-x-4 pl-2">
+              {/* Divider */}
+              <div className="w-px h-8 bg-gray-600"></div>
+              
+              {/* Enhanced Status Indicators - Better spacing */}
+              <div className="flex items-center space-x-6">
                 {/* Connection Status */}
                 <div className="flex items-center space-x-2">
                   <div className={`status ${connectionStatus === 'connected' ? 'status-success' : 'status-error'}`}>
