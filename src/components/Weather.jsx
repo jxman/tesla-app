@@ -172,11 +172,11 @@ function Weather() {
           )}
         </div>
         <div className="flex items-center space-x-3">
-          {/* Hourly/Daily Toggle - Enhanced */}
-          <div className="btn-group bg-gray-700 rounded-lg p-1">
+          {/* Hourly/Daily Toggle - Even width buttons */}
+          <div className="grid grid-cols-2 gap-2 bg-gray-700 rounded-lg p-2">
             <button
               onClick={() => setShowHourly(false)}
-              className={`btn btn-sm px-3 py-2 text-xs rounded-md transition-all ${
+              className={`btn btn-sm px-4 py-2 text-xs rounded-md transition-all flex items-center justify-center ${
                 !showHourly ? 'btn-active bg-blue-600 text-white btn-soft' : 'text-gray-300 hover:text-white btn-ghost'
               }`}
               tabIndex="0"
@@ -185,7 +185,7 @@ function Weather() {
             </button>
             <button
               onClick={() => setShowHourly(true)}
-              className={`btn btn-sm px-3 py-2 text-xs rounded-md transition-all ${
+              className={`btn btn-sm px-4 py-2 text-xs rounded-md transition-all flex items-center justify-center ${
                 showHourly ? 'btn-active bg-blue-600 text-white btn-soft' : 'text-gray-300 hover:text-white btn-ghost'
               }`}
               tabIndex="0"

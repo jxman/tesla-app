@@ -144,21 +144,21 @@ function News() {
         </button>
       </div>
 
-      {/* Category Tabs - Enhanced */}
-      <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
+      {/* Category Tabs - Even width buttons */}
+      <div className="grid grid-cols-4 gap-3 mb-4 flex-shrink-0">
         {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => handleCategoryChange(cat.id)}
-            className={`btn btn-xl px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap flex items-center space-x-2 ${
+            className={`btn btn-xl px-2 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex flex-col items-center justify-center space-y-1 h-16 ${
               category === cat.id
                 ? 'btn-active bg-blue-600 text-white shadow-lg btn-soft'
                 : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white btn-ghost hover:shadow-md'
             }`}
             tabIndex="0"
           >
-            <span className="text-lg">{cat.icon}</span>
-            <span>{cat.name}</span>
+            <span className="text-xl">{cat.icon}</span>
+            <span className="text-xs leading-tight">{cat.name}</span>
           </button>
         ))}
       </div>
