@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
 import { FaMapMarkerAlt, FaClock, FaRoute, FaSync } from "react-icons/fa";
 import { BiRefresh } from "react-icons/bi";
 import TeslaAppContext from "../context/TeslaAppContext";
@@ -16,8 +16,8 @@ function Places() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  // Simple category mapping for OpenStreetMap
-  const categories = [
+  // Simple category mapping for OpenStreetMap - memoized to prevent unnecessary re-renders
+  const categories = useMemo(() => [
     { id: 'restaurants', name: 'Food', icon: '🍽️', query: 'restaurant|fast_food|cafe|bar|pub' },
     { id: 'gas', name: 'Gas', icon: '⛽', query: 'fuel' },
     { id: 'charging', name: 'Charging', icon: '⚡', query: 'charging_station' },
@@ -25,7 +25,7 @@ function Places() {
     { id: 'shopping', name: 'Shopping', icon: '🛍️', query: 'supermarket|mall|shop' },
     { id: 'attractions', name: 'Fun', icon: '🎯', query: 'attraction|museum|park' },
     { id: 'services', name: 'Services', icon: '🔧', query: 'bank|pharmacy|hospital|car_repair' }
-  ];
+  ], []);
 
   // Drag scrolling handlers
   const handleMouseDown = (e) => {
@@ -214,7 +214,7 @@ function Places() {
     };
 
     fetchPlaces();
-  }, [selectedCategory, lat, long, refreshTrigger]);
+  }, [selectedCategory, lat, long, refreshTrigger, categories]);
 
   // Handle category change
   const handleCategoryChange = (categoryId) => {
