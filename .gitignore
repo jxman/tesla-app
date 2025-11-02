@@ -10,10 +10,15 @@
 
 # production
 /build
+/dist
+
+# Vite
+*.local
 
 # misc
 .DS_Store
 .env
+.env.cra-backup
 .env.local
 .env.development.local
 .env.test.local
@@ -64,3 +69,6 @@ lerna-debug.log*
 # Yarn Integrity file
 .yarn-integrity
 
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.github/instructions/snyk_rules.instructions.md

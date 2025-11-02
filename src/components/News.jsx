@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FaNewspaper, FaSync, FaExclamationTriangle, FaClock } from "react-icons/fa";
 import { BiRefresh } from "react-icons/bi";
 
-const NEWS_API_KEY = process.env.REACT_APP_NEWS_API_KEY;
-const NEWS_API_URL = process.env.REACT_APP_NEWS_API_URL;
+const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
+const NEWS_API_URL = import.meta.env.VITE_NEWS_API_URL;
 
 function News() {
   const [articles, setArticles] = useState([]);

@@ -11,19 +11,18 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
-    "react-scripts": "^5.0.1",
     "web-vitals": "^5.0.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "dev": "vite",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest"
   },
   "eslintConfig": {
     "extends": [
-      "react-app",
-      "react-app/jest"
+      "eslint:recommended"
     ]
   },
   "browserslist": {
@@ -39,9 +38,11 @@
     ]
   },
   "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.0",
     "autoprefixer": "^10.4.2",
     "postcss": "^8.4.31",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^3.4.17",
+    "vite": "^7.1.12"
   },
   "overrides": {
     "nth-check": ">=2.0.1"

@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from "react";
-const OW_API_URL = process.env.REACT_APP_API_URL;
-const OW_API_KEY = process.env.REACT_APP_API_KEY;
+const OW_API_URL = import.meta.env.VITE_API_URL;
+const OW_API_KEY = import.meta.env.VITE_API_KEY;
 
 const TeslaAppContext = createContext();
 
@@ -30,8 +30,8 @@ export const TeslaAppProvider = ({ children }) => {
     // Default to Boston if geolocation is denied or not available
     function error(error) {
       console.log('Geolocation error:', error);
-      const defaultLat = parseFloat(process.env.REACT_APP_DEFAULT_LAT) || 42.364506;
-      const defaultLon = parseFloat(process.env.REACT_APP_DEFAULT_LON) || -71.038887;
+      const defaultLat = parseFloat(import.meta.env.VITE_DEFAULT_LAT) || 42.364506;
+      const defaultLon = parseFloat(import.meta.env.VITE_DEFAULT_LON) || -71.038887;
       
       setLong(defaultLon);
       setLat(defaultLat);

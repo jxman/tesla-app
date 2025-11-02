@@ -2,6 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+# 🚨 CRITICAL RULES - ALWAYS FOLLOW
+
+## Git & Version Control Rules
+**NEVER commit or push code without explicit user permission.**
+
+### Commit Protocol:
+- ✅ **ASK FIRST**: Always ask "Would you like me to commit these changes?" 
+- ✅ **WAIT FOR CONFIRMATION**: Only proceed after user explicitly says yes
+- ✅ **EXCEPTION**: Only commit automatically if user message contains "commit this" or "push these changes"
+- ❌ **NEVER ASSUME**: Don't assume user wants changes committed
+- ❌ **NO AUTO-COMMITS**: Never commit just because you finished implementing something
+
+### Example Correct Behavior:
+```
+Assistant: I've successfully implemented the button uniformity improvements. 
+Would you like me to commit and push these changes?
+
+User: Yes, go ahead
+Assistant: [proceeds with git commands]
+```
+
+**REMINDER**: Being proactive about code commits makes users feel you're overstepping boundaries.
+
 ## Project Overview
 
 Tesla Dashboard is a React-based web application with a modern tabbed interface designed as a homepage replacement for Tesla vehicle browsers. It provides enhanced weather forecasts, traffic conditions, news updates, and real nearby places in a Tesla-optimized interface.
@@ -17,20 +40,35 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 
 ## Development Commands
 
+### Build Tool: Vite
+This project uses **Vite** for fast development and optimized production builds. Migrated from Create React App to resolve security vulnerabilities and improve performance.
+
 ### Essential Commands
-- **Start development server**: `npm start` (runs on port 3000)
-- **Build for production**: `npm run build`
-- **Run tests**: `npm test`
-- **Eject (not recommended)**: `npm run eject`
+- **Start development server**: `npm start` or `npm run dev` (runs on port 3000)
+- **Build for production**: `npm run build` (output: `build/`)
+- **Preview production build**: `npm run preview` (runs on port 4173)
+- **Run tests**: `npm test` (Vitest)
 
 ### Development Testing Protocol
 **For Claude Code development assistance:**
 - **User's server**: Always runs on port 3000 (`http://localhost:3000`)
-- **Testing changes**: Use port 3002 to avoid conflicts (`PORT=3002 BROWSER=none npm start`)
+- **Testing changes**: Use port 3002 to avoid conflicts (`PORT=3002 npm start`)
 - **Always test compilation** before asking user to verify changes
 
+### Environment Variables (Vite)
+- **Prefix**: All environment variables must use `VITE_` prefix
+- **Access**: Use `import.meta.env.VITE_VARIABLE_NAME` (not `process.env`)
+- **Example**: `import.meta.env.VITE_API_KEY`
+
+### Performance Improvements from Vite Migration
+- **Dev server startup**: ~20-30s → ~150ms (100x+ faster)
+- **Hot Module Replacement**: ~1-3s → <500ms (5x+ faster)
+- **Production build size**: 5.6MB → 2.5MB (55% reduction)
+- **Production build time**: ~30s → ~1s (30x faster)
+- **Security**: Resolved webpack-dev-server CVE-2025-30360
+
 ### No Linting/Type Checking
-This project uses standard Create React App setup without additional linting or TypeScript. Code style is enforced through consistent patterns rather than automated tools.
+This project uses standard setup without additional linting or TypeScript. Code style is enforced through consistent patterns rather than automated tools.
 
 ## Project Architecture
 
@@ -87,20 +125,22 @@ The app uses a modern tabbed interface:
 
 ## Environment Configuration
 
-Required environment variables in `.env`:
+Required environment variables in `.env` (using **VITE_** prefix):
 ```env
 # OpenWeather API
-REACT_APP_API_URL=https://api.openweathermap.org/data/2.5
-REACT_APP_API_KEY=your_openweather_api_key
+VITE_API_URL=https://api.openweathermap.org/data/2.5
+VITE_API_KEY=your_openweather_api_key
 
 # News API
-REACT_APP_NEWS_API_KEY=your_news_api_key
-REACT_APP_NEWS_API_URL=https://newsapi.org/v2
+VITE_NEWS_API_KEY=your_news_api_key
+VITE_NEWS_API_URL=https://newsapi.org/v2
 
 # Default location (Boston coordinates)
-REACT_APP_DEFAULT_LAT=42.364506
-REACT_APP_DEFAULT_LON=-71.038887
+VITE_DEFAULT_LAT=42.364506
+VITE_DEFAULT_LON=-71.038887
 ```
+
+**Important**: Vite requires the `VITE_` prefix for all environment variables. Access them in code using `import.meta.env.VITE_VARIABLE_NAME`.
 
 ## Styling Architecture
 
