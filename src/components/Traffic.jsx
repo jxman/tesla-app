@@ -1,9 +1,11 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
+import moment from "moment";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import TeslaAppContext from "../context/TeslaAppContext";
 
 function Traffic() {
   const { lat, long, currentLocation } = useContext(TeslaAppContext);
+  const [lastUpdated] = useState(new Date());
 
   // Check if we have valid coordinates (fix the array length bug)
   if (!lat || !long || lat === 0 || long === 0) {
@@ -44,14 +46,17 @@ function Traffic() {
             )}
           </div>
         </div>
-        
-        <div className="flex items-center space-x-2">
+
+        <div className="flex flex-col items-end">
           <button
             onClick={() => window.open(`https://www.waze.com/livemap?lat=${lat}&lon=${long}`, '_blank')}
-            className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors btn-soft hover:shadow-lg"
           >
             Open in Waze
           </button>
+          <p className="text-xs text-gray-500 mt-1">
+            Updated {moment(lastUpdated).fromNow()}
+          </p>
         </div>
       </div>
 

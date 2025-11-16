@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
-import { FaMapMarkerAlt, FaClock, FaRoute, FaSync } from "react-icons/fa";
-import { BiRefresh } from "react-icons/bi";
+import moment from "moment";
+import { FaMapMarkerAlt, FaRoute, FaSync } from "react-icons/fa";
 import TeslaAppContext from "../context/TeslaAppContext";
 
 function Places() {
@@ -238,25 +238,36 @@ function Places() {
           {currentLocation && (
             <p className="text-sm text-blue-400 italic mt-1">{currentLocation}</p>
           )}
+        </div>
+
+        <div className="flex flex-col items-end">
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className={`btn btn-sm px-4 py-2 bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
+              isLoading ? 'opacity-50 cursor-not-allowed btn-disabled' : 'btn-soft hover:shadow-lg'
+            }`}
+            title="Refresh Places Data"
+            tabIndex="0"
+          >
+            <svg
+              className={`w-4 h-4 mr-1 transition-transform duration-300 ${
+                isLoading ? 'animate-spin' : ''
+              }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            {isLoading ? 'Refreshing...' : 'Refresh'}
+          </button>
           {lastUpdated && (
-            <p className="text-xs text-gray-400 flex items-center space-x-1 mt-1">
-              <FaClock className="w-3 h-3" />
-              <span>Updated {lastUpdated.toLocaleTimeString()}</span>
+            <p className="text-xs text-gray-500 mt-1">
+              Updated {moment(lastUpdated).fromNow()}
             </p>
           )}
         </div>
-        
-        <button
-          onClick={handleRefresh}
-          disabled={isLoading}
-          className={`btn btn-xl p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-all duration-200 group ${
-            isLoading ? 'btn-disabled opacity-50' : 'btn-soft hover:shadow-lg'
-          }`}
-          title="Refresh Places"
-          tabIndex="0"
-        >
-          <BiRefresh className={`w-4 h-4 text-gray-300 group-hover:text-white transition-colors ${isLoading ? 'animate-spin' : 'group-hover:rotate-180'} transition-transform duration-300`} />
-        </button>
       </div>
 
       {/* Category Tabs - Even width buttons */}
