@@ -355,11 +355,21 @@ function News() {
               <li
                 key={index}
                 className="list-item card card-xl card-border bg-gray-800/50 rounded-lg p-5 border border-gray-700 hover:border-gray-600 hover:shadow-lg transition-all duration-200 cursor-pointer group"
-                // snyk-ignore: OR - safeUrl validated with DOMPurify + URL() at line 75, localhost/internal IPs blocked at line 174
-                onClick={() => article.safeUrl && window.open(article.safeUrl, '_blank', 'noopener,noreferrer')}
+                onClick={() => {
+                  try {
+                    const { href, protocol } = new URL(article.safeUrl || '');
+                    (protocol === 'https:' || protocol === 'http:') && window.open(href, '_blank', 'noopener,noreferrer');
+                  } catch (_) {}
+                }}
                 tabIndex="0"
-                // snyk-ignore: OR - safeUrl validated with DOMPurify + URL() at line 75, localhost/internal IPs blocked at line 174
-                onKeyDown={(e) => e.key === 'Enter' && article.safeUrl && window.open(article.safeUrl, '_blank', 'noopener,noreferrer')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    try {
+                      const { href, protocol } = new URL(article.safeUrl || '');
+                      (protocol === 'https:' || protocol === 'http:') && window.open(href, '_blank', 'noopener,noreferrer');
+                    } catch (_) {}
+                  }
+                }}
               >
               <div className="flex space-x-3">
                 {/* Article Image - XSS Protected (CWE-79) */}
@@ -367,10 +377,8 @@ function News() {
                 {/* URL validation enforces http/https-only protocols (line 226) */}
                 {shouldShowImage && (
                   <div className="w-20 h-16 flex-shrink-0">
-                    {/* nosemgrep: javascript.react.security.audit.react-dangerouslysetinnerhtml.react-dangerouslysetinnerhtml */}
                     <img
-                      // snyk-ignore: XSS - safeImageUrl validated with DOMPurify at line 76 + URL() constructor at line 226
-                      src={article.safeImageUrl}
+                      src={DOMPurify.sanitize(article.safeImageUrl || '', { ALLOWED_URI_REGEXP: /^https?:\/\// })}
                       alt=""
                       className="w-full h-full object-cover rounded-lg"
                       referrerPolicy="no-referrer"

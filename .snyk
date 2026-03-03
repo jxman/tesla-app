@@ -55,20 +55,27 @@ version: v1.25.1
 # ============================================================================
 
 ignore:
-  SNYK-CODE-0001-de46d7c6-0e24-4d30-bc11-6d6ddc062be9:
+  # Open Redirect (CWE-601) - window.open(href) onClick at News.jsx
+  # safeUrl is pre-sanitized via sanitizeUrl(): new URL() validation + http/https-only whitelist
+  # + localhost/internal-IP blocklist + DOMPurify. href is derived from new URL(safeUrl).
+  # Snyk taint analysis tracks through new URL() but the protocol check (http/https) at render
+  # time prevents any dangerous redirect. window.open is only called when protocol is safe.
+  d7990cfd.4773f344.6bb8eed2.0083fa25.ef9f7d82.8020cfdf.df7e59ba.870b3dbe.909a0981.7d4b7307.c9330245.c8688b2b.601e4ccc.9e16a999.02c62b03.6723ddeb:
     - '*':
-        reason: False positive - URL sanitized with DOMPurify at ingress (see justification above)
+        reason: >
+          False positive. article.safeUrl is validated at fetch time by sanitizeUrl() using
+          new URL() + protocol whitelist + localhost blocklist + DOMPurify. At render time,
+          new URL() is called again and window.open() is gated by protocol === 'https:' || 'http:'.
+          Snyk taint analysis does not recognize the double protocol validation as sanitization.
         expires: 2026-12-31T00:00:00.000Z
-        created: 2025-11-07T00:00:00.000Z
-  de46d7c6-0e24-4d30-bc11-6d6ddc062be9:
+        created: 2026-03-03T00:00:00.000Z
+  # Open Redirect (CWE-601) - window.open(href) onKeyDown at News.jsx
+  d7990cfd.4773f344.6bb8eed2.0083fa25.ef9f7d82.8020cfdf.df7e59ba.870b3dbe.87bc1c5f.4773f344.a3fa85e7.d7919eeb.ef9f7d82.8431f2ca.cd61fc56.6723ddeb:
     - '*':
-        reason: False positive - URL sanitized with DOMPurify at ingress (see justification above)
+        reason: >
+          False positive. Same as above - keyboard handler mirrors onClick security posture.
+          article.safeUrl validated at fetch time; protocol re-checked at render time before
+          window.open(). Snyk taint analysis tracks through new URL() constructor.
         expires: 2026-12-31T00:00:00.000Z
-        created: 2025-11-07T20:48:42.503Z
-exclude:
-  code:
-    # DOM-based XSS false positives (safeImageUrl is pre-sanitized)
-    - src/components/News.jsx > javascript/DOMXSS
-    # Open Redirect false positives (safeUrl is pre-sanitized and validated)
-    - src/components/News.jsx > javascript/OR
+        created: 2026-03-03T00:00:00.000Z
 patch: {}
