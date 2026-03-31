@@ -356,18 +356,18 @@ function News() {
                 key={index}
                 className="list-item card card-xl card-border bg-gray-800/50 rounded-lg p-5 border border-gray-700 hover:border-gray-600 hover:shadow-lg transition-all duration-200 cursor-pointer group"
                 onClick={() => {
-                  try {
-                    const { href, protocol } = new URL(article.safeUrl || '');
-                    (protocol === 'https:' || protocol === 'http:') && window.open(href, '_blank', 'noopener,noreferrer');
-                  } catch (_) {}
+                  const url = article.safeUrl;
+                  if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }
                 }}
                 tabIndex="0"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
-                    try {
-                      const { href, protocol } = new URL(article.safeUrl || '');
-                      (protocol === 'https:' || protocol === 'http:') && window.open(href, '_blank', 'noopener,noreferrer');
-                    } catch (_) {}
+                    const url = article.safeUrl;
+                    if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+                      window.open(url, '_blank', 'noopener,noreferrer');
+                    }
                   }
                 }}
               >
