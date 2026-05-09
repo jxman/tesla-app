@@ -33,9 +33,9 @@ function App() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 h-16 px-6 gap-3 flex items-center justify-center transition-all duration-200 rounded-xl ${
+                  className={`flex-1 h-14 px-6 gap-3 flex items-center justify-center transition-all duration-200 rounded-xl ${
                     activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-lg font-semibold'
+                      ? 'bg-white text-gray-900 shadow-lg font-semibold'
                       : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                   }`}
                   tabIndex="0"

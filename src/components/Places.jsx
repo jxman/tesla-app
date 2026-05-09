@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useContext, useRef, useMemo } from "react";
-import moment from "moment";
-import { FaMapMarkerAlt, FaRoute, FaSync } from "react-icons/fa";
+import { FiNavigation, FiRefreshCw, FiAlertCircle, FiMapPin, FiCoffee, FiDroplet, FiZap, FiHome, FiShoppingBag, FiStar, FiTool } from "react-icons/fi";
 import TeslaAppContext from "../context/TeslaAppContext";
 
 function Places() {
@@ -16,15 +15,14 @@ function Places() {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
 
-  // Simple category mapping for OpenStreetMap - memoized to prevent unnecessary re-renders
   const categories = useMemo(() => [
-    { id: 'restaurants', name: 'Food', icon: '🍽️', query: 'restaurant|fast_food|cafe|bar|pub' },
-    { id: 'gas', name: 'Gas', icon: '⛽', query: 'fuel' },
-    { id: 'charging', name: 'Charging', icon: '⚡', query: 'charging_station' },
-    { id: 'lodging', name: 'Hotels', icon: '🏨', query: 'hotel|motel|hostel' },
-    { id: 'shopping', name: 'Shopping', icon: '🛍️', query: 'supermarket|mall|shop' },
-    { id: 'attractions', name: 'Fun', icon: '🎯', query: 'attraction|museum|park' },
-    { id: 'services', name: 'Services', icon: '🔧', query: 'bank|pharmacy|hospital|car_repair' }
+    { id: 'restaurants', name: 'Food',     Icon: FiCoffee,      query: 'restaurant|fast_food|cafe|bar|pub' },
+    { id: 'gas',         name: 'Gas',      Icon: FiDroplet,     query: 'fuel' },
+    { id: 'charging',    name: 'Charging', Icon: FiZap,         query: 'charging_station' },
+    { id: 'lodging',     name: 'Hotels',   Icon: FiHome,        query: 'hotel|motel|hostel' },
+    { id: 'shopping',    name: 'Shopping', Icon: FiShoppingBag, query: 'supermarket|mall|shop' },
+    { id: 'attractions', name: 'Fun',      Icon: FiStar,        query: 'attraction|museum|park' },
+    { id: 'services',    name: 'Services', Icon: FiTool,        query: 'bank|pharmacy|hospital|car_repair' },
   ], []);
 
   // Drag scrolling handlers
@@ -226,105 +224,65 @@ function Places() {
     setRefreshTrigger(prev => prev + 1);
   };
 
+  const visiblePlaces = places.filter(p => p.coordinates);
+
   return (
-    <div className="h-full flex flex-col space-y-4 overflow-hidden">
-      {/* Header */}
-      <div className="flex justify-between items-start flex-shrink-0">
-        <div>
-          <div className="flex items-center space-x-2">
-            <FaMapMarkerAlt className="text-lg text-blue-400" />
-            <h2 className="text-xl font-bold text-white">Nearby Places</h2>
-          </div>
-          {currentLocation && (
-            <p className="text-sm text-blue-400 italic mt-1">{currentLocation}</p>
-          )}
-        </div>
+    <div className="h-full flex flex-col gap-4 overflow-hidden">
 
-        <div className="flex flex-col items-end">
-          <button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className={`btn btn-sm px-4 py-2 bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
-              isLoading ? 'opacity-50 cursor-not-allowed btn-disabled' : 'btn-soft hover:shadow-lg'
-            }`}
-            title="Refresh Places Data"
-            tabIndex="0"
-          >
-            <svg
-              className={`w-4 h-4 mr-1 transition-transform duration-300 ${
-                isLoading ? 'animate-spin' : ''
+      {/* Category tabs + refresh */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="grid grid-cols-7 gap-2 flex-1">
+          {categories.map(({ id, name, Icon }) => (
+            <button
+              key={id}
+              onClick={() => handleCategoryChange(id)}
+              className={`h-14 flex flex-col items-center justify-center gap-1 rounded-xl font-medium text-xs transition-all ${
+                selectedCategory === id
+                  ? 'bg-white text-gray-900 shadow-lg'
+                  : 'bg-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-700'
               }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+              tabIndex="0"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {isLoading ? 'Refreshing...' : 'Refresh'}
-          </button>
-          {lastUpdated && (
-            <p className="text-xs text-gray-500 mt-1">
-              Updated {moment(lastUpdated).fromNow()}
-            </p>
-          )}
+              <Icon className="w-4 h-4" />
+              <span>{name}</span>
+            </button>
+          ))}
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="h-14 w-14 flex items-center justify-center bg-gray-700/60 hover:bg-gray-700 border border-gray-600/50 rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
+          title="Refresh"
+        >
+          <FiRefreshCw className={`w-4 h-4 text-gray-400 ${isLoading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
-      {/* Category Tabs - Even width buttons */}
-      <div className="grid grid-cols-7 gap-2 flex-shrink-0">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            onClick={() => handleCategoryChange(category.id)}
-            className={`btn btn-xl px-2 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex flex-col items-center justify-center space-y-1 h-16 ${
-              selectedCategory === category.id
-                ? 'btn-active bg-blue-600 text-white shadow-lg btn-soft'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white btn-ghost hover:shadow-md'
-            }`}
-            tabIndex="0"
-          >
-            <span className="text-xl">{category.icon}</span>
-            <span className="text-xs leading-tight">{category.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Error State */}
+      {/* Error */}
       {error && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-6">
-            <FaMapMarkerAlt className="w-12 h-12 text-red-500 mx-auto mb-3" />
+            <FiAlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
             <h3 className="text-lg font-medium text-white mb-2">Places Unavailable</h3>
             <p className="text-sm text-gray-400 mb-4">{error}</p>
-            <button
-              onClick={handleRefresh}
-              className="btn btn-xl px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 btn-soft hover:shadow-lg"
-              tabIndex="0"
-            >
+            <button onClick={handleRefresh} className="px-6 py-3 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-100 transition-colors" tabIndex="0">
               Try Again
             </button>
           </div>
         </div>
       )}
 
-      {/* Loading State */}
+      {/* Loading */}
       {isLoading && !error && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <FaSync className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-3" />
-            <p className="text-gray-400">Finding nearby places...</p>
-          </div>
+          <FiRefreshCw className="w-7 h-7 text-gray-500 animate-spin" />
         </div>
       )}
 
-      {/* Places List */}
-      {!isLoading && !error && places.length > 0 && (
-        <div className="flex-1 overflow-hidden">
-          <h3 className="text-lg font-semibold text-white mb-3">
-            {categories.find(cat => cat.id === selectedCategory)?.name} Near You
-          </h3>
-          
-          <div 
+      {/* Place cards — horizontal scroll */}
+      {!isLoading && !error && visiblePlaces.length > 0 && (
+        <div className="flex-1 overflow-hidden min-h-0">
+          <div
             ref={scrollContainerRef}
             className="h-full overflow-x-auto overflow-y-hidden cursor-grab select-none"
             style={{ scrollBehavior: isDragging ? 'auto' : 'smooth' }}
@@ -336,40 +294,40 @@ function Places() {
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
           >
-            <div className="flex space-x-4 pb-2">
-              {places.map((place) => (
-                <div 
+            <div className="flex gap-3 h-full pb-2">
+              {visiblePlaces.map((place) => (
+                <div
                   key={place.id}
-                  className="card card-xl card-border flex-shrink-0 bg-gray-800/30 rounded-lg p-5 border border-gray-700/50 min-w-[280px] cursor-pointer hover:bg-gray-800/50 hover:shadow-lg transition-all duration-200 select-none pointer-events-auto"
-                  onClick={() => handlePlaceClick(place)}
-                  tabIndex="0"
-                  onKeyDown={(e) => e.key === 'Enter' && handlePlaceClick(place)}
+                  className="flex-shrink-0 flex flex-col justify-between bg-gray-800/40 border border-gray-700/60 rounded-2xl p-5 min-w-[220px] max-w-[240px] select-none pointer-events-auto"
                 >
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <h4 className="text-white font-medium text-sm truncate flex-1">
-                        {place.name}
-                      </h4>
-                      <div className="flex items-center space-x-1 ml-2 text-xs text-gray-400">
-                        <FaRoute className="w-3 h-3" />
-                        <span>{getDistance(place)}</span>
-                      </div>
-                    </div>
-                    
-                    <p className="text-xs text-gray-400 truncate">
-                      {place.address}
-                    </p>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">
-                        {place.category}
-                      </span>
-                      
-                      <div className="text-xs text-blue-400 hover:text-blue-300">
-                        Open in Maps →
-                      </div>
-                    </div>
+                  {/* Distance — lead element */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <FiMapPin className="w-4 h-4 text-green-400 flex-shrink-0" />
+                    <span className="text-2xl font-bold text-white leading-none">{getDistance(place)}</span>
                   </div>
+
+                  {/* Name + category */}
+                  <div className="flex-1 min-h-0">
+                    <h4 className="text-sm font-semibold text-white leading-snug line-clamp-2 mb-1">
+                      {place.name}
+                    </h4>
+                    <span className="text-[11px] text-gray-500 font-mono uppercase tracking-wide">
+                      {place.category}
+                    </span>
+                    {place.address && place.address !== 'Address not available' && (
+                      <p className="text-xs text-gray-500 mt-1 truncate">{place.address}</p>
+                    )}
+                  </div>
+
+                  {/* Navigate CTA */}
+                  <button
+                    onClick={() => handlePlaceClick(place)}
+                    className="mt-4 w-full h-12 flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-gray-900 font-semibold text-sm rounded-xl transition-all"
+                    tabIndex="0"
+                  >
+                    <FiNavigation className="w-4 h-4" />
+                    Navigate
+                  </button>
                 </div>
               ))}
             </div>
@@ -377,14 +335,14 @@ function Places() {
         </div>
       )}
 
-      {/* No Places State */}
-      {!isLoading && !error && places.length === 0 && (
+      {/* Empty */}
+      {!isLoading && !error && visiblePlaces.length === 0 && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-6">
-            <FaMapMarkerAlt className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-white mb-2">No Places Found</h3>
-            <p className="text-sm text-gray-400">
-              No {categories.find(cat => cat.id === selectedCategory)?.name.toLowerCase()} found nearby
+            <FiMapPin className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+            <h3 className="text-base font-medium text-white mb-1">No Places Found</h3>
+            <p className="text-sm text-gray-500">
+              No {categories.find(c => c.id === selectedCategory)?.name.toLowerCase()} found nearby
             </p>
           </div>
         </div>

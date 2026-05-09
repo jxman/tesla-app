@@ -1,90 +1,57 @@
-import { useContext, useState } from "react";
-import moment from "moment";
-import { FaMapMarkerAlt } from "react-icons/fa";
+import { useContext } from "react";
+import { FiMapPin, FiNavigation } from "react-icons/fi";
 import TeslaAppContext from "../context/TeslaAppContext";
 
 function Traffic() {
   const { lat, long, currentLocation } = useContext(TeslaAppContext);
-  const [lastUpdated] = useState(new Date());
 
-  // Check if we have valid coordinates (fix the array length bug)
   if (!lat || !long || lat === 0 || long === 0) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center p-8">
-          <FaMapMarkerAlt className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+          <FiMapPin className="w-10 h-10 text-gray-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-white mb-2">Location Required</h3>
-          <p className="text-sm text-gray-400 mb-4">
-            Please allow location access or enter a zip code to view traffic
+          <p className="text-sm text-gray-500 mb-4">
+            Allow location access or enter a zip code to view traffic
           </p>
           {currentLocation && (
-            <p className="text-xs text-gray-500">
-              Current: {currentLocation}
-            </p>
+            <p className="text-xs text-gray-600">Current: {currentLocation}</p>
           )}
         </div>
       </div>
     );
   }
 
-  // Generate Waze URL with proper coordinates
   const wazeUrl = `https://embed.waze.com/iframe?zoom=11&lat=${lat}&lon=${long}&pin=1&desc=1&ct=livemap`;
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="text-2xl">🚗</div>
-          <div>
-            <h2 className="text-lg font-bold text-white">Traffic Conditions</h2>
-            {currentLocation && (
-              <p className="text-xs text-gray-400 flex items-center space-x-1">
-                <FaMapMarkerAlt className="w-3 h-3" />
-                <span>{currentLocation}</span>
-              </p>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end">
-          <button
-            onClick={() => window.open(`https://www.waze.com/livemap?lat=${lat}&lon=${long}`, '_blank')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors btn-soft hover:shadow-lg"
-          >
-            Open in Waze
-          </button>
-          <p className="text-xs text-gray-500 mt-1">
-            Updated {moment(lastUpdated).fromNow()}
-          </p>
-        </div>
+    <div className="h-full flex flex-col gap-3">
+      {/* Minimal header: just Open in Waze CTA */}
+      <div className="flex items-center justify-end flex-shrink-0">
+        <button
+          onClick={() => window.open(`https://www.waze.com/livemap?lat=${lat}&lon=${long}`, '_blank', 'noopener,noreferrer')}
+          className="h-11 px-5 flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-900 font-semibold text-sm rounded-xl transition-all"
+        >
+          <FiNavigation className="w-4 h-4" />
+          Open in Waze
+        </button>
       </div>
 
-      {/* Waze Embed */}
-      <div className="flex-1 rounded-lg overflow-hidden border border-gray-700">
+      {/* Map — flush to card edges, Waze header clipped */}
+      <div className="flex-1 rounded-xl overflow-hidden relative" style={{ minHeight: 0 }}>
         <iframe
           src={wazeUrl}
           width="100%"
-          height="100%"
-          style={{ minHeight: '400px' }}
           title="Waze Traffic Map"
-          className="rounded-lg"
+          style={{
+            position: 'absolute',
+            top: '-56px',
+            left: 0,
+            width: '100%',
+            height: 'calc(100% + 56px)',
+            border: 'none',
+          }}
         />
-      </div>
-
-      {/* Footer Info */}
-      <div className="mt-3 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-400">Live Traffic:</span>
-            <span className="text-green-400">Connected</span>
-          </div>
-          <div className="flex items-center space-x-4 text-gray-500">
-            <span>Powered by Waze</span>
-            <span>•</span>
-            <span>Real-time Updates</span>
-          </div>
-        </div>
       </div>
     </div>
   );

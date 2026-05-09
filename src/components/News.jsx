@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import moment from "moment";
-import { FaNewspaper, FaSync, FaExclamationTriangle } from "react-icons/fa";
+import { FiFileText, FiCpu, FiTrendingUp, FiActivity, FiRefreshCw, FiAlertTriangle } from "react-icons/fi";
 import DOMPurify from "dompurify";
 
 const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
@@ -15,12 +15,11 @@ function News() {
   // Prevents XSS (CWE-79) and Open Redirect (CWE-601) attacks
   const [sanitizedArticles, setSanitizedArticles] = useState([]);
 
-  // Available news categories
   const categories = [
-    { id: 'general', name: 'Headlines', icon: '📰' },
-    { id: 'technology', name: 'Tech', icon: '💻' },
-    { id: 'business', name: 'Business', icon: '💼' },
-    { id: 'science', name: 'Science', icon: '🔬' }
+    { id: 'general',    name: 'Headlines', Icon: FiFileText   },
+    { id: 'technology', name: 'Tech',      Icon: FiCpu        },
+    { id: 'business',   name: 'Business',  Icon: FiTrendingUp },
+    { id: 'science',    name: 'Science',   Icon: FiActivity   },
   ];
 
   // Fetch news articles - memoized to prevent infinite re-renders
@@ -254,174 +253,116 @@ function News() {
     }
   };
 
+  const openArticle = (article) => {
+    const url = article.safeUrl;
+    if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <FaNewspaper className="text-2xl text-blue-400" />
-          <div>
-            <h2 className="text-xl font-bold text-white">Latest News</h2>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-end">
-          <button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className={`btn btn-sm px-4 py-2 bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300 rounded-lg transition-all duration-200 flex items-center space-x-2 ${
-              isLoading ? 'opacity-50 cursor-not-allowed btn-disabled' : 'btn-soft hover:shadow-lg'
-            }`}
-            title="Refresh News Data"
-            tabIndex="0"
-          >
-            <svg
-              className={`w-4 h-4 mr-1 transition-transform duration-300 ${
-                isLoading ? 'animate-spin' : ''
+    <div className="h-full flex flex-col gap-4">
+      {/* Category tabs + refresh */}
+      <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="grid grid-cols-4 gap-2 flex-1">
+          {categories.map(({ id, name, Icon }) => (
+            <button
+              key={id}
+              onClick={() => handleCategoryChange(id)}
+              className={`h-14 flex items-center justify-center gap-2.5 rounded-xl font-medium text-sm transition-all ${
+                category === id
+                  ? 'bg-white text-gray-900 shadow-lg'
+                  : 'bg-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-700'
               }`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+              tabIndex="0"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {isLoading ? 'Refreshing...' : 'Refresh'}
-          </button>
-          {lastUpdated && (
-            <p className="text-xs text-gray-500 mt-1">
-              Updated {moment(lastUpdated).fromNow()}
-            </p>
-          )}
+              <Icon className="w-4 h-4" />
+              <span>{name}</span>
+            </button>
+          ))}
         </div>
+        <button
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="h-14 w-14 flex items-center justify-center bg-gray-700/60 hover:bg-gray-700 border border-gray-600/50 rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
+          title="Refresh"
+        >
+          <FiRefreshCw className={`w-4 h-4 text-gray-400 ${isLoading ? 'animate-spin' : ''}`} />
+        </button>
       </div>
 
-      {/* Category Tabs - Even width buttons */}
-      <div className="grid grid-cols-4 gap-3 mb-4 flex-shrink-0">
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => handleCategoryChange(cat.id)}
-            className={`btn btn-xl px-2 py-3 rounded-lg text-sm font-medium transition-all duration-200 flex flex-col items-center justify-center space-y-1 h-16 ${
-              category === cat.id
-                ? 'btn-active bg-blue-600 text-white shadow-lg btn-soft'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white btn-ghost hover:shadow-md'
-            }`}
-            tabIndex="0"
-          >
-            <span className="text-xl">{cat.icon}</span>
-            <span className="text-xs leading-tight">{cat.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Error State */}
+      {/* Error */}
       {error && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-6">
-            <FaExclamationTriangle className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
+            <FiAlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-3" />
             <h3 className="text-lg font-medium text-white mb-2">News Unavailable</h3>
             <p className="text-sm text-gray-400 mb-4">{error}</p>
-            <button
-              onClick={handleRefresh}
-              className="btn btn-xl px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 btn-soft hover:shadow-lg"
-              tabIndex="0"
-            >
+            <button onClick={handleRefresh} className="px-6 py-3 bg-white text-gray-900 font-semibold rounded-xl transition-colors hover:bg-gray-100" tabIndex="0">
               Try Again
             </button>
           </div>
         </div>
       )}
 
-      {/* Loading State */}
+      {/* Loading */}
       {isLoading && !error && (
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <FaSync className="w-8 h-8 text-blue-400 animate-spin mx-auto mb-3" />
-            <p className="text-gray-400">Loading latest news...</p>
+          <FiRefreshCw className="w-7 h-7 text-gray-500 animate-spin" />
+        </div>
+      )}
+
+      {/* Article list with optional thumbnails */}
+      {!isLoading && !error && sanitizedArticles.length > 0 && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col divide-y divide-gray-700/50">
+            {sanitizedArticles.map((article, index) => (
+              <button
+                key={index}
+                className="flex items-center gap-4 py-3 px-1 text-left hover:bg-gray-700/30 transition-colors rounded-lg group cursor-pointer w-full"
+                onClick={() => openArticle(article)}
+                tabIndex="0"
+                onKeyDown={(e) => e.key === 'Enter' && openArticle(article)}
+              >
+                {/* Thumbnail — shown when available, XSS-safe via pre-sanitized safeImageUrl */}
+                {article.safeImageUrl && (
+                  <div className="w-16 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-700">
+                    <img
+                      src={DOMPurify.sanitize(article.safeImageUrl, { ALLOWED_URI_REGEXP: /^https?:\/\// })}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      crossOrigin="anonymous"
+                      onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-white leading-snug line-clamp-2 group-hover:text-blue-300 transition-colors">
+                    {truncateText(article.title, 120)}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1.5 text-[11px] text-gray-500 font-mono">
+                    <span className="truncate">{article.source?.name || 'Unknown'}</span>
+                    <span>·</span>
+                    <span className="flex-shrink-0">{timeAgo(article.publishedAt)}</span>
+                  </div>
+                </div>
+                <svg className="w-4 h-4 text-gray-600 group-hover:text-gray-400 flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* News Articles - Enhanced List */}
-      {!isLoading && !error && sanitizedArticles.length > 0 && (
-        <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-          <ul className="list space-y-2">
-            {sanitizedArticles.map((article, index) => {
-              // Use pre-sanitized image URL (XSS-safe, validated at fetch time)
-              // article.safeImageUrl is already validated and contains only http/https URLs
-              const shouldShowImage = article.safeImageUrl !== null;
-
-              return (
-              <li
-                key={index}
-                className="list-item card card-xl card-border bg-gray-800/50 rounded-lg p-5 border border-gray-700 hover:border-gray-600 hover:shadow-lg transition-all duration-200 cursor-pointer group"
-                onClick={() => {
-                  const url = article.safeUrl;
-                  if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
-                    window.open(url, '_blank', 'noopener,noreferrer');
-                  }
-                }}
-                tabIndex="0"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    const url = article.safeUrl;
-                    if (typeof url === 'string' && /^https?:\/\//i.test(url)) {
-                      window.open(url, '_blank', 'noopener,noreferrer');
-                    }
-                  }
-                }}
-              >
-              <div className="flex space-x-3">
-                {/* Article Image - XSS Protected (CWE-79) */}
-                {/* article.safeImageUrl is pre-sanitized at fetch time using DOMPurify (line 76) */}
-                {/* URL validation enforces http/https-only protocols (line 226) */}
-                {shouldShowImage && (
-                  <div className="w-20 h-16 flex-shrink-0">
-                    <img
-                      src={DOMPurify.sanitize(article.safeImageUrl || '', { ALLOWED_URI_REGEXP: /^https?:\/\// })}
-                      alt=""
-                      className="w-full h-full object-cover rounded-lg"
-                      referrerPolicy="no-referrer"
-                      crossOrigin="anonymous"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-                
-                {/* Article Content */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-medium text-white mb-1 line-clamp-2 group-hover:text-blue-400 transition-colors">
-                    {truncateText(article.title, 100)}
-                  </h3>
-                  
-                  {article.description && (
-                    <p className="text-xs text-gray-400 mb-2 line-clamp-2">
-                      {truncateText(article.description, 120)}
-                    </p>
-                  )}
-                  
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span className="truncate">{article.source?.name || 'Unknown Source'}</span>
-                    <span>{timeAgo(article.publishedAt)}</span>
-                  </div>
-                </div>
-              </div>
-              </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-
-      {/* No Articles State */}
+      {/* Empty */}
       {!isLoading && !error && sanitizedArticles.length === 0 && (
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-6">
-            <FaNewspaper className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-white mb-2">No News Available</h3>
-            <p className="text-sm text-gray-400">Check back later for updates</p>
+            <FiFileText className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+            <h3 className="text-base font-medium text-white mb-1">No News Available</h3>
+            <p className="text-sm text-gray-500">Check back later for updates</p>
           </div>
         </div>
       )}
