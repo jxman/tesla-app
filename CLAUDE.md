@@ -30,13 +30,13 @@ Assistant: [proceeds with git commands]
 Tesla Dashboard is a React-based web application with a modern tabbed interface designed as a homepage replacement for Tesla vehicle browsers. It provides enhanced weather forecasts, traffic conditions, news updates, and real nearby places in a Tesla-optimized interface.
 
 **Key Features:**
-- **Tabbed Navigation**: Single-tab interface with Weather, Traffic, News, and Places tabs
-- **Enhanced Weather**: 12-hour and 10-day forecasts with horizontal scrolling and drag support
-- **Real Places Integration**: OpenStreetMap-based nearby places with 7 Tesla-relevant categories
-- **Live News Feed**: Categorized content (Headlines, Tech, Business, Science) with refresh
-- **Traffic Conditions**: Waze integration for real-time traffic data
-- **Touch-Optimized**: Drag scrolling, large touch targets, Tesla browser compatible
-- **Tesla-themed UI**: Dark theme with Tesla-inspired design elements
+- **Tabbed Navigation**: 4-tab interface (Weather, Traffic, News, Places) with Feather icon labels and white-pill active state
+- **Enhanced Weather**: Option B hero — insight cards (What to Expect, Driving) derived from live forecast data + 12-hour temperature sparkline; OWM weather icons; 10-day forecast
+- **Real Places Integration**: OpenStreetMap Overpass + OSRM — 2×3 image-grid layout (featured card spans 2 rows), 6 EV-specific categories (no Gas), opening hours parsing, brand panel with Wikidata logo lookup, attribute chips, OSM attribution
+- **Live News Feed**: Categorized content (Headlines, Tech, Business, Science) with headline rows and DOMPurify-sanitized thumbnails
+- **Traffic Conditions**: Waze iframe integration clipping vendor chrome
+- **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
+- **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography
 
 ## Development Commands
 
@@ -144,12 +144,17 @@ VITE_DEFAULT_LON=-71.038887
 
 ## Styling Architecture
 
-**CSS Framework**: Tailwind CSS + DaisyUI components
-**Theme**: Tesla-inspired dark theme with:
-- Background: `bg-gray-900` (main), `bg-gray-800` (cards)
-- Tesla Red accent: `#dc2626` (used in branding)
-- Gray scale for text hierarchy
-- Blue accents for interactive elements
+**CSS Framework**: Tailwind CSS + DaisyUI for structural layout; inline styles for design tokens
+**Theme**: Dark ink theme — token reference:
+| Token | Value | Usage |
+|---|---|---|
+| ink | `#0e1014` | Page background |
+| card | `#14181f` | Card surfaces |
+| line | `#232932` | All borders |
+| text | `#e8eaed` | Primary text |
+| mute | `#8a93a0` | Secondary text |
+| accent | `#4d7cff` | Brand action, sparkline |
+| good | `#22c55e` | Live pill, open status |
 
 **Responsive Design**:
 - Grid layout adapts to screen size
@@ -165,18 +170,22 @@ VITE_DEFAULT_LON=-71.038887
 - Persistent header across all tabs for unified experience
 
 ### Enhanced Weather Features
-- 12-hour forecast with horizontal scrolling
-- 10-day forecast with extended weather patterns
-- Drag/touch scrolling with mouse and touch event handlers
-- Hourly/Daily toggle with animated transitions
-- Forecast data from OpenWeather 5-day API
+- **Option B hero**: insight cards (What to Expect + Driving) derived from live OWM forecast; `deriveWhatToExpect` and `deriveDriving` are pure functions operating on `forecastData.list` (3-hour intervals); no new API calls
+- **12-hour sparkline**: SVG path built from `buildHourlyTemps()` which linearly interpolates between OWM 3-hour intervals; `linearGradient` fill + labeled markers every 3rd point
+- **OWM weather icons**: `https://openweathermap.org/img/wn/{icon}@2x.png` used in hero header and 5-day forecast cards
+- Hero temperature: Inter 200 / 168 px; `marginTop: auto` anchors temp block above insight content
+- 5-day and hourly forecasts from OpenWeather `/forecast` endpoint (3-hour intervals, 5-day window)
 
 ### Places Integration
-- OpenStreetMap Overpass API for real place data
-- 7 Tesla-relevant categories (Food, Gas, Charging, Hotels, Shopping, Fun, Services)
-- Smart API fallback system (Google Places → Foursquare → OpenStreetMap)
-- Touch-optimized horizontal scrolling place cards
-- Distance calculations and Google Maps integration
+- **Data sources**: Overpass API (place discovery) + OSRM `/table` batch call (ETA) + Wikidata P154 (brand logo, 30-day localStorage cache)
+- **6 EV-specific categories**: Food, Charging, Hotels, Shopping, Fun, Services (Gas removed — Tesla app)
+- **Per-category search radius**: 2–16 km tuned to POI density (Charging = 16 km, Food = 2 km)
+- **10-minute query cache** keyed by `lat,lon,category`; in-flight dedup prevents double requests
+- **opening_hours.js** parses `opening_hours` OSM tag — renders open/closed pill only when tag exists and parses cleanly
+- **Place normalizer**: strips unnamed POIs, `disused:*`/`abandoned:*`/`fixme=*` entries, confirmed-closed places; sorts ascending by distance; caps at 5
+- **2×3 grid layout**: first card spans 2 rows (featured); brand panel with hash-derived gradient + 2-letter monogram (swaps to Wikidata logo when available); open/closed pill top-left, distance+ETA pill top-right; attribute chips (`yes`/`designated` → accent, `limited` → amber, `no` → omit)
+- **Whole card is the tap target** — opens Google Maps at place coordinates; navigate arrow in body row is decorative only
+- `© OpenStreetMap contributors · ODbL` attribution required and rendered
 
 ### Location Management
 - GPS location detection with fallback to default (Boston)
@@ -204,27 +213,25 @@ VITE_DEFAULT_LON=-71.038887
 ## Dependencies & Versions
 
 **Core Dependencies**:
-- React 18.3.1 (hooks-based with useMemo/useCallback optimization)
-- Tailwind CSS 3.4.17 + DaisyUI 4.12.24 (touch-optimized components)
-- React Icons 5.5.0 (tab navigation icons: FiCloud, FiNavigation, FiRss, FiMapPin)
-- Moment.js 2.29.1 (date formatting for forecasts and timestamps)
+- React 18.3.1 (hooks-based with useCallback/useMemo optimization)
+- Tailwind CSS 3.4.17 + DaisyUI 4.12.24 (structural layout; design-specific tokens use inline styles)
+- React Icons 5.5.0 — Feather (`react-icons/fi`) used throughout; `react-icons/bi` for BiCurrentLocation
+- opening_hours 3.12.0 (OSM opening_hours tag parser — used in Places)
+- DOMPurify 3.4.0 (URL sanitization in News thumbnails)
+- Moment.js 2.29.1 (date formatting for weather eyebrow)
 
-**Performance Features**:
-- React.useMemo for category definitions and expensive calculations
-- React.useCallback for event handlers and API calls
-- Horizontal scrolling with native browser scroll optimization
-- Component-level state management to minimize re-renders
+**Design token approach**: Weather and Places components use inline style objects keyed to a `C` / token constant at the top of each file (e.g. `--ink: #0e1014`, `--card: #14181f`, `--line: #232932`). Do not use Tailwind for these — the values are too specific.
 
 **Build Tools**:
-- Create React App 5.0.1 (webpack, babel, dev server)
+- Vite 7.3.2 (replaces CRA; `npm start` = `vite`, `npm run build` = `vite build`)
 - PostCSS + Autoprefixer (CSS processing)
 
 ## Testing & Quality
 
-- Uses React Testing Library + Jest (standard CRA setup)
+- Uses Vitest (migrated from Jest with CRA)
 - No additional testing configuration
-- Manual testing recommended for API integrations
-- Focus on component rendering and user interactions
+- Manual testing recommended for API integrations (Overpass, OWM, OSRM, Wikidata)
+- Playwright MCP available in Claude Code sessions for browser screenshot verification
 
 ## Deployment
 
@@ -263,10 +270,11 @@ VITE_DEFAULT_LON=-71.038887
 - Test drag interactions on multiple device types
 
 ### Places Component Updates
-- Modify category queries in Places.jsx useMemo
-- Update OpenStreetMap Overpass queries for new place types
-- Test API fallback scenarios (OpenStreetMap → Google → Foursquare)
-- Ensure proper error handling for location services
+- Add/remove categories in the `CATEGORIES` array at the top of `Places.jsx` — each entry has `id`, `label`, `Icon`, `radius` (metres), and `filters` (array of `{key, rx}` Overpass tag filters)
+- Adjust `radius` per category to tune POI density (sparse types like Charging need larger radii)
+- Add new attribute chips in the `CHIP_DEFS` array (`tag` = OSM key, `label` = display string)
+- The query cache is module-level (`queryCache` Map); invalidated by the refresh button or cleared on app reload
+- Do not re-add Gas (`amenity=fuel`) — this is an EV-only app
 
 ### Updating Styling
 - Follow existing Tailwind + DaisyUI patterns
