@@ -31,12 +31,13 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 
 **Key Features:**
 - **Tabbed Navigation**: 4-tab interface (Weather, Traffic, News, Places) with Feather icon labels and white-pill active state
-- **Enhanced Weather**: Option B hero — insight cards (What to Expect, Driving) derived from live forecast data + 12-hour temperature sparkline; OWM weather icons; 10-day forecast
+- **Enhanced Weather**: Option B hero — insight cards (What to Expect, Driving) derived from live forecast data + 12-hour temperature sparkline; react-icons/wi weather icons (per-condition colors); 10-day forecast
 - **Real Places Integration**: OpenStreetMap Overpass + OSRM — 2×3 image-grid layout (featured card spans 2 rows), 6 EV-specific categories (no Gas), opening hours parsing, brand panel with Wikidata logo lookup, attribute chips, OSM attribution
 - **Live News Feed**: Categorized content (Headlines, Tech, Business, Science) with headline rows and DOMPurify-sanitized thumbnails
 - **Traffic Conditions**: Waze iframe integration clipping vendor chrome
 - **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
-- **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography
+- **Light/Dark Mode**: Sun/moon toggle in header; preference persisted in localStorage; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
+- **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography; light mode uses `#f0f4f8` background
 
 ## Development Commands
 
@@ -52,7 +53,7 @@ This project uses **Vite** for fast development and optimized production builds.
 ### Development Testing Protocol
 **For Claude Code development assistance:**
 - **User's server**: Always runs on port 3000 (`http://localhost:3000`)
-- **Testing changes**: Use port 3002 to avoid conflicts (`PORT=3002 npm start`)
+- **Testing changes**: Use a free port with `npx vite --port 3005` (Vite ignores the `PORT` env var; use the `--port` flag directly)
 - **Always test compilation** before asking user to verify changes
 
 ### Environment Variables (Vite)
@@ -87,9 +88,10 @@ The application uses React Context API for global state management:
 src/
 ├── App.js                      # Tabbed interface with state-driven navigation
 ├── context/
-│   └── TeslaAppContext.js     # Global state with forecast data
+│   ├── TeslaAppContext.js     # Global state with forecast data
+│   └── ThemeContext.jsx       # Light/dark mode state; applies .dark to <html>
 ├── components/
-│   ├── LocationSelector.jsx   # Header with search and branding
+│   ├── LocationSelector.jsx   # Header with search + sun/moon theme toggle
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
 │   ├── Traffic.jsx           # Waze traffic embed
 │   ├── News.jsx             # News feed with categories
@@ -145,16 +147,24 @@ VITE_DEFAULT_LON=-71.038887
 ## Styling Architecture
 
 **CSS Framework**: Tailwind CSS + DaisyUI for structural layout; inline styles for design tokens
-**Theme**: Dark ink theme — token reference:
-| Token | Value | Usage |
-|---|---|---|
-| ink | `#0e1014` | Page background |
-| card | `#14181f` | Card surfaces |
-| line | `#232932` | All borders |
-| text | `#e8eaed` | Primary text |
-| mute | `#8a93a0` | Secondary text |
-| accent | `#4d7cff` | Brand action, sparkline |
-| good | `#22c55e` | Live pill, open status |
+**Dark mode**: `darkMode: 'class'` in `tailwind.config.js`; ThemeContext applies/removes `.dark` on `<html>`
+**Theme tokens**: All color tokens are CSS custom properties defined in `src/index.css`. `:root` holds light values; `.dark` overrides to dark values. Components reference `var(--token)` in inline styles.
+
+| Token | Light value | Dark value | Usage |
+|---|---|---|---|
+| `--ink` | `#f0f4f8` | `#0e1014` | Page background |
+| `--card` | `#ffffff` | `#14181f` | Card surfaces |
+| `--surface-deep` | `#f8fafc` | `#0f1218` | Inset cards (InsightCard, SparkCard) |
+| `--line` | `#e2e8f0` | `#232932` | All borders |
+| `--text` | `#0e1014` | `#e8eaed` | Primary text |
+| `--mute` | `#64748b` | `#8a93a0` | Secondary text |
+| `--dim` | `#94a3b8` | `#5e6772` | Tertiary / attribution text |
+| `--arrowBlue` | `#2563eb` | `#6db4ff` | Navigation arrow, distance pill |
+| `--hero-grad` | light gray gradient | dark blue gradient | Hero card background |
+| `--cat-inactive` | `#f1f5f9` | `#1a1f28` | Places category inactive button |
+| `--shimmer-peak` | `#e2e8f0` | `#1e2530` | Skeleton shimmer midpoint |
+
+Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-800`). Do NOT hardcode hex values in inline styles — always use the CSS variable.
 
 **Responsive Design**:
 - Grid layout adapts to screen size
@@ -172,7 +182,7 @@ VITE_DEFAULT_LON=-71.038887
 ### Enhanced Weather Features
 - **Option B hero**: insight cards (What to Expect + Driving) derived from live OWM forecast; `deriveWhatToExpect` and `deriveDriving` are pure functions operating on `forecastData.list` (3-hour intervals); no new API calls
 - **12-hour sparkline**: SVG path built from `buildHourlyTemps()` which linearly interpolates between OWM 3-hour intervals; `linearGradient` fill + labeled markers every 3rd point
-- **OWM weather icons**: `https://openweathermap.org/img/wn/{icon}@2x.png` used in hero header and 5-day forecast cards
+- **Weather icons**: `react-icons/wi` (Erik Flowers Weather Icons) — SVG components, no CDN dependency. Mapped via `OWM_TO_WI` lookup in `Weather.jsx` (18 OWM codes → WI component + hex color). Hero renders at `size={96}`, forecast cards at `size={48}`. Each condition has a tuned color (e.g. `WiDaySunny` → `#FFB800`, `WiDayRain` → `#4A88C0`). Add new mappings to `OWM_TO_WI`; fallback is `WiDaySunny`.
 - Hero temperature: Inter 200 / 168 px; `marginTop: auto` anchors temp block above insight content
 - 5-day and hourly forecasts from OpenWeather `/forecast` endpoint (3-hour intervals, 5-day window)
 
@@ -215,12 +225,12 @@ VITE_DEFAULT_LON=-71.038887
 **Core Dependencies**:
 - React 18.3.1 (hooks-based with useCallback/useMemo optimization)
 - Tailwind CSS 3.4.17 + DaisyUI 4.12.24 (structural layout; design-specific tokens use inline styles)
-- React Icons 5.5.0 — Feather (`react-icons/fi`) used throughout; `react-icons/bi` for BiCurrentLocation
+- React Icons 5.5.0 — Feather (`react-icons/fi`) for UI icons; `react-icons/bi` for BiCurrentLocation; **Weather Icons (`react-icons/wi`)** for all weather condition icons in Weather.jsx
 - opening_hours 3.12.0 (OSM opening_hours tag parser — used in Places)
 - DOMPurify 3.4.0 (URL sanitization in News thumbnails)
 - Moment.js 2.29.1 (date formatting for weather eyebrow)
 
-**Design token approach**: Weather and Places components use inline style objects keyed to a `C` / token constant at the top of each file (e.g. `--ink: #0e1014`, `--card: #14181f`, `--line: #232932`). Do not use Tailwind for these — the values are too specific.
+**Design token approach**: Weather and Places components reference CSS custom properties via a `C` object at the top of each file (e.g. `C.ink = "var(--ink)"`). The actual values are defined in `src/index.css` and switch automatically with the `.dark` class. Do not hardcode hex values in inline styles.
 
 **Build Tools**:
 - Vite 7.3.2 (replaces CRA; `npm start` = `vite`, `npm run build` = `vite build`)
@@ -277,7 +287,9 @@ VITE_DEFAULT_LON=-71.038887
 - Do not re-add Gas (`amenity=fuel`) — this is an EV-only app
 
 ### Updating Styling
-- Follow existing Tailwind + DaisyUI patterns
-- Maintain Tesla theme colors and dark mode
+- Follow existing Tailwind + DaisyUI patterns with `dark:` variants for every color class
+- For inline styles, always use `var(--token)` — never hardcode hex values
+- To add a new color token: add it to both `:root` (light) and `.dark` blocks in `src/index.css`
+- Test both light and dark modes after any styling change
 - Test tabbed navigation on multiple screen sizes
 - Ensure touch target accessibility standards

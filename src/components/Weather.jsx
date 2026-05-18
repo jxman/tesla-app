@@ -1,11 +1,48 @@
 import { useContext, useState, useRef, useMemo } from "react";
 import moment from "moment";
 import { FiRefreshCw } from "react-icons/fi";
+import {
+  WiDaySunny, WiNightClear,
+  WiDayCloudy, WiNightPartlyCloudy,
+  WiDaySunnyOvercast, WiNightCloudy,
+  WiCloudy,
+  WiDayShowers, WiNightShowers,
+  WiDayRain, WiNightRain,
+  WiDayThunderstorm, WiNightThunderstorm,
+  WiDaySnow, WiNightSnow,
+  WiDayFog, WiNightFog,
+} from "react-icons/wi";
 import TeslaAppContext from "../context/TeslaAppContext";
 import Spinner from "../shared/Spinner";
 
-const owmIcon = (icon, size = '2x') =>
-  `https://openweathermap.org/img/wn/${icon}@${size}.png`;
+// OWM icon code → { Icon component, color }
+const OWM_TO_WI = {
+  '01d': { Icon: WiDaySunny,          color: '#FFB800' },
+  '01n': { Icon: WiNightClear,        color: '#C8D8FF' },
+  '02d': { Icon: WiDayCloudy,         color: '#7EB3E0' },
+  '02n': { Icon: WiNightPartlyCloudy, color: '#8B9CC0' },
+  '03d': { Icon: WiDaySunnyOvercast,  color: '#9BA8B8' },
+  '03n': { Icon: WiNightCloudy,       color: '#788899' },
+  '04d': { Icon: WiCloudy,            color: '#9BA8B8' },
+  '04n': { Icon: WiCloudy,            color: '#788899' },
+  '09d': { Icon: WiDayShowers,        color: '#5B9BD5' },
+  '09n': { Icon: WiNightShowers,      color: '#4A88C0' },
+  '10d': { Icon: WiDayRain,           color: '#4A88C0' },
+  '10n': { Icon: WiNightRain,         color: '#3A78B0' },
+  '11d': { Icon: WiDayThunderstorm,   color: '#8877CC' },
+  '11n': { Icon: WiNightThunderstorm, color: '#7766BB' },
+  '13d': { Icon: WiDaySnow,           color: '#A8C8FF' },
+  '13n': { Icon: WiNightSnow,         color: '#98B8F0' },
+  '50d': { Icon: WiDayFog,            color: '#9AABB8' },
+  '50n': { Icon: WiNightFog,          color: '#7A8A97' },
+};
+
+const FALLBACK_WI = { Icon: WiDaySunny, color: '#FFB800' };
+
+function WeatherIcon({ code, size }) {
+  const { Icon, color } = OWM_TO_WI[code] ?? FALLBACK_WI;
+  return <Icon size={size} color={color} style={{ flexShrink: 0 }} />;
+}
 
 const PRECIP_MAINS = new Set(['Rain', 'Drizzle', 'Thunderstorm', 'Snow']);
 
@@ -295,11 +332,7 @@ function Weather() {
               {data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1)} · Feels {feelsF}°
             </div>
           </div>
-          <img
-            src={owmIcon(currentIcon, '4x')}
-            alt={data.weather[0].description}
-            style={{ width: 78, height: 78, opacity: 0.92, filter: 'drop-shadow(0 12px 30px rgba(120,160,220,0.18))', flexShrink: 0 }}
-          />
+          <WeatherIcon code={currentIcon} size={96} />
         </div>
 
         {/* Temperature block — margin-top: auto fills dead space above it */}
@@ -415,7 +448,7 @@ function Weather() {
                         <span className={`text-[10px] font-mono tracking-wide ${isNow ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
                           {isNow ? 'Now' : hour.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}
                         </span>
-                        <img src={owmIcon(hour.data.weather[0].icon)} alt={hour.data.weather[0].description} className="w-12 h-12 flex-shrink-0" />
+                        <WeatherIcon code={hour.data.weather[0].icon} size={48} />
                         <span className="text-[11px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{hour.data.weather[0].description}</span>
                         <span className="text-lg font-semibold text-gray-900 dark:text-white">{Math.round(hour.data.main.temp * 9 / 5 + 32)}°</span>
                         <span className="text-[10px] text-blue-500 dark:text-blue-400">
@@ -435,7 +468,7 @@ function Weather() {
                       <span className={`text-[10px] font-mono tracking-wide ${isToday ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
                         {isToday ? 'Today' : moment.unix(day.date).format('ddd')}
                       </span>
-                      <img src={owmIcon(day.weather.icon)} alt={day.weather.description} className="w-12 h-12 flex-shrink-0" />
+                      <WeatherIcon code={day.weather.icon} size={48} />
                       <span className="text-[11px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{day.weather.description}</span>
                       <span className="text-base font-semibold text-gray-900 dark:text-white">{Math.round(Math.max(...day.temps) * 9 / 5 + 32)}°</span>
                       <span className="text-[11px] text-gray-400 dark:text-gray-500">{Math.round(Math.min(...day.temps) * 9 / 5 + 32)}°</span>
