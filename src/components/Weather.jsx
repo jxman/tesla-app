@@ -20,7 +20,7 @@ function fmtHour(dt) {
 function toF(c) { return Math.round(c * 9 / 5 + 32); }
 
 function deriveWhatToExpect(data, forecastList) {
-  const next = (forecastList || []).slice(0, 4); // 4 × 3h = 12h
+  const next = (forecastList || []).slice(0, 4);
   if (!next.length) return { headline: 'Clear conditions', sub: `High ${toF(data.main.temp_max)}°, low ${toF(data.main.temp_min)}°.` };
 
   const currentPrecip = PRECIP_MAINS.has(data.weather[0].main);
@@ -103,11 +103,11 @@ function buildHourlyTemps(forecastList) {
 
 function StatTile({ label, value, unit }) {
   return (
-    <div className="flex flex-col gap-1 bg-gray-900/60 border border-gray-700/60 rounded-xl p-3">
-      <span className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">{label}</span>
-      <span className="text-lg font-semibold text-white leading-none">
+    <div className="flex flex-col gap-1 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl p-3">
+      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono tracking-widest uppercase">{label}</span>
+      <span className="text-lg font-semibold text-gray-900 dark:text-white leading-none">
         {value}
-        {unit && <span className="text-xs text-gray-500 font-normal ml-0.5">{unit}</span>}
+        {unit && <span className="text-xs text-gray-400 dark:text-gray-500 font-normal ml-0.5">{unit}</span>}
       </span>
     </div>
   );
@@ -115,14 +115,14 @@ function StatTile({ label, value, unit }) {
 
 function InsightCard({ label, headline, sub }) {
   return (
-    <div style={{ background: '#0f1218', border: '1px solid #232932', borderRadius: 14, padding: '14px 16px' }}>
-      <div style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8a93a0' }}>
+    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px' }}>
+      <div style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mute)' }}>
         {label}
       </div>
-      <div style={{ fontWeight: 700, fontSize: 18, marginTop: 8, lineHeight: 1.2, color: '#e8eaed' }}>
+      <div style={{ fontWeight: 700, fontSize: 18, marginTop: 8, lineHeight: 1.2, color: 'var(--text)' }}>
         {headline}
       </div>
-      <div style={{ fontSize: 13, color: '#8a93a0', marginTop: 6, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 13, color: 'var(--mute)', marginTop: 6, lineHeight: 1.4 }}>
         {sub}
       </div>
     </div>
@@ -140,13 +140,13 @@ function SparkCard({ pts, nowTemp, endTemp }) {
   const fillPath = `${linePath} L ${xs[xs.length - 1]} ${H} L ${xs[0]} ${H} Z`;
 
   return (
-    <div style={{ background: '#0f1218', border: '1px solid #232932', borderRadius: 14, padding: '16px 18px', marginTop: 14 }}>
+    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: '16px 18px', marginTop: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#8a93a0' }}>
+        <span style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mute)' }}>
           Temperature · next 12 hours
         </span>
-        <span style={{ fontSize: 12, color: '#8a93a0' }}>
-          <strong style={{ color: '#e8eaed' }}>{nowTemp}°</strong> now → <strong style={{ color: '#e8eaed' }}>{endTemp}°</strong> in 12 h
+        <span style={{ fontSize: 12, color: 'var(--mute)' }}>
+          <strong style={{ color: 'var(--text)' }}>{nowTemp}°</strong> now → <strong style={{ color: 'var(--text)' }}>{endTemp}°</strong> in 12 h
         </span>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: 'block', marginTop: 10 }}>
@@ -161,7 +161,7 @@ function SparkCard({ pts, nowTemp, endTemp }) {
         {xs.map((x, i) => i % 3 === 0 && (
           <g key={i}>
             <circle cx={x} cy={ys[i]} r="3" fill="#6db4ff" />
-            <text x={x} y={ys[i] - 8} fontSize="11" fontFamily="JetBrains Mono, monospace" fill="#8a93a0" textAnchor="middle">
+            <text x={x} y={ys[i] - 8} fontSize="11" fontFamily="JetBrains Mono, monospace" fill="var(--mute)" textAnchor="middle">
               {pts[i]}°
             </text>
           </g>
@@ -229,7 +229,7 @@ function Weather() {
   if (!data || Object.keys(data).length === 0) {
     return (
       <div className="text-center p-6">
-        <p className="text-xl mb-3 text-gray-300">No Weather Data</p>
+        <p className="text-xl mb-3 text-gray-500 dark:text-gray-300">No Weather Data</p>
         <p className="text-sm text-gray-400 mb-4">Please check your API key in the .env file</p>
         <button className="btn bg-blue-600 hover:bg-blue-700 border-blue-600 text-white" onClick={handleRefresh} disabled={isRefreshing}>
           {isRefreshing ? 'Loading…' : 'Retry'}
@@ -279,8 +279,8 @@ function Weather() {
       <div
         className="rounded-[18px] border flex flex-col overflow-auto"
         style={{
-          background: 'linear-gradient(180deg, #161b24 0%, #11151c 100%)',
-          borderColor: '#232932',
+          background: 'var(--hero-grad)',
+          borderColor: 'var(--line)',
           padding: 24,
           position: 'relative',
         }}
@@ -288,10 +288,10 @@ function Weather() {
         {/* Header row: date + condition-sub on left, OWM icon on right */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ font: '500 11px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#8a93a0' }}>
+            <div style={{ font: '500 11px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--mute)' }}>
               {moment().format('dddd · MMMM D')}
             </div>
-            <div style={{ marginTop: 6, fontSize: 14, color: '#8a93a0' }}>
+            <div style={{ marginTop: 6, fontSize: 14, color: 'var(--mute)' }}>
               {data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1)} · Feels {feelsF}°
             </div>
           </div>
@@ -306,17 +306,17 @@ function Weather() {
         <div style={{ marginTop: 'auto' }}>
           {/* Numeric */}
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-            <span style={{ fontWeight: 200, fontSize: 168, lineHeight: 0.85, letterSpacing: '-0.06em', color: '#e8eaed' }}>
+            <span style={{ fontWeight: 200, fontSize: 168, lineHeight: 0.85, letterSpacing: '-0.06em', color: 'var(--text)' }}>
               {tempF}
             </span>
-            <span style={{ fontSize: 30, color: '#8a93a0', marginTop: 18, marginLeft: 4, fontWeight: 400 }}>
+            <span style={{ fontSize: 30, color: 'var(--mute)', marginTop: 18, marginLeft: 4, fontWeight: 400 }}>
               °F
             </span>
           </div>
           {/* Condition + H/L */}
-          <div style={{ fontSize: 22, fontWeight: 500, color: '#e8eaed', letterSpacing: '-0.005em', marginTop: 4 }}>
+          <div style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.005em', marginTop: 4 }}>
             {data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1)}
-            <span style={{ color: '#8a93a0', marginLeft: 12, fontSize: 15, fontWeight: 400 }}>
+            <span style={{ color: 'var(--mute)', marginLeft: 12, fontSize: 15, fontWeight: 400 }}>
               H {highF}° · L {lowF}°
             </span>
           </div>
@@ -340,16 +340,16 @@ function Weather() {
       <div className="flex flex-col gap-4 min-h-0">
 
         {/* Conditions strip */}
-        <div className="bg-gray-800/40 border border-gray-700/60 rounded-2xl p-5 flex flex-col gap-4 flex-shrink-0">
+        <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-5 flex flex-col gap-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">Conditions</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono tracking-widest uppercase">Conditions</span>
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-40"
+              className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-40"
               title="Refresh"
             >
-              <FiRefreshCw className={`w-3.5 h-3.5 text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <FiRefreshCw className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -361,21 +361,21 @@ function Weather() {
         </div>
 
         {/* Forecast panel */}
-        <div className="bg-gray-800/40 border border-gray-700/60 rounded-2xl p-5 flex-1 flex flex-col gap-4 min-h-0 overflow-hidden">
+        <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-5 flex-1 flex flex-col gap-4 min-h-0 overflow-hidden">
           <div className="flex items-center justify-between flex-shrink-0">
-            <span className="text-[10px] text-gray-500 font-mono tracking-widest uppercase">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono tracking-widest uppercase">
               {showHourly ? '6-Hour Forecast' : '5-Day Forecast'}
             </span>
-            <div className="flex gap-1 bg-gray-700/50 rounded-lg p-1">
+            <div className="flex gap-1 bg-gray-200 dark:bg-gray-700/50 rounded-lg p-1">
               <button
                 onClick={() => setShowHourly(false)}
-                className={`px-3 py-1 text-xs rounded-md transition-all ${!showHourly ? 'bg-white text-gray-900 font-semibold' : 'text-gray-400 hover:text-white'}`}
+                className={`px-3 py-1 text-xs rounded-md transition-all ${!showHourly ? 'bg-white text-gray-900 font-semibold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
               >
                 Daily
               </button>
               <button
                 onClick={() => setShowHourly(true)}
-                className={`px-3 py-1 text-xs rounded-md transition-all ${showHourly ? 'bg-white text-gray-900 font-semibold' : 'text-gray-400 hover:text-white'}`}
+                className={`px-3 py-1 text-xs rounded-md transition-all ${showHourly ? 'bg-white text-gray-900 font-semibold' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
               >
                 Hourly
               </button>
@@ -411,14 +411,14 @@ function Weather() {
                   return hourlyData.map((hour, i) => {
                     const isNow = i === 0;
                     return (
-                      <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl p-3 border gap-1 w-[100px] ${isNow ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-900/50 border-gray-700/50'}`}>
-                        <span className={`text-[10px] font-mono tracking-wide ${isNow ? 'text-blue-300' : 'text-gray-500'}`}>
+                      <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl p-3 border gap-1 w-[100px] ${isNow ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-200/60 dark:bg-gray-900/50 border-gray-300 dark:border-gray-700/50'}`}>
+                        <span className={`text-[10px] font-mono tracking-wide ${isNow ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
                           {isNow ? 'Now' : hour.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}
                         </span>
                         <img src={owmIcon(hour.data.weather[0].icon)} alt={hour.data.weather[0].description} className="w-12 h-12 flex-shrink-0" />
-                        <span className="text-[11px] text-gray-400 capitalize text-center leading-tight line-clamp-2">{hour.data.weather[0].description}</span>
-                        <span className="text-lg font-semibold text-white">{Math.round(hour.data.main.temp * 9 / 5 + 32)}°</span>
-                        <span className="text-[10px] text-blue-400">
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{hour.data.weather[0].description}</span>
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">{Math.round(hour.data.main.temp * 9 / 5 + 32)}°</span>
+                        <span className="text-[10px] text-blue-500 dark:text-blue-400">
                           {hour.data.pop > 0.1 ? `${Math.round(hour.data.pop * 100)}%` : ' '}
                         </span>
                       </div>
@@ -431,14 +431,14 @@ function Weather() {
                 {dailyForecast.map((day, i) => {
                   const isToday = i === 0;
                   return (
-                    <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl p-3 border gap-1 w-[100px] ${isToday ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-900/50 border-gray-700/50'}`}>
-                      <span className={`text-[10px] font-mono tracking-wide ${isToday ? 'text-blue-300' : 'text-gray-500'}`}>
+                    <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl p-3 border gap-1 w-[100px] ${isToday ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-200/60 dark:bg-gray-900/50 border-gray-300 dark:border-gray-700/50'}`}>
+                      <span className={`text-[10px] font-mono tracking-wide ${isToday ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
                         {isToday ? 'Today' : moment.unix(day.date).format('ddd')}
                       </span>
                       <img src={owmIcon(day.weather.icon)} alt={day.weather.description} className="w-12 h-12 flex-shrink-0" />
-                      <span className="text-[11px] text-gray-400 capitalize text-center leading-tight line-clamp-2">{day.weather.description}</span>
-                      <span className="text-base font-semibold text-white">{Math.round(Math.max(...day.temps) * 9 / 5 + 32)}°</span>
-                      <span className="text-[11px] text-gray-500">{Math.round(Math.min(...day.temps) * 9 / 5 + 32)}°</span>
+                      <span className="text-[11px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{day.weather.description}</span>
+                      <span className="text-base font-semibold text-gray-900 dark:text-white">{Math.round(Math.max(...day.temps) * 9 / 5 + 32)}°</span>
+                      <span className="text-[11px] text-gray-400 dark:text-gray-500">{Math.round(Math.min(...day.temps) * 9 / 5 + 32)}°</span>
                     </div>
                   );
                 })}

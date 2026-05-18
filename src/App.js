@@ -5,6 +5,7 @@ import News from "./components/News";
 import Places from "./components/Places";
 import LocationSelector from "./components/LocationSelector";
 import { TeslaAppProvider } from "./context/TeslaAppContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { FiCloud, FiNavigation, FiRss, FiMapPin } from "react-icons/fi";
 
 function App() {
@@ -20,42 +21,44 @@ function App() {
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || Weather;
 
   return (
-    <TeslaAppProvider>
-      <div className="min-h-screen bg-gray-900 text-white p-4">
-        <LocationSelector />
-        
-        {/* Tab Navigation - Enhanced spacing */}
-        <div className="bg-gray-800 border border-gray-700 mb-4 p-3 rounded-xl">
-          <div className="flex space-x-3">
-            {tabs.map((tab) => {
-              const IconComponent = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 h-14 px-6 gap-3 flex items-center justify-center transition-all duration-200 rounded-xl ${
-                    activeTab === tab.id
-                      ? 'bg-white text-gray-900 shadow-lg font-semibold'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
-                  }`}
-                  tabIndex="0"
-                >
-                  <IconComponent className="w-5 h-5" />
-                  <span className="font-medium text-sm">{tab.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+    <ThemeProvider>
+      <TeslaAppProvider>
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-4">
+          <LocationSelector />
 
-        {/* Active Tab Content - Enhanced with DaisyUI 5.0 */}
-        <div className="card card-xl card-border shadow-xl bg-gray-800 border border-gray-700 h-[calc(100vh-200px)]">
-          <div className="card-body p-6 h-full overflow-hidden">
-            <ActiveComponent />
+          {/* Tab Navigation */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-4 p-3 rounded-xl">
+            <div className="flex space-x-3">
+              {tabs.map((tab) => {
+                const IconComponent = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-1 h-14 px-6 gap-3 flex items-center justify-center transition-all duration-200 rounded-xl ${
+                      activeTab === tab.id
+                        ? 'bg-white dark:bg-white text-gray-900 shadow-lg font-semibold'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                    }`}
+                    tabIndex="0"
+                  >
+                    <IconComponent className="w-5 h-5" />
+                    <span className="font-medium text-sm">{tab.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Active Tab Content */}
+          <div className="card card-xl card-border shadow-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 h-[calc(100vh-200px)]">
+            <div className="card-body p-6 h-full overflow-hidden">
+              <ActiveComponent />
+            </div>
           </div>
         </div>
-      </div>
-    </TeslaAppProvider>
+      </TeslaAppProvider>
+    </ThemeProvider>
   );
 }
 export default App;

@@ -8,24 +8,24 @@ import TeslaAppContext from "../context/TeslaAppContext";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
-  ink:         "#0e1014",
-  card:        "#14181f",
-  line:        "#232932",
-  text:        "#e8eaed",
-  mute:        "#8a93a0",
-  dim:         "#5e6772",
-  arrowBlue:   "#6db4ff",
-  pillBg:      "rgba(20,24,31,0.85)",
-  pillLine:    "rgba(255,255,255,0.1)",
+  ink:         "var(--ink)",
+  card:        "var(--card)",
+  line:        "var(--line)",
+  text:        "var(--text)",
+  mute:        "var(--mute)",
+  dim:         "var(--dim)",
+  arrowBlue:   "var(--arrowBlue)",
+  pillBg:      "var(--pillBg)",
+  pillLine:    "var(--pillLine)",
   openBg:      "rgba(34,197,94,0.18)",
   openFg:      "#6dd49a",
   openLine:    "rgba(34,197,94,0.35)",
   closedBg:    "rgba(239,68,68,0.18)",
   closedFg:    "#fda4a4",
   closedLine:  "rgba(239,68,68,0.4)",
-  chipBg:      "rgba(77,124,255,0.12)",
-  chipFg:      "#93b4ff",
-  chipLine:    "rgba(77,124,255,0.25)",
+  chipBg:      "var(--chipBg)",
+  chipFg:      "var(--chipFg)",
+  chipLine:    "var(--chipLine)",
   warnBg:      "rgba(245,158,11,0.15)",
   warnFg:      "#fbbf24",
   warnLine:    "rgba(245,158,11,0.3)",
@@ -458,9 +458,9 @@ function CardBody({ place, featured }) {
         {/* Navigate affordance — decorative; tap handled by card wrapper */}
         <div aria-hidden style={{
           width: 36, height: 36, flexShrink: 0,
-          background: "#ffffff", borderRadius: 10,
+          background: "var(--text)", borderRadius: 10,
           display: "grid", placeItems: "center",
-          color: C.ink, pointerEvents: "none",
+          color: "var(--ink)", pointerEvents: "none",
         }}>
           <FiNavigation size={15} />
         </div>
@@ -515,7 +515,7 @@ function PlaceCard({ place, featured, onNavigate }) {
 
 function SkeletonCard({ featured }) {
   const shimmer = {
-    background: `linear-gradient(90deg, ${C.card} 25%, #1e2530 50%, ${C.card} 75%)`,
+    background: `linear-gradient(90deg, var(--card) 25%, var(--shimmer-peak) 50%, var(--card) 75%)`,
     backgroundSize: "200% 100%",
     animation: "places-shimmer 1.5s infinite",
   };
@@ -606,9 +606,9 @@ export default function Places() {
                   flex: 1, height: 64,
                   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5,
                   borderRadius: 14, fontSize: 13, fontWeight: 600,
-                  background: active ? "#ffffff" : "#1a1f28",
-                  color:      active ? C.ink    : C.mute,
-                  border:     `1px solid ${active ? "#ffffff" : C.line}`,
+                  background: active ? "var(--text)" : "var(--cat-inactive)",
+                  color:      active ? "var(--ink)"  : C.mute,
+                  border:     `1px solid ${active ? "var(--line)" : C.line}`,
                   cursor: "pointer", transition: "all 0.15s",
                   WebkitTapHighlightColor: "transparent",
                 }}
@@ -625,7 +625,7 @@ export default function Places() {
             style={{
               width: 64, height: 64, flexShrink: 0,
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: "#1a1f28", border: `1px solid ${C.line}`,
+              background: "var(--cat-inactive)", border: `1px solid ${C.line}`,
               borderRadius: 14, cursor: loading ? "default" : "pointer",
               opacity: loading ? 0.4 : 1, transition: "opacity 0.15s",
             }}
@@ -647,7 +647,7 @@ export default function Places() {
               <p style={{ color: C.mute, fontSize: 13, marginBottom: 16 }}>{error}</p>
               <button
                 onClick={handleRefresh}
-                style={{ padding: "10px 24px", background: "#fff", color: C.ink, fontWeight: 600, borderRadius: 12, cursor: "pointer" }}
+                style={{ padding: "10px 24px", background: "var(--text)", color: "var(--ink)", fontWeight: 600, borderRadius: 12, cursor: "pointer" }}
               >
                 Try Again
               </button>

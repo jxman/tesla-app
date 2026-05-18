@@ -2,26 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Custom scrollbar for Tesla theme */
+/* ── Theme tokens ─────────────────────────────────────────────────────────── */
+:root {
+  /* Light mode */
+  --ink:          #f0f4f8;
+  --card:         #ffffff;
+  --surface-deep: #f8fafc;
+  --line:         #e2e8f0;
+  --text:         #0e1014;
+  --mute:         #64748b;
+  --dim:          #94a3b8;
+  --arrowBlue:    #2563eb;
+  --pillBg:       rgba(255,255,255,0.92);
+  --pillLine:     rgba(0,0,0,0.12);
+  --chipBg:       rgba(37,99,235,0.1);
+  --chipFg:       #1d4ed8;
+  --chipLine:     rgba(37,99,235,0.25);
+  --hero-grad:    linear-gradient(180deg, #f8fafc 0%, #f0f4f8 100%);
+  --cat-inactive: #f1f5f9;
+  --shimmer-peak: #e2e8f0;
+}
+
+.dark {
+  --ink:          #0e1014;
+  --card:         #14181f;
+  --surface-deep: #0f1218;
+  --line:         #232932;
+  --text:         #e8eaed;
+  --mute:         #8a93a0;
+  --dim:          #5e6772;
+  --arrowBlue:    #6db4ff;
+  --pillBg:       rgba(20,24,31,0.85);
+  --pillLine:     rgba(255,255,255,0.1);
+  --chipBg:       rgba(77,124,255,0.12);
+  --chipFg:       #93b4ff;
+  --chipLine:     rgba(77,124,255,0.25);
+  --hero-grad:    linear-gradient(180deg, #161b24 0%, #11151c 100%);
+  --cat-inactive: #1a1f28;
+  --shimmer-peak: #1e2530;
+}
+
+/* ── Custom scrollbar ─────────────────────────────────────────────────────── */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: rgb(55, 65, 81); /* gray-700 */
+  background: var(--surface-deep);
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: rgb(75, 85, 99); /* gray-600 */
+  background: var(--line);
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgb(107, 114, 128); /* gray-500 */
+  background: var(--mute);
 }
 
-/* Line clamp utilities for text truncation */
+/* ── Line clamp utilities ─────────────────────────────────────────────────── */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

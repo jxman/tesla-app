@@ -10,7 +10,7 @@ function Traffic() {
       <div className="h-full flex items-center justify-center">
         <div className="text-center p-8">
           <FiMapPin className="w-10 h-10 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">Location Required</h3>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Location Required</h3>
           <p className="text-sm text-gray-500 mb-4">
             Allow location access or enter a zip code to view traffic
           </p>
