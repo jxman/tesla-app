@@ -404,18 +404,23 @@ function BrandPanel({ place, featured }) {
       overflow: "hidden",
     }}>
       {logoUrl && !logoFailed ? (
-        <img
-          src={logoUrl}
-          alt={place.name}
-          onError={() => setLogoFail(true)}
-          style={{
-            maxHeight: featured ? 80 : 46,
-            maxWidth: "60%",
-            objectFit: "contain",
-            filter: "brightness(0) invert(1)",
-            opacity: 0.85,
-          }}
-        />
+        <div style={{
+          background: "white",
+          borderRadius: 10,
+          padding: featured ? "8px 14px" : "5px 10px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <img
+            src={logoUrl}
+            alt={place.name}
+            onError={() => setLogoFail(true)}
+            style={{
+              maxHeight: featured ? 72 : 40,
+              maxWidth: "80%",
+              objectFit: "contain",
+            }}
+          />
+        </div>
       ) : (
         <span style={{
           fontSize: featured ? 52 : 30, fontWeight: 700,

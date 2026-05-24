@@ -194,6 +194,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - **opening_hours.js** parses `opening_hours` OSM tag — renders open/closed pill only when tag exists and parses cleanly
 - **Place normalizer**: strips unnamed POIs, `disused:*`/`abandoned:*`/`fixme=*` entries, confirmed-closed places; sorts ascending by distance; caps at 5
 - **2×3 grid layout**: first card spans 2 rows (featured); brand panel with hash-derived gradient + 2-letter monogram (swaps to Wikidata logo when available); open/closed pill top-left, distance+ETA pill top-right; attribute chips (`yes`/`designated` → accent, `limited` → amber, `no` → omit)
+- **Brand logo rendering**: Wikidata logos render inside a white rounded tile (no CSS filter) — this handles both transparent-background SVGs and opaque-background JPEGs (e.g. Dunkin') correctly; monogram fallback used when no `brand:wikidata` tag exists in OSM or Wikidata has no P154 claim
 - **Whole card is the tap target** — opens Google Maps at place coordinates; navigate arrow in body row is decorative only
 - `© OpenStreetMap contributors · ODbL` attribution required and rendered
 
