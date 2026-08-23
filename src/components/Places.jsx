@@ -204,7 +204,16 @@ function normalizePlace(el, userLat, userLon) {
 }
 
 // ─── Overpass fetcher ─────────────────────────────────────────────────────────
-const OVERPASS_URL  = "https://overpass-api.de/api/interpreter";
+// The public overpass-api.de cluster rate-limits/errors under load, and its
+// error responses often omit CORS headers — the browser then reports a plain
+// "Failed to fetch" with no way to distinguish it from a real network outage.
+// Fall back across sibling nodes in the same cluster before giving up.
+const OVERPASS_URLS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://z.overpass-api.de/api/interpreter",
+  "https://lz4.overpass-api.de/api/interpreter",
+];
+const OVERPASS_TIMEOUT_MS = 12000;
 const CACHE_TTL_MS  = 10 * 60 * 1000; // 10 min
 const MAX_RESULTS   = 5;               // 1 featured + 4 regular
 
@@ -219,16 +228,38 @@ function getCacheKey(lat, lon, categoryId) {
   return `${lat.toFixed(4)},${lon.toFixed(4)},${categoryId}`;
 }
 
+async function queryOverpassUrl(url, query) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
+  try {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: controller.signal,
+    });
+    if (!resp.ok) throw new Error(`Overpass HTTP ${resp.status}`);
+    return resp.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 async function fetchFromOverpass(lat, lon, categoryId) {
   const cat   = CATEGORIES.find((c) => c.id === categoryId);
   const query = buildOverpassQuery(lat, lon, cat.filters, cat.radius);
-  const resp  = await fetch(OVERPASS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `data=${encodeURIComponent(query)}`,
-  });
-  if (!resp.ok) throw new Error(`Overpass HTTP ${resp.status}`);
-  const json = await resp.json();
+
+  let json, lastErr;
+  for (const url of OVERPASS_URLS) {
+    try {
+      json = await queryOverpassUrl(url, query);
+      lastErr = null;
+      break;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  if (lastErr) throw new Error("Map data service is temporarily unavailable. Please try again.");
 
   return (json.elements || [])
     .map((el) => normalizePlace(el, lat, lon))
