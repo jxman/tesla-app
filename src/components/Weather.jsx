@@ -140,11 +140,11 @@ function buildHourlyTemps(forecastList) {
 
 function StatTile({ label, value, unit }) {
   return (
-    <div className="flex flex-col gap-1 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl p-3">
-      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono tracking-widest uppercase">{label}</span>
-      <span className="text-lg font-semibold text-gray-900 dark:text-white leading-none">
+    <div className="flex flex-col gap-1 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl overflow-hidden" style={{ padding: 'clamp(6px, 1.4vh, 12px)' }}>
+      <span className="text-gray-400 dark:text-gray-500 font-mono tracking-wide uppercase whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(8px, 1.3vh, 10px)' }}>{label}</span>
+      <span className="font-semibold text-gray-900 dark:text-white leading-none whitespace-nowrap" style={{ fontSize: 'clamp(12px, 2.4vh, 18px)' }}>
         {value}
-        {unit && <span className="text-xs text-gray-400 dark:text-gray-500 font-normal ml-0.5">{unit}</span>}
+        {unit && <span className="text-gray-400 dark:text-gray-500 font-normal ml-0.5" style={{ fontSize: 'clamp(9px, 1.6vh, 12px)' }}>{unit}</span>}
       </span>
     </div>
   );
@@ -152,14 +152,14 @@ function StatTile({ label, value, unit }) {
 
 function InsightCard({ label, headline, sub }) {
   return (
-    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: 'clamp(8px, 1.8vh, 14px) clamp(10px, 2vh, 16px)' }}>
+    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: 'clamp(6px, 1.4vh, 14px) clamp(8px, 1.8vh, 16px)', overflow: 'hidden' }}>
       <div style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mute)' }}>
         {label}
       </div>
-      <div style={{ fontWeight: 700, fontSize: 'clamp(13px, 2.2vh, 18px)', marginTop: 'clamp(4px, 1vh, 8px)', lineHeight: 1.2, color: 'var(--text)' }}>
+      <div style={{ fontWeight: 700, fontSize: 'clamp(12px, 2vh, 18px)', marginTop: 'clamp(3px, 0.8vh, 8px)', lineHeight: 1.2, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
         {headline}
       </div>
-      <div style={{ fontSize: 'clamp(10px, 1.8vh, 13px)', color: 'var(--mute)', marginTop: 'clamp(3px, 0.8vh, 6px)', lineHeight: 1.4 }}>
+      <div style={{ fontSize: 'clamp(9px, 1.5vh, 13px)', color: 'var(--mute)', marginTop: 'clamp(2px, 0.6vh, 6px)', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
         {sub}
       </div>
     </div>
@@ -177,16 +177,16 @@ function SparkCard({ pts, nowTemp, endTemp }) {
   const fillPath = `${linePath} L ${xs[xs.length - 1]} ${H} L ${xs[0]} ${H} Z`;
 
   return (
-    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: 'clamp(10px, 2vh, 16px) clamp(12px, 2.2vh, 18px)', marginTop: 'clamp(8px, 1.8vh, 14px)' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mute)' }}>
-          Temperature · next 12 hours
+    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: 'clamp(8px, 1.6vh, 16px) clamp(10px, 1.8vh, 18px)', marginTop: 'clamp(6px, 1.4vh, 14px)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+        <span style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mute)', whiteSpace: 'nowrap' }}>
+          Next 12 hours
         </span>
-        <span style={{ fontSize: 12, color: 'var(--mute)' }}>
+        <span style={{ fontSize: 'clamp(10px, 1.6vh, 12px)', color: 'var(--mute)', whiteSpace: 'nowrap' }}>
           <strong style={{ color: 'var(--text)' }}>{nowTemp}°</strong> now → <strong style={{ color: 'var(--text)' }}>{endTemp}°</strong> in 12 h
         </span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: 'block', marginTop: 10, maxHeight: 'clamp(40px, 9vh, 80px)' }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: 'block', marginTop: 'clamp(4px, 1vh, 10px)', maxHeight: 'clamp(28px, 6.5vh, 80px)' }}>
         <defs>
           <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#4d7cff" stopOpacity="0.45" />
@@ -318,7 +318,7 @@ function Weather() {
         style={{
           background: 'var(--hero-grad)',
           borderColor: 'var(--line)',
-          padding: 'clamp(12px, 3vh, 24px)',
+          padding: 'clamp(10px, 2.4vh, 24px)',
           position: 'relative',
         }}
       >
@@ -332,22 +332,22 @@ function Weather() {
               {data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1)} · Feels {feelsF}°
             </div>
           </div>
-          <WeatherIcon code={currentIcon} size={64} />
+          <WeatherIcon code={currentIcon} size={52} />
         </div>
 
         {/* Temperature block — margin-top: auto fills dead space above it */}
         <div style={{ marginTop: 'auto' }}>
           {/* Numeric */}
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-            <span style={{ fontWeight: 200, fontSize: 'clamp(56px, 16vh, 168px)', lineHeight: 0.85, letterSpacing: '-0.06em', color: 'var(--text)' }}>
+            <span style={{ fontWeight: 200, fontSize: 'clamp(44px, 12.5vh, 168px)', lineHeight: 0.85, letterSpacing: '-0.06em', color: 'var(--text)' }}>
               {tempF}
             </span>
-            <span style={{ fontSize: 'clamp(16px, 3vh, 30px)', color: 'var(--mute)', marginTop: 'clamp(8px, 2vh, 18px)', marginLeft: 4, fontWeight: 400 }}>
+            <span style={{ fontSize: 'clamp(14px, 2.4vh, 30px)', color: 'var(--mute)', marginTop: 'clamp(6px, 1.6vh, 18px)', marginLeft: 4, fontWeight: 400 }}>
               °F
             </span>
           </div>
           {/* Condition + H/L */}
-          <div style={{ fontSize: 'clamp(14px, 2.6vh, 22px)', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.005em', marginTop: 4 }}>
+          <div style={{ fontSize: 'clamp(13px, 2.2vh, 22px)', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.005em', marginTop: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1)}
             <span style={{ color: 'var(--mute)', marginLeft: 12, fontSize: 'clamp(11px, 1.8vh, 15px)', fontWeight: 400 }}>
               H {highF}° · L {lowF}°
@@ -357,7 +357,7 @@ function Weather() {
 
         {/* ── Insight row ── */}
         {whatToExpect && driving && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(8px, 1.5vh, 14px)', marginTop: 'clamp(8px, 2vh, 16px)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(6px, 1.2vh, 14px)', marginTop: 'clamp(6px, 1.4vh, 16px)' }}>
             <InsightCard label="What to expect" headline={whatToExpect.headline} sub={whatToExpect.sub} />
             <InsightCard label="Driving" headline={driving.headline} sub={driving.sub} />
           </div>
@@ -370,10 +370,10 @@ function Weather() {
       </div>
 
       {/* ── RIGHT: Conditions + Forecast stacked ── */}
-      <div className="flex flex-col gap-4 min-h-0 min-w-0">
+      <div className="flex flex-col min-h-0 min-w-0" style={{ gap: 'clamp(8px, 1.6vh, 16px)' }}>
 
         {/* Conditions strip */}
-        <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-5 flex flex-col gap-4 flex-shrink-0">
+        <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl flex flex-col flex-shrink-0" style={{ padding: 'clamp(10px, 2vh, 20px)', gap: 'clamp(6px, 1.4vh, 16px)' }}>
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono tracking-widest uppercase">Conditions</span>
             <button
@@ -385,7 +385,7 @@ function Weather() {
               <FiRefreshCw className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <StatTile label="Wind" value={windMph} unit=" mph" />
             <StatTile label="Humidity" value={`${data.main.humidity}`} unit="%" />
             <StatTile label="Sunrise" value={sunriseTime} />
@@ -394,7 +394,7 @@ function Weather() {
         </div>
 
         {/* Forecast panel */}
-        <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-5 flex-1 flex flex-col gap-4 min-h-0 overflow-hidden">
+        <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl flex-1 flex flex-col min-h-0 overflow-hidden" style={{ padding: 'clamp(10px, 2vh, 20px)', gap: 'clamp(6px, 1.4vh, 16px)' }}>
           <div className="flex items-center justify-between flex-shrink-0">
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono tracking-widest uppercase">
               {showHourly ? '6-Hour Forecast' : '5-Day Forecast'}
@@ -428,7 +428,7 @@ function Weather() {
             onTouchEnd={handleTouchEnd}
           >
             {showHourly ? (
-              <div className="flex gap-2 h-full pb-1">
+              <div className="flex gap-1.5 h-full pb-1">
                 {(() => {
                   const now = new Date();
                   const hourlyData = [];
@@ -444,14 +444,14 @@ function Weather() {
                   return hourlyData.map((hour, i) => {
                     const isNow = i === 0;
                     return (
-                      <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl p-3 border gap-1 w-[100px] ${isNow ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-200/60 dark:bg-gray-900/50 border-gray-300 dark:border-gray-700/50'}`}>
-                        <span className={`text-[10px] font-mono tracking-wide ${isNow ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
+                      <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl border gap-1 w-[78px] ${isNow ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-200/60 dark:bg-gray-900/50 border-gray-300 dark:border-gray-700/50'}`} style={{ padding: 'clamp(6px, 1.4vh, 12px) 6px' }}>
+                        <span className={`text-[9px] font-mono tracking-wide whitespace-nowrap ${isNow ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
                           {isNow ? 'Now' : hour.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}
                         </span>
-                        <WeatherIcon code={hour.data.weather[0].icon} size={48} />
-                        <span className="text-[11px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{hour.data.weather[0].description}</span>
-                        <span className="text-lg font-semibold text-gray-900 dark:text-white">{Math.round(hour.data.main.temp * 9 / 5 + 32)}°</span>
-                        <span className="text-[10px] text-blue-500 dark:text-blue-400">
+                        <WeatherIcon code={hour.data.weather[0].icon} size={32} />
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{hour.data.weather[0].description}</span>
+                        <span className="font-semibold text-gray-900 dark:text-white" style={{ fontSize: 'clamp(13px, 2.2vh, 18px)' }}>{Math.round(hour.data.main.temp * 9 / 5 + 32)}°</span>
+                        <span className="text-[9px] text-blue-500 dark:text-blue-400">
                           {hour.data.pop > 0.1 ? `${Math.round(hour.data.pop * 100)}%` : ' '}
                         </span>
                       </div>
@@ -460,18 +460,18 @@ function Weather() {
                 })()}
               </div>
             ) : (
-              <div className="flex gap-2 h-full pb-1">
+              <div className="flex gap-1.5 h-full pb-1">
                 {dailyForecast.map((day, i) => {
                   const isToday = i === 0;
                   return (
-                    <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl p-3 border gap-1 w-[100px] ${isToday ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-200/60 dark:bg-gray-900/50 border-gray-300 dark:border-gray-700/50'}`}>
-                      <span className={`text-[10px] font-mono tracking-wide ${isToday ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
+                    <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl border gap-1 w-[78px] ${isToday ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-200/60 dark:bg-gray-900/50 border-gray-300 dark:border-gray-700/50'}`} style={{ padding: 'clamp(6px, 1.4vh, 12px) 6px' }}>
+                      <span className={`text-[9px] font-mono tracking-wide whitespace-nowrap ${isToday ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
                         {isToday ? 'Today' : moment.unix(day.date).format('ddd')}
                       </span>
-                      <WeatherIcon code={day.weather.icon} size={48} />
-                      <span className="text-[11px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{day.weather.description}</span>
-                      <span className="text-base font-semibold text-gray-900 dark:text-white">{Math.round(Math.max(...day.temps) * 9 / 5 + 32)}°</span>
-                      <span className="text-[11px] text-gray-400 dark:text-gray-500">{Math.round(Math.min(...day.temps) * 9 / 5 + 32)}°</span>
+                      <WeatherIcon code={day.weather.icon} size={32} />
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{day.weather.description}</span>
+                      <span className="font-semibold text-gray-900 dark:text-white" style={{ fontSize: 'clamp(12px, 2vh, 16px)' }}>{Math.round(Math.max(...day.temps) * 9 / 5 + 32)}°</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500">{Math.round(Math.min(...day.temps) * 9 / 5 + 32)}°</span>
                     </div>
                   );
                 })}
