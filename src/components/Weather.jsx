@@ -152,14 +152,14 @@ function StatTile({ label, value, unit }) {
 
 function InsightCard({ label, headline, sub }) {
   return (
-    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: '14px 16px' }}>
+    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: 'clamp(8px, 1.8vh, 14px) clamp(10px, 2vh, 16px)' }}>
       <div style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mute)' }}>
         {label}
       </div>
-      <div style={{ fontWeight: 700, fontSize: 18, marginTop: 8, lineHeight: 1.2, color: 'var(--text)' }}>
+      <div style={{ fontWeight: 700, fontSize: 'clamp(13px, 2.2vh, 18px)', marginTop: 'clamp(4px, 1vh, 8px)', lineHeight: 1.2, color: 'var(--text)' }}>
         {headline}
       </div>
-      <div style={{ fontSize: 13, color: 'var(--mute)', marginTop: 6, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 'clamp(10px, 1.8vh, 13px)', color: 'var(--mute)', marginTop: 'clamp(3px, 0.8vh, 6px)', lineHeight: 1.4 }}>
         {sub}
       </div>
     </div>
@@ -177,7 +177,7 @@ function SparkCard({ pts, nowTemp, endTemp }) {
   const fillPath = `${linePath} L ${xs[xs.length - 1]} ${H} L ${xs[0]} ${H} Z`;
 
   return (
-    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: '16px 18px', marginTop: 14 }}>
+    <div style={{ background: 'var(--surface-deep)', border: '1px solid var(--line)', borderRadius: 14, padding: 'clamp(10px, 2vh, 16px) clamp(12px, 2.2vh, 18px)', marginTop: 'clamp(8px, 1.8vh, 14px)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mute)' }}>
           Temperature · next 12 hours
@@ -186,7 +186,7 @@ function SparkCard({ pts, nowTemp, endTemp }) {
           <strong style={{ color: 'var(--text)' }}>{nowTemp}°</strong> now → <strong style={{ color: 'var(--text)' }}>{endTemp}°</strong> in 12 h
         </span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: 'block', marginTop: 10 }}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={H} preserveAspectRatio="none" style={{ display: 'block', marginTop: 10, maxHeight: 'clamp(40px, 9vh, 80px)' }}>
         <defs>
           <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0%" stopColor="#4d7cff" stopOpacity="0.45" />
@@ -310,15 +310,15 @@ function Weather() {
   const endTemp = hourlyTemps[hourlyTemps.length - 1] ?? tempF;
 
   return (
-    <div className="h-full grid gap-4 min-h-0" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
+    <div className="h-full grid min-h-0" style={{ gridTemplateColumns: '1.4fr 1fr', gap: 'clamp(8px, 2vh, 16px)' }}>
 
       {/* ── LEFT: Hero card ── */}
       <div
-        className="rounded-[18px] border flex flex-col overflow-auto"
+        className="rounded-[18px] border flex flex-col overflow-auto min-w-0"
         style={{
           background: 'var(--hero-grad)',
           borderColor: 'var(--line)',
-          padding: 24,
+          padding: 'clamp(12px, 3vh, 24px)',
           position: 'relative',
         }}
       >
@@ -332,24 +332,24 @@ function Weather() {
               {data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1)} · Feels {feelsF}°
             </div>
           </div>
-          <WeatherIcon code={currentIcon} size={96} />
+          <WeatherIcon code={currentIcon} size={64} />
         </div>
 
         {/* Temperature block — margin-top: auto fills dead space above it */}
         <div style={{ marginTop: 'auto' }}>
           {/* Numeric */}
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-            <span style={{ fontWeight: 200, fontSize: 168, lineHeight: 0.85, letterSpacing: '-0.06em', color: 'var(--text)' }}>
+            <span style={{ fontWeight: 200, fontSize: 'clamp(56px, 16vh, 168px)', lineHeight: 0.85, letterSpacing: '-0.06em', color: 'var(--text)' }}>
               {tempF}
             </span>
-            <span style={{ fontSize: 30, color: 'var(--mute)', marginTop: 18, marginLeft: 4, fontWeight: 400 }}>
+            <span style={{ fontSize: 'clamp(16px, 3vh, 30px)', color: 'var(--mute)', marginTop: 'clamp(8px, 2vh, 18px)', marginLeft: 4, fontWeight: 400 }}>
               °F
             </span>
           </div>
           {/* Condition + H/L */}
-          <div style={{ fontSize: 22, fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.005em', marginTop: 4 }}>
+          <div style={{ fontSize: 'clamp(14px, 2.6vh, 22px)', fontWeight: 500, color: 'var(--text)', letterSpacing: '-0.005em', marginTop: 4 }}>
             {data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1)}
-            <span style={{ color: 'var(--mute)', marginLeft: 12, fontSize: 15, fontWeight: 400 }}>
+            <span style={{ color: 'var(--mute)', marginLeft: 12, fontSize: 'clamp(11px, 1.8vh, 15px)', fontWeight: 400 }}>
               H {highF}° · L {lowF}°
             </span>
           </div>
@@ -357,7 +357,7 @@ function Weather() {
 
         {/* ── Insight row ── */}
         {whatToExpect && driving && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(8px, 1.5vh, 14px)', marginTop: 'clamp(8px, 2vh, 16px)' }}>
             <InsightCard label="What to expect" headline={whatToExpect.headline} sub={whatToExpect.sub} />
             <InsightCard label="Driving" headline={driving.headline} sub={driving.sub} />
           </div>
@@ -370,7 +370,7 @@ function Weather() {
       </div>
 
       {/* ── RIGHT: Conditions + Forecast stacked ── */}
-      <div className="flex flex-col gap-4 min-h-0">
+      <div className="flex flex-col gap-4 min-h-0 min-w-0">
 
         {/* Conditions strip */}
         <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl p-5 flex flex-col gap-4 flex-shrink-0">

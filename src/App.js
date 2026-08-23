@@ -23,11 +23,13 @@ function App() {
   return (
     <ThemeProvider>
       <TeslaAppProvider>
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-4">
-          <LocationSelector />
+        <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-4 overflow-hidden">
+          <div className="flex-shrink-0">
+            <LocationSelector />
+          </div>
 
           {/* Tab Navigation */}
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-4 p-3 rounded-xl">
+          <div className="flex-shrink-0 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 mb-4 p-3 rounded-xl">
             <div className="flex space-x-3">
               {tabs.map((tab) => {
                 const IconComponent = tab.icon;
@@ -51,7 +53,7 @@ function App() {
           </div>
 
           {/* Active Tab Content */}
-          <div className="card card-xl card-border shadow-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 h-[calc(100vh-200px)]">
+          <div className="card card-xl card-border shadow-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex-1 min-h-0">
             <div className="card-body p-6 h-full overflow-hidden">
               <ActiveComponent />
             </div>
