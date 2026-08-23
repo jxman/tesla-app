@@ -1,4 +1,4 @@
-import { useContext, useState, useRef, useMemo } from "react";
+import { useContext, useState, useMemo } from "react";
 import moment from "moment";
 import { FiRefreshCw } from "react-icons/fi";
 import {
@@ -48,59 +48,7 @@ const PRECIP_MAINS = new Set(['Rain', 'Drizzle', 'Thunderstorm', 'Snow']);
 
 // ── Insight selectors ──────────────────────────────────────────────────────
 
-function fmtHour(dt) {
-  const d = new Date(dt * 1000);
-  const h = d.getHours();
-  return `${h > 12 ? h - 12 : h || 12} ${h >= 12 ? 'PM' : 'AM'}`;
-}
-
 function toF(c) { return Math.round(c * 9 / 5 + 32); }
-
-function deriveWhatToExpect(data, forecastList) {
-  const next = (forecastList || []).slice(0, 4);
-  if (!next.length) return { headline: 'Clear conditions', sub: `High ${toF(data.main.temp_max)}°, low ${toF(data.main.temp_min)}°.` };
-
-  const currentPrecip = PRECIP_MAINS.has(data.weather[0].main);
-  const nightLow = toF(Math.min(...next.map(f => f.main.temp)));
-
-  if (currentPrecip) {
-    const clearIdx = next.findIndex(f => !PRECIP_MAINS.has(f.weather[0].main));
-    if (clearIdx > 0) {
-      return {
-        headline: `Rain easing by ${fmtHour(next[clearIdx].dt)}`,
-        sub: `Then ${next[clearIdx].weather[0].description}. Overnight low ${nightLow}°.`,
-      };
-    }
-    return {
-      headline: 'Rain through the evening',
-      sub: `${data.weather[0].description}. Low ${toF(data.main.temp_min)}°.`,
-    };
-  }
-
-  const precipStart = next.findIndex(f => PRECIP_MAINS.has(f.weather[0].main));
-  if (precipStart > 0) {
-    return {
-      headline: `Rain starting around ${fmtHour(next[precipStart].dt)}`,
-      sub: `Currently ${data.weather[0].description}. Overnight low ${nightLow}°.`,
-    };
-  }
-
-  const currentF = toF(data.main.temp);
-  const minFuture = toF(Math.min(...next.map(f => f.main.temp)));
-  if (currentF - minFuture > 8) {
-    const coldIdx = next.reduce((a, f, i) => f.main.temp < next[a].main.temp ? i : a, 0);
-    return {
-      headline: `Cooling to ${minFuture}° by ${fmtHour(next[coldIdx].dt)}`,
-      sub: `Currently ${currentF}° and ${data.weather[0].description.toLowerCase()}.`,
-    };
-  }
-
-  const last = next[next.length - 1];
-  return {
-    headline: `Clear through ${fmtHour(last.dt)}`,
-    sub: `${data.weather[0].description}. High ${toF(data.main.temp_max)}°, low ${toF(data.main.temp_min)}°.`,
-  };
-}
 
 function deriveDriving(data) {
   const tempF = toF(data.main.temp);
@@ -140,12 +88,26 @@ function buildHourlyTemps(forecastList) {
 
 function StatTile({ label, value, unit }) {
   return (
-    <div className="flex flex-col gap-1 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl overflow-hidden" style={{ padding: 'clamp(6px, 1.4vh, 12px)' }}>
-      <span className="text-gray-400 dark:text-gray-500 font-mono tracking-wide uppercase whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(8px, 1.3vh, 10px)' }}>{label}</span>
-      <span className="font-semibold text-gray-900 dark:text-white leading-none whitespace-nowrap" style={{ fontSize: 'clamp(12px, 2.4vh, 18px)' }}>
+    <div className="flex flex-col gap-0.5 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl overflow-hidden" style={{ padding: 'clamp(4px, 1vh, 10px)' }}>
+      <span className="text-gray-400 dark:text-gray-500 font-mono tracking-wide uppercase whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(8px, 1.2vh, 10px)' }}>{label}</span>
+      <span className="font-semibold text-gray-900 dark:text-white leading-none whitespace-nowrap" style={{ fontSize: 'clamp(11px, 2vh, 16px)' }}>
         {value}
         {unit && <span className="text-gray-400 dark:text-gray-500 font-normal ml-0.5" style={{ fontSize: 'clamp(9px, 1.6vh, 12px)' }}>{unit}</span>}
       </span>
+    </div>
+  );
+}
+
+function ForecastRow({ label, isActive, icon, description, primary, secondary }) {
+  return (
+    <div className={`flex-1 flex items-center gap-1.5 rounded-lg px-2 ${isActive ? 'bg-blue-600/10' : 'bg-gray-200/50 dark:bg-gray-900/40'}`} style={{ minHeight: 0 }}>
+      <span className={`font-mono w-9 flex-shrink-0 ${isActive ? 'text-blue-500 dark:text-blue-300 font-semibold' : 'text-gray-500 dark:text-gray-400'}`} style={{ fontSize: 'clamp(9px, 1.5vh, 12px)' }}>
+        {label}
+      </span>
+      {icon}
+      <span className="text-gray-500 dark:text-gray-400 capitalize truncate flex-1" style={{ fontSize: 'clamp(9px, 1.5vh, 12px)' }}>{description}</span>
+      <span className="font-semibold text-gray-900 dark:text-white w-7 text-right flex-shrink-0" style={{ fontSize: 'clamp(10px, 1.7vh, 14px)' }}>{primary}</span>
+      <span className="text-gray-400 dark:text-gray-500 w-9 text-right flex-shrink-0" style={{ fontSize: 'clamp(9px, 1.5vh, 12px)' }}>{secondary}</span>
     </div>
   );
 }
@@ -156,7 +118,7 @@ function InsightCard({ label, headline, sub }) {
       <div style={{ font: '500 10px/1 \'JetBrains Mono\', monospace', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--mute)' }}>
         {label}
       </div>
-      <div style={{ fontWeight: 700, fontSize: 'clamp(12px, 2vh, 18px)', marginTop: 'clamp(3px, 0.8vh, 8px)', lineHeight: 1.2, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+      <div style={{ fontWeight: 700, fontSize: 'clamp(12px, 2vh, 18px)', marginTop: 'clamp(3px, 0.8vh, 8px)', lineHeight: 1.2, color: 'var(--text)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
         {headline}
       </div>
       <div style={{ fontSize: 'clamp(9px, 1.5vh, 13px)', color: 'var(--mute)', marginTop: 'clamp(2px, 0.6vh, 6px)', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
@@ -214,35 +176,12 @@ function Weather() {
   const { data, forecastData, isLoading, refreshWeather } = useContext(TeslaAppContext);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showHourly, setShowHourly] = useState(false);
-  const scrollContainerRef = useRef(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try { await refreshWeather(); } catch (e) { console.error(e); }
     finally { setIsRefreshing(false); }
   };
-
-  const handleMouseDown = (e) => {
-    if (!scrollContainerRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
-    setScrollLeft(scrollContainerRef.current.scrollLeft);
-    scrollContainerRef.current.style.cursor = 'grabbing';
-  };
-  const handleMouseMove = (e) => {
-    if (!isDragging || !scrollContainerRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - scrollContainerRef.current.offsetLeft;
-    scrollContainerRef.current.scrollLeft = scrollLeft - (x - startX) * 2;
-  };
-  const handleMouseUp = () => { setIsDragging(false); if (scrollContainerRef.current) scrollContainerRef.current.style.cursor = 'grab'; };
-  const handleMouseLeave = () => { setIsDragging(false); if (scrollContainerRef.current) scrollContainerRef.current.style.cursor = 'grab'; };
-  const handleTouchStart = (e) => { if (!scrollContainerRef.current) return; setIsDragging(true); setStartX(e.touches[0].pageX - scrollContainerRef.current.offsetLeft); setScrollLeft(scrollContainerRef.current.scrollLeft); };
-  const handleTouchMove = (e) => { if (!isDragging || !scrollContainerRef.current) return; const x = e.touches[0].pageX - scrollContainerRef.current.offsetLeft; scrollContainerRef.current.scrollLeft = scrollLeft - (x - startX) * 2; };
-  const handleTouchEnd = () => setIsDragging(false);
 
   const dailyForecast = useMemo(() => {
     if (!forecastData?.list) return [];
@@ -257,7 +196,6 @@ function Weather() {
   }, [forecastData]);
 
   const forecastList = forecastData?.list || [];
-  const whatToExpect = useMemo(() => data?.main ? deriveWhatToExpect(data, forecastList) : null, [data, forecastList]);
   const driving = useMemo(() => data?.main ? deriveDriving(data) : null, [data]);
   const hourlyTemps = useMemo(() => buildHourlyTemps(forecastList), [forecastList]);
 
@@ -310,7 +248,7 @@ function Weather() {
   const endTemp = hourlyTemps[hourlyTemps.length - 1] ?? tempF;
 
   return (
-    <div className="h-full grid min-h-0" style={{ gridTemplateColumns: '1.4fr 1fr', gap: 'clamp(8px, 2vh, 16px)' }}>
+    <div className="h-full grid min-h-0" style={{ gridTemplateColumns: '1fr 1fr', gap: 'clamp(8px, 2vh, 16px)' }}>
 
       {/* ── LEFT: Hero card ── */}
       <div
@@ -355,10 +293,9 @@ function Weather() {
           </div>
         </div>
 
-        {/* ── Insight row ── */}
-        {whatToExpect && driving && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(6px, 1.2vh, 14px)', marginTop: 'clamp(6px, 1.4vh, 16px)' }}>
-            <InsightCard label="What to expect" headline={whatToExpect.headline} sub={whatToExpect.sub} />
+        {/* ── Driving insight ── */}
+        {driving && (
+          <div style={{ marginTop: 'clamp(6px, 1.4vh, 16px)' }}>
             <InsightCard label="Driving" headline={driving.headline} sub={driving.sub} />
           </div>
         )}
@@ -373,7 +310,7 @@ function Weather() {
       <div className="flex flex-col min-h-0 min-w-0" style={{ gap: 'clamp(8px, 1.6vh, 16px)' }}>
 
         {/* Conditions strip */}
-        <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl flex flex-col flex-shrink-0" style={{ padding: 'clamp(10px, 2vh, 20px)', gap: 'clamp(6px, 1.4vh, 16px)' }}>
+        <div className="bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/60 rounded-2xl flex flex-col flex-shrink-0" style={{ padding: 'clamp(6px, 1.1vh, 12px)', gap: 'clamp(3px, 0.7vh, 8px)' }}>
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-mono tracking-widest uppercase">Conditions</span>
             <button
@@ -385,7 +322,7 @@ function Weather() {
               <FiRefreshCw className={`w-3.5 h-3.5 text-gray-400 dark:text-gray-400 ${isRefreshing ? 'animate-spin' : ''}`} />
             </button>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             <StatTile label="Wind" value={windMph} unit=" mph" />
             <StatTile label="Humidity" value={`${data.main.humidity}`} unit="%" />
             <StatTile label="Sunrise" value={sunriseTime} />
@@ -415,20 +352,9 @@ function Weather() {
             </div>
           </div>
 
-          <div
-            ref={scrollContainerRef}
-            className="flex-1 overflow-x-auto overflow-y-hidden cursor-grab select-none min-h-0"
-            style={{ scrollBehavior: isDragging ? 'auto' : 'smooth' }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-          >
+          <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
             {showHourly ? (
-              <div className="flex gap-1.5 h-full pb-1">
+              <div className="flex flex-col gap-0.5 h-full">
                 {(() => {
                   const now = new Date();
                   const hourlyData = [];
@@ -444,35 +370,35 @@ function Weather() {
                   return hourlyData.map((hour, i) => {
                     const isNow = i === 0;
                     return (
-                      <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl border gap-1 w-[78px] ${isNow ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-200/60 dark:bg-gray-900/50 border-gray-300 dark:border-gray-700/50'}`} style={{ padding: 'clamp(6px, 1.4vh, 12px) 6px' }}>
-                        <span className={`text-[9px] font-mono tracking-wide whitespace-nowrap ${isNow ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
-                          {isNow ? 'Now' : hour.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}
-                        </span>
-                        <WeatherIcon code={hour.data.weather[0].icon} size={32} />
-                        <span className="text-[10px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{hour.data.weather[0].description}</span>
-                        <span className="font-semibold text-gray-900 dark:text-white" style={{ fontSize: 'clamp(13px, 2.2vh, 18px)' }}>{Math.round(hour.data.main.temp * 9 / 5 + 32)}°</span>
-                        <span className="text-[9px] text-blue-500 dark:text-blue-400">
-                          {hour.data.pop > 0.1 ? `${Math.round(hour.data.pop * 100)}%` : ' '}
-                        </span>
-                      </div>
+                      <ForecastRow
+                        key={i}
+                        label={isNow ? 'Now' : hour.time.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}
+                        isActive={isNow}
+                        icon={<WeatherIcon code={hour.data.weather[0].icon} size={15} />}
+                        description={hour.data.weather[0].description}
+                        primary={`${Math.round(hour.data.main.temp * 9 / 5 + 32)}°`}
+                        secondary={hour.data.pop > 0.1 ? `${Math.round(hour.data.pop * 100)}%` : '—'}
+                      />
                     );
                   });
                 })()}
               </div>
             ) : (
-              <div className="flex gap-1.5 h-full pb-1">
+              <div className="flex flex-col gap-0.5 h-full">
                 {dailyForecast.map((day, i) => {
                   const isToday = i === 0;
+                  const hi = Math.round(Math.max(...day.temps) * 9 / 5 + 32);
+                  const lo = Math.round(Math.min(...day.temps) * 9 / 5 + 32);
                   return (
-                    <div key={i} className={`flex-shrink-0 flex flex-col items-center justify-between rounded-xl border gap-1 w-[78px] ${isToday ? 'bg-blue-600/10 border-blue-500/40' : 'bg-gray-200/60 dark:bg-gray-900/50 border-gray-300 dark:border-gray-700/50'}`} style={{ padding: 'clamp(6px, 1.4vh, 12px) 6px' }}>
-                      <span className={`text-[9px] font-mono tracking-wide whitespace-nowrap ${isToday ? 'text-blue-500 dark:text-blue-300' : 'text-gray-400 dark:text-gray-500'}`}>
-                        {isToday ? 'Today' : moment.unix(day.date).format('ddd')}
-                      </span>
-                      <WeatherIcon code={day.weather.icon} size={32} />
-                      <span className="text-[10px] text-gray-500 dark:text-gray-400 capitalize text-center leading-tight line-clamp-2">{day.weather.description}</span>
-                      <span className="font-semibold text-gray-900 dark:text-white" style={{ fontSize: 'clamp(12px, 2vh, 16px)' }}>{Math.round(Math.max(...day.temps) * 9 / 5 + 32)}°</span>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500">{Math.round(Math.min(...day.temps) * 9 / 5 + 32)}°</span>
-                    </div>
+                    <ForecastRow
+                      key={i}
+                      label={isToday ? 'Today' : moment.unix(day.date).format('ddd')}
+                      isActive={isToday}
+                      icon={<WeatherIcon code={day.weather.icon} size={15} />}
+                      description={day.weather.description}
+                      primary={`${hi}°`}
+                      secondary={`${lo}°`}
+                    />
                   );
                 })}
               </div>
