@@ -182,8 +182,9 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 ### Enhanced Weather Features
 - **Option B hero**: insight cards (What to Expect + Driving) derived from live OWM forecast; `deriveWhatToExpect` and `deriveDriving` are pure functions operating on `forecastData.list` (3-hour intervals); no new API calls
 - **12-hour sparkline**: SVG path built from `buildHourlyTemps()` which linearly interpolates between OWM 3-hour intervals; `linearGradient` fill + labeled markers every 3rd point
-- **Weather icons**: `react-icons/wi` (Erik Flowers Weather Icons) — SVG components, no CDN dependency. Mapped via `OWM_TO_WI` lookup in `Weather.jsx` (18 OWM codes → WI component + hex color). Hero renders at `size={96}`, forecast cards at `size={48}`. Each condition has a tuned color (e.g. `WiDaySunny` → `#FFB800`, `WiDayRain` → `#4A88C0`). Add new mappings to `OWM_TO_WI`; fallback is `WiDaySunny`.
-- Hero temperature: Inter 200 / 168 px; `marginTop: auto` anchors temp block above insight content
+- **Weather icons**: `react-icons/wi` (Erik Flowers Weather Icons) — SVG components, no CDN dependency. Mapped via `OWM_TO_WI` lookup in `Weather.jsx` (18 OWM codes → WI component + hex color). `WeatherIcon` takes `size` as px or any CSS length; hero and forecast rows pass viewport-scaled `clamp()` values. Each condition has a tuned color (e.g. `WiDaySunny` → `#FFB800`, `WiDayRain` → `#4A88C0`). Add new mappings to `OWM_TO_WI`; fallback is `WiDaySunny`.
+- Hero temperature: Inter 200, `clamp(64px, calc(30vh - 102px), 168px)`; `marginTop: auto` anchors temp block above insight content
+- **Tesla viewport sizing**: the in-car browser is ~773×601 CSS px (Weather content area ~739×409). Font `clamp()` minimums are set so the smallest text stays ≥11px there; verify at 773×601 and 1180×919 with no hero/forecast overflow after layout changes
 - 5-day and hourly forecasts from OpenWeather `/forecast` endpoint (3-hour intervals, 5-day window)
 
 ### Places Integration
