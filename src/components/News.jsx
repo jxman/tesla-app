@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import moment from "moment";
 import { FiFileText, FiCpu, FiTrendingUp, FiActivity, FiRefreshCw, FiAlertTriangle } from "react-icons/fi";
 import DOMPurify from "dompurify";
 
@@ -10,7 +9,6 @@ function News() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [category, setCategory] = useState('general');
-  const [lastUpdated, setLastUpdated] = useState(null);
   // Sanitized articles with XSS-safe URLs (validated at fetch time)
   // Prevents XSS (CWE-79) and Open Redirect (CWE-601) attacks
   const [sanitizedArticles, setSanitizedArticles] = useState([]);
@@ -79,7 +77,6 @@ function News() {
         const validArticles = sanitized.filter(article => article.safeUrl !== null);
         setSanitizedArticles(validArticles);
 
-        setLastUpdated(new Date());
         console.log('News articles loaded:', validArticles.length, 'of', rawArticles.length);
       } else {
         throw new Error(data.message || 'Failed to fetch news');

@@ -49,6 +49,7 @@ This project uses **Vite** for fast development and optimized production builds.
 - **Build for production**: `npm run build` (output: `build/`)
 - **Preview production build**: `npm run preview` (runs on port 4173)
 - **Run tests**: `npm test` (Vitest)
+- **Lint**: `npm run lint` (ESLint; also runs on staged files at commit time)
 
 ### Development Testing Protocol
 **For Claude Code development assistance:**
@@ -68,8 +69,13 @@ This project uses **Vite** for fast development and optimized production builds.
 - **Production build time**: ~30s → ~1s (30x faster)
 - **Security**: Resolved webpack-dev-server CVE-2025-30360
 
-### No Linting/Type Checking
-This project uses standard setup without additional linting or TypeScript. Code style is enforced through consistent patterns rather than automated tools.
+### Linting & Pre-commit Hooks
+- **ESLint 9** flat config in `eslint.config.mjs` (`@eslint/js` recommended + `eslint-plugin-react` + `react-hooks` rules-of-hooks/exhaustive-deps). `.js` files in `src/` contain JSX, so JSX parsing is enabled for both extensions. No TypeScript.
+- **Run lint**: `npm run lint`
+- **Husky hooks** (installed by `npm install` via `"prepare": "husky"`):
+  - `.husky/pre-commit`: blocks unresolved merge-conflict markers → `gitleaks protect --staged` secret scan (requires `brew install gitleaks`; fails closed if missing) → `lint-staged` (`eslint --fix` on staged `*.{js,jsx,mjs}`)
+  - `.husky/commit-msg`: `commitlint` enforces Conventional Commits (`feat:`, `fix:`, `chore(deps):` …)
+- **Testing the secret hook**: gitleaks allowlists keys ending in `EXAMPLE`, so `AKIAIOSFODNN7EXAMPLE` passes — use a throwaway fake of `AKIA` + 16 random characters from A–Z/2–7 (don't commit it — this hook will block it)
 
 ## Project Architecture
 

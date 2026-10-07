@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback, useRef } from "react";
+import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import opening_hours from "opening_hours";
 import {
   FiNavigation, FiRefreshCw, FiAlertCircle,
@@ -332,7 +332,7 @@ async function resolveBrandLogo(qid) {
       brandCache.set(qid, ls);
       return ls.logoUrl;
     }
-  } catch {}
+  } catch { /* localStorage unavailable or corrupt — fall through to network */ }
 
   try {
     const resp = await fetch(
@@ -345,7 +345,7 @@ async function resolveBrandLogo(qid) {
       : null;
     const entry = { logoUrl, expires: Date.now() + 30 * 24 * 60 * 60 * 1000 };
     brandCache.set(qid, entry);
-    try { localStorage.setItem(lsKey, JSON.stringify(entry)); } catch {}
+    try { localStorage.setItem(lsKey, JSON.stringify(entry)); } catch { /* best-effort cache */ }
     return logoUrl;
   } catch {
     return null;

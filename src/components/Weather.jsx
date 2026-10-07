@@ -203,9 +203,8 @@ function Weather() {
     return Object.values(dailyData);
   }, [forecastData]);
 
-  const forecastList = forecastData?.list || [];
   const driving = useMemo(() => data?.main ? deriveDriving(data) : null, [data]);
-  const hourlyTemps = useMemo(() => buildHourlyTemps(forecastList), [forecastList]);
+  const hourlyTemps = useMemo(() => buildHourlyTemps(forecastData?.list), [forecastData]);
 
   if (isLoading) return <Spinner />;
 
