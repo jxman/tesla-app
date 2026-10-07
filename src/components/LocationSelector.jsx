@@ -31,7 +31,7 @@ function LocationSelector() {
             autoFocus
             type="text"
             placeholder="Enter zip code"
-            className="flex-1 h-12 px-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 border border-gray-300 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm"
+            className="flex-1 h-12 px-4 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 border border-gray-300 dark:border-gray-600 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-base"
             value={zip}
             onChange={(e) => setZip(e.target.value)}
             disabled={isSearching}
@@ -47,7 +47,7 @@ function LocationSelector() {
           <button
             type="submit"
             disabled={!zip.trim() || isSearching}
-            className="h-12 px-6 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-xl font-semibold transition-all disabled:opacity-40 flex-shrink-0 text-sm"
+            className="h-12 px-6 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-xl font-semibold transition-all disabled:opacity-40 flex-shrink-0 text-base"
           >
             {isSearching ? "Searching…" : "Go"}
           </button>
@@ -69,7 +69,7 @@ function LocationSelector() {
           {locationName}
         </h1>
         {!isLoading && data?.name && (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/25 text-green-600 dark:text-green-400 text-[10px] font-mono tracking-widest uppercase flex-shrink-0">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/25 text-green-600 dark:text-green-400 text-xs font-mono tracking-widest uppercase flex-shrink-0">
             <span className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400" />
             Live
           </span>

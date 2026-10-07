@@ -269,14 +269,14 @@ function News() {
             <button
               key={id}
               onClick={() => handleCategoryChange(id)}
-              className={`h-14 flex items-center justify-center gap-2.5 rounded-xl font-medium text-sm transition-all ${
+              className={`h-14 flex items-center justify-center gap-2.5 rounded-xl font-medium text-base transition-all ${
                 category === id
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg'
                   : 'bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               tabIndex="0"
             >
-              <Icon className="w-4 h-4" />
+              <Icon className="w-5 h-5" />
               <span>{name}</span>
             </button>
           ))}
@@ -287,7 +287,7 @@ function News() {
           className="h-14 w-14 flex items-center justify-center bg-gray-100 dark:bg-gray-700/60 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600/50 rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
           title="Refresh"
         >
-          <FiRefreshCw className={`w-4 h-4 text-gray-500 dark:text-gray-400 ${isLoading ? 'animate-spin' : ''}`} />
+          <FiRefreshCw className={`w-5 h-5 text-gray-500 dark:text-gray-400 ${isLoading ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
@@ -296,8 +296,8 @@ function News() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-6">
             <FiAlertTriangle className="w-10 h-10 text-yellow-500 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">News Unavailable</h3>
-            <p className="text-sm text-gray-400 mb-4">{error}</p>
+            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">News Unavailable</h3>
+            <p className="text-base text-gray-400 mb-4">{error}</p>
             <button onClick={handleRefresh} className="px-6 py-3 bg-white text-gray-900 font-semibold rounded-xl transition-colors hover:bg-gray-100" tabIndex="0">
               Try Again
             </button>
@@ -326,7 +326,7 @@ function News() {
               >
                 {/* Thumbnail — shown when available, XSS-safe via pre-sanitized safeImageUrl */}
                 {article.safeImageUrl && (
-                  <div className="w-16 h-14 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
+                  <div className="w-20 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700">
                     <img
                       src={DOMPurify.sanitize(article.safeImageUrl, { ALLOWED_URI_REGEXP: /^https?:\/\// })}
                       alt=""
@@ -338,16 +338,16 @@ function News() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
+                  <p className="text-[17px] font-medium text-gray-900 dark:text-white leading-snug line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
                     {truncateText(article.title, 120)}
                   </p>
-                  <div className="flex items-center gap-3 mt-1.5 text-[11px] text-gray-500 font-mono">
+                  <div className="flex items-center gap-3 mt-1.5 text-[13px] text-gray-500 dark:text-gray-400 font-mono">
                     <span className="truncate">{article.source?.name || 'Unknown'}</span>
                     <span>·</span>
                     <span className="flex-shrink-0">{timeAgo(article.publishedAt)}</span>
                   </div>
                 </div>
-                <svg className="w-4 h-4 text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400 flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-gray-400 dark:text-gray-600 group-hover:text-gray-600 dark:group-hover:text-gray-400 flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -361,8 +361,8 @@ function News() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center p-6">
             <FiFileText className="w-10 h-10 text-gray-600 mx-auto mb-3" />
-            <h3 className="text-base font-medium text-gray-900 dark:text-white mb-1">No News Available</h3>
-            <p className="text-sm text-gray-500">Check back later for updates</p>
+            <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-1">No News Available</h3>
+            <p className="text-base text-gray-500">Check back later for updates</p>
           </div>
         </div>
       )}

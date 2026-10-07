@@ -21,6 +21,9 @@
   --hero-grad:    linear-gradient(180deg, #f8fafc 0%, #f0f4f8 100%);
   --cat-inactive: #f1f5f9;
   --shimmer-peak: #e2e8f0;
+  --open-fg:      #15803d;
+  --closed-fg:    #b91c1c;
+  --warn-fg:      #b45309;
 }
 
 .dark {
@@ -40,6 +43,9 @@
   --hero-grad:    linear-gradient(180deg, #161b24 0%, #11151c 100%);
   --cat-inactive: #1a1f28;
   --shimmer-peak: #1e2530;
+  --open-fg:      #6dd49a;
+  --closed-fg:    #fda4a4;
+  --warn-fg:      #fbbf24;
 }
 
 /* ── Custom scrollbar ─────────────────────────────────────────────────────── */

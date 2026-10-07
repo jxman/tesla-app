@@ -44,8 +44,8 @@ function App() {
                     }`}
                     tabIndex="0"
                   >
-                    <IconComponent className="w-5 h-5" />
-                    <span className="font-medium text-sm">{tab.name}</span>
+                    <IconComponent className="w-6 h-6" />
+                    <span className="font-medium text-base">{tab.name}</span>
                   </button>
                 );
               })}

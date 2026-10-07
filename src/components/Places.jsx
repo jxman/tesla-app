@@ -18,16 +18,16 @@ const C = {
   pillBg:      "var(--pillBg)",
   pillLine:    "var(--pillLine)",
   openBg:      "rgba(34,197,94,0.18)",
-  openFg:      "#6dd49a",
+  openFg:      "var(--open-fg)",
   openLine:    "rgba(34,197,94,0.35)",
   closedBg:    "rgba(239,68,68,0.18)",
-  closedFg:    "#fda4a4",
+  closedFg:    "var(--closed-fg)",
   closedLine:  "rgba(239,68,68,0.4)",
   chipBg:      "var(--chipBg)",
   chipFg:      "var(--chipFg)",
   chipLine:    "var(--chipLine)",
   warnBg:      "rgba(245,158,11,0.15)",
-  warnFg:      "#fbbf24",
+  warnFg:      "var(--warn-fg)",
   warnLine:    "rgba(245,158,11,0.3)",
 };
 
@@ -362,27 +362,36 @@ const KEYFRAMES = `
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
   }
+  /* Short viewports (Tesla in-car browser ~601px tall): small cards drop their
+     attribute chips and brand mark (the panel shrinks to a colour band) so
+     name, distance and open status stay visible */
+  @media (max-height: 760px) {
+    .places-chips-secondary,
+    .places-brandmark-secondary { display: none !important; }
+  }
 `;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-function OpenPill({ openNow, label }) {
+// Open/closed status. Sits in the card body (not over the brand panel), so it
+// uses theme-aware text tokens. `compact` drops the hours label for narrow cards.
+function OpenPill({ openNow, label, compact }) {
   if (openNow === null) return null;
+  const text = openNow ? "Open" : "Closed";
   return (
     <div style={{
-      display: "inline-flex", alignItems: "center", gap: 5,
-      padding: "6px 10px", borderRadius: 999,
+      display: "inline-flex", alignItems: "center", gap: 6,
+      padding: "4px 10px", borderRadius: 999,
       background: openNow ? C.openBg : C.closedBg,
       border: `1px solid ${openNow ? C.openLine : C.closedLine}`,
       color: openNow ? C.openFg : C.closedFg,
-      font: "500 10px/1 'JetBrains Mono', monospace",
-      letterSpacing: "0.14em", textTransform: "uppercase",
+      fontSize: "clamp(13px, 2.2vh, 15px)", fontWeight: 600, lineHeight: 1.2,
       whiteSpace: "nowrap", flexShrink: 0,
     }}>
       <span style={{
-        width: 6, height: 6, borderRadius: "50%",
+        width: 7, height: 7, borderRadius: "50%",
         background: openNow ? C.openFg : C.closedFg, flexShrink: 0,
       }} />
-      {openNow ? `Open${label ? ` · ${label}` : ""}` : `Closed${label ? ` · ${label}` : ""}`}
+      {!compact && label ? `${text} · ${label}` : text}
     </div>
   );
 }
@@ -391,13 +400,13 @@ function DistancePill({ distanceMi, etaMinutes }) {
   return (
     <div style={{
       display: "inline-flex", alignItems: "center", gap: 4,
-      padding: "6px 12px", borderRadius: 999,
-      background: C.pillBg, backdropFilter: "blur(8px)",
+      padding: "4px 10px", borderRadius: 999,
+      background: C.pillBg,
       border: `1px solid ${C.pillLine}`,
-      color: C.text, fontSize: 13, fontWeight: 600,
+      color: C.text, fontSize: "clamp(14px, 2.4vh, 16px)", fontWeight: 600, lineHeight: 1.2,
       whiteSpace: "nowrap", flexShrink: 0,
     }}>
-      <span style={{ color: C.arrowBlue, fontSize: 11, fontWeight: 700 }}>↗</span>
+      <span style={{ color: C.arrowBlue, fontSize: "0.85em", fontWeight: 700 }}>↗</span>
       {distanceMi.toFixed(1)} mi{etaMinutes != null ? ` · ${etaMinutes} min` : ""}
     </div>
   );
@@ -407,7 +416,7 @@ function AttributeChip({ label, warn }) {
   return (
     <span style={{
       padding: "4px 10px", borderRadius: 999,
-      fontSize: 11, fontWeight: 500, whiteSpace: "nowrap",
+      fontSize: "clamp(12px, 2vh, 14px)", fontWeight: 500, whiteSpace: "nowrap",
       background: warn ? C.warnBg   : C.chipBg,
       color:      warn ? C.warnFg   : C.chipFg,
       border:     `1px solid ${warn ? C.warnLine : C.chipLine}`,
@@ -417,6 +426,8 @@ function AttributeChip({ label, warn }) {
   );
 }
 
+// Brand panel flexes to whatever height the card body leaves over — on the
+// short Tesla viewport it shrinks to a colour band rather than hiding the body.
 function BrandPanel({ place, featured }) {
   const [logoUrl, setLogoUrl]     = useState(null);
   const [logoFailed, setLogoFail] = useState(false);
@@ -428,17 +439,16 @@ function BrandPanel({ place, featured }) {
 
   return (
     <div style={{
-      position: "relative", flexShrink: 0,
-      minHeight: featured ? 220 : 110,
+      position: "relative", flex: 1, minHeight: featured ? 40 : 0,
       background: `linear-gradient(135deg, ${place.brandColor} 0%, ${place.brandColor}99 100%)`,
       display: "flex", alignItems: "center", justifyContent: "center",
       overflow: "hidden",
     }}>
       {logoUrl && !logoFailed ? (
-        <div style={{
+        <div className={featured ? undefined : "places-brandmark-secondary"} style={{
           background: "white",
-          borderRadius: 10,
-          padding: featured ? "8px 14px" : "5px 10px",
+          borderRadius: 8,
+          padding: featured ? "6px 12px" : "3px 8px",
           display: "flex", alignItems: "center", justifyContent: "center",
         }}>
           <img
@@ -446,28 +456,21 @@ function BrandPanel({ place, featured }) {
             alt={place.name}
             onError={() => setLogoFail(true)}
             style={{
-              maxHeight: featured ? 72 : 40,
+              maxHeight: featured ? "clamp(28px, 8vh, 72px)" : "clamp(14px, 3.5vh, 40px)",
               maxWidth: "80%",
               objectFit: "contain",
             }}
           />
         </div>
       ) : (
-        <span style={{
-          fontSize: featured ? 52 : 30, fontWeight: 700,
+        <span className={featured ? undefined : "places-brandmark-secondary"} style={{
+          fontSize: featured ? "clamp(32px, 7vh, 60px)" : "clamp(16px, 4vh, 34px)", fontWeight: 700,
           color: "rgba(255,255,255,0.22)", letterSpacing: "-0.02em",
           userSelect: "none",
         }}>
           {place.monogram}
         </span>
       )}
-
-      <div style={{ position: "absolute", top: 12, left: 12 }}>
-        <OpenPill openNow={place.openNow} label={place.hoursLabel} />
-      </div>
-      <div style={{ position: "absolute", top: 12, right: 12 }}>
-        <DistancePill distanceMi={place.distanceMi} etaMinutes={place.etaMinutes} />
-      </div>
     </div>
   );
 }
@@ -478,10 +481,10 @@ function CardBody({ place, featured }) {
   const meta  = [place.primaryType, cuisine].filter(Boolean).join(" · ");
 
   return (
-    <div style={{ padding: "12px", display: "flex", flexDirection: "column", gap: 6 }}>
+    <div style={{ padding: "clamp(8px, 1.6vh, 14px)", display: "flex", flexDirection: "column", gap: "clamp(4px, 0.8vh, 8px)", flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 }}>
         <span style={{
-          fontSize: featured ? 18 : 15, fontWeight: 700,
+          fontSize: featured ? "clamp(18px, 3.2vh, 22px)" : "clamp(16px, 2.8vh, 19px)", fontWeight: 700,
           color: C.text, letterSpacing: "-0.01em", lineHeight: 1.2,
           flex: 1, minWidth: 0,
           overflow: "hidden", textOverflow: "ellipsis",
@@ -493,8 +496,8 @@ function CardBody({ place, featured }) {
         </span>
         {/* Navigate affordance — decorative; tap handled by card wrapper */}
         <div aria-hidden style={{
-          width: 36, height: 36, flexShrink: 0,
-          background: "var(--text)", borderRadius: 10,
+          width: 32, height: 32, flexShrink: 0,
+          background: "var(--text)", borderRadius: 9,
           display: "grid", placeItems: "center",
           color: "var(--ink)", pointerEvents: "none",
         }}>
@@ -503,20 +506,26 @@ function CardBody({ place, featured }) {
       </div>
 
       {meta && (
-        <div style={{ fontSize: 12, color: C.mute, lineHeight: 1.3 }}>{meta}</div>
+        <div style={{ fontSize: "clamp(13px, 2.3vh, 15px)", color: C.mute, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meta}</div>
       )}
 
       {featured && place.address && (
         <div style={{
-          fontSize: 12, color: C.mute, lineHeight: 1.3,
+          fontSize: "clamp(13px, 2.3vh, 15px)", color: C.mute, lineHeight: 1.3,
           overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
         }}>
           {place.address}
         </div>
       )}
 
+      {/* Distance + open status — the info a driver needs most */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6 }}>
+        <DistancePill distanceMi={place.distanceMi} etaMinutes={place.etaMinutes} />
+        <OpenPill openNow={place.openNow} label={place.hoursLabel} compact={!featured} />
+      </div>
+
       {chips.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 2 }}>
+        <div className={featured ? undefined : "places-chips-secondary"} style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {chips.map((c) => <AttributeChip key={c.label} label={c.label} warn={c.warn} />)}
         </div>
       )}
@@ -532,7 +541,7 @@ function PlaceCard({ place, featured, onNavigate }) {
       onClick={() => onNavigate(place)}
       onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onNavigate(place)}
       style={{
-        display: "flex", flexDirection: "column",
+        display: "flex", flexDirection: "column", minHeight: 0,
         background: C.card, border: `1px solid ${C.line}`,
         borderRadius: 16, overflow: "hidden",
         cursor: "pointer", outline: "none",
@@ -557,15 +566,16 @@ function SkeletonCard({ featured }) {
   };
   return (
     <div style={{
-      display: "flex", flexDirection: "column",
+      display: "flex", flexDirection: "column", minHeight: 0,
       background: C.card, border: `1px solid ${C.line}`,
       borderRadius: 16, overflow: "hidden",
       gridRow: featured ? "span 2" : undefined,
     }}>
-      <div style={{ minHeight: featured ? 220 : 110, flexShrink: 0, ...shimmer }} />
-      <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-        <div style={{ height: 15, width: "65%", borderRadius: 6, ...shimmer }} />
-        <div style={{ height: 11, width: "45%", borderRadius: 6, ...shimmer }} />
+      <div style={{ flex: 1, minHeight: 0, ...shimmer }} />
+      <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8, flexShrink: 0 }}>
+        <div style={{ height: 17, width: "65%", borderRadius: 6, ...shimmer }} />
+        <div style={{ height: 13, width: "45%", borderRadius: 6, ...shimmer }} />
+        <div style={{ height: 22, width: "55%", borderRadius: 999, ...shimmer }} />
       </div>
     </div>
   );
@@ -628,7 +638,7 @@ export default function Places() {
   return (
     <>
       <style>{KEYFRAMES}</style>
-      <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: "clamp(8px, 1.6vh, 14px)" }}>
 
         {/* Category chips + refresh */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
@@ -641,7 +651,7 @@ export default function Places() {
                 style={{
                   flex: 1, height: 64,
                   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 5,
-                  borderRadius: 14, fontSize: 13, fontWeight: 600,
+                  borderRadius: 14, fontSize: "clamp(14px, 2.4vh, 16px)", fontWeight: 600,
                   background: active ? "var(--text)" : "var(--cat-inactive)",
                   color:      active ? "var(--ink)"  : C.mute,
                   border:     `1px solid ${active ? "var(--line)" : C.line}`,
@@ -649,7 +659,7 @@ export default function Places() {
                   WebkitTapHighlightColor: "transparent",
                 }}
               >
-                <Icon size={16} />
+                <Icon size={18} />
                 <span>{label}</span>
               </button>
             );
@@ -679,8 +689,8 @@ export default function Places() {
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <div style={{ textAlign: "center", padding: 24 }}>
               <FiAlertCircle size={36} color="#f87171" style={{ margin: "0 auto 12px", display: "block" }} />
-              <p style={{ color: C.text, fontWeight: 600, marginBottom: 8 }}>Places Unavailable</p>
-              <p style={{ color: C.mute, fontSize: 13, marginBottom: 16 }}>{error}</p>
+              <p style={{ color: C.text, fontWeight: 600, fontSize: 18, marginBottom: 8 }}>Places Unavailable</p>
+              <p style={{ color: C.mute, fontSize: 15, marginBottom: 16 }}>{error}</p>
               <button
                 onClick={handleRefresh}
                 style={{ padding: "10px 24px", background: "var(--text)", color: "var(--ink)", fontWeight: 600, borderRadius: 12, cursor: "pointer" }}
@@ -698,7 +708,7 @@ export default function Places() {
             display: "grid",
             gridTemplateColumns: "repeat(3, 1fr)",
             gridTemplateRows: "1fr 1fr",
-            gap: 14,
+            gap: "clamp(8px, 1.6vh, 14px)",
           }}>
             {showSkeletons
               ? [0, 1, 2, 3, 4].map((i) => <SkeletonCard key={i} featured={i === 0} />)
@@ -717,13 +727,13 @@ export default function Places() {
         {/* OSM attribution */}
         <div style={{
           flexShrink: 0, textAlign: "right",
-          fontSize: 10, color: C.dim, paddingRight: 2,
+          fontSize: 12, color: C.mute, paddingRight: 2,
         }}>
           © <a
             href="https://www.openstreetmap.org/copyright"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: C.dim, textDecoration: "underline" }}
+            style={{ color: C.mute, textDecoration: "underline" }}
           >
             OpenStreetMap contributors
           </a> · ODbL

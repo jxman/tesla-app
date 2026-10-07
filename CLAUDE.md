@@ -163,6 +163,7 @@ VITE_DEFAULT_LON=-71.038887
 | `--hero-grad` | light gray gradient | dark blue gradient | Hero card background |
 | `--cat-inactive` | `#f1f5f9` | `#1a1f28` | Places category inactive button |
 | `--shimmer-peak` | `#e2e8f0` | `#1e2530` | Skeleton shimmer midpoint |
+| `--open-fg` / `--closed-fg` / `--warn-fg` | `#15803d` / `#b91c1c` / `#b45309` | `#6dd49a` / `#fda4a4` / `#fbbf24` | Places open/closed pill and amber chip text |
 
 Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-800`). Do NOT hardcode hex values in inline styles — always use the CSS variable.
 
@@ -184,7 +185,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - **12-hour sparkline**: SVG path built from `buildHourlyTemps()` which linearly interpolates between OWM 3-hour intervals; `linearGradient` fill + labeled markers every 3rd point
 - **Weather icons**: `react-icons/wi` (Erik Flowers Weather Icons) — SVG components, no CDN dependency. Mapped via `OWM_TO_WI` lookup in `Weather.jsx` (18 OWM codes → WI component + hex color). `WeatherIcon` takes `size` as px or any CSS length; hero and forecast rows pass viewport-scaled `clamp()` values. Each condition has a tuned color (e.g. `WiDaySunny` → `#FFB800`, `WiDayRain` → `#4A88C0`). Add new mappings to `OWM_TO_WI`; fallback is `WiDaySunny`.
 - Hero temperature: Inter 200, `clamp(64px, calc(30vh - 102px), 168px)`; `marginTop: auto` anchors temp block above insight content
-- **Tesla viewport sizing**: the in-car browser is ~773×601 CSS px (Weather content area ~739×409). Font `clamp()` minimums are set so the smallest text stays ≥11px there; verify at 773×601 and 1180×919 with no hero/forecast overflow after layout changes
+- **Tesla viewport sizing**: the in-car browser is ~773×601 CSS px (Weather content area ~739×409). Across all tabs, font `clamp()` minimums keep the smallest text ≥11px there; verify at 773×601 and 1180×919 with no hero/forecast overflow after layout changes
 - 5-day and hourly forecasts from OpenWeather `/forecast` endpoint (3-hour intervals, 5-day window)
 
 ### Places Integration
@@ -194,7 +195,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - **10-minute query cache** keyed by `lat,lon,category`; in-flight dedup prevents double requests
 - **opening_hours.js** parses `opening_hours` OSM tag — renders open/closed pill only when tag exists and parses cleanly
 - **Place normalizer**: strips unnamed POIs, `disused:*`/`abandoned:*`/`fixme=*` entries, confirmed-closed places; sorts ascending by distance; caps at 5
-- **2×3 grid layout**: first card spans 2 rows (featured); brand panel with hash-derived gradient + 2-letter monogram (swaps to Wikidata logo when available); open/closed pill top-left, distance+ETA pill top-right; attribute chips (`yes`/`designated` → accent, `limited` → amber, `no` → omit)
+- **2×3 grid layout**: first card spans 2 rows (featured); brand panel with hash-derived gradient + 2-letter monogram (swaps to Wikidata logo when available) flexes to the height the card body leaves; distance+ETA pill and open/closed pill sit in the card body (small cards show just Open/Closed, featured adds hours); on short viewports (`max-height: 760px`) small cards hide chips and brand mark so the panel becomes a colour band; attribute chips (`yes`/`designated` → accent, `limited` → amber, `no` → omit)
 - **Brand logo rendering**: Wikidata logos render inside a white rounded tile (no CSS filter) — this handles both transparent-background SVGs and opaque-background JPEGs (e.g. Dunkin') correctly; monogram fallback used when no `brand:wikidata` tag exists in OSM or Wikidata has no P154 claim
 - **Whole card is the tap target** — opens Google Maps at place coordinates; navigate arrow in body row is decorative only
 - `© OpenStreetMap contributors · ODbL` attribution required and rendered
