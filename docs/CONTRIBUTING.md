@@ -38,7 +38,7 @@ This project now features a modern tabbed interface with enhanced weather foreca
 
 ## Code Style Guidelines
 - Use React hooks and functional components (no class components)
-- Follow existing Tailwind CSS + DaisyUI patterns
+- Follow existing Tailwind CSS patterns
 - Implement useMemo/useCallback for performance optimization
 - Add comments for complex logic, especially in drag/touch handlers
 - Use descriptive variable and function names

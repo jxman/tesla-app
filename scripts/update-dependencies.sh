@@ -18,11 +18,7 @@ npm install @testing-library/react@^16.3.0
 echo "🎨 Updating TailwindCSS..."
 npm install tailwindcss@^3.4.17
 
-# Step 5: DaisyUI update (stay on v4)
-echo "🌼 Updating DaisyUI..."
-npm install daisyui@^4.12.14
-
-# Step 6: Fix vulnerabilities
+# Step 5: Fix vulnerabilities
 echo "🔒 Fixing security vulnerabilities..."
 npm audit fix
 

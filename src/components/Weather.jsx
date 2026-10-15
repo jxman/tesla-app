@@ -213,7 +213,7 @@ function Weather() {
       <div className="text-center p-6">
         <p className="text-xl mb-3 text-gray-500 dark:text-gray-300">No Weather Data</p>
         <p className="text-sm text-gray-400 mb-4">Please check your API key in the .env file</p>
-        <button className="btn bg-blue-600 hover:bg-blue-700 border-blue-600 text-white" onClick={handleRefresh} disabled={isRefreshing}>
+        <button className="bg-blue-600 hover:bg-blue-700 border-blue-600 text-white" onClick={handleRefresh} disabled={isRefreshing}>
           {isRefreshing ? 'Loading…' : 'Retry'}
         </button>
       </div>
@@ -225,7 +225,7 @@ function Weather() {
       <div className="text-center p-6">
         <p className="text-xl mb-3 text-red-400">API Error</p>
         <p className="text-sm text-gray-400 mb-4">{data.message || `Error ${data.cod}`}</p>
-        <button className="btn bg-blue-600 hover:bg-blue-700 border-blue-600 text-white" onClick={handleRefresh} disabled={isRefreshing}>
+        <button className="bg-blue-600 hover:bg-blue-700 border-blue-600 text-white" onClick={handleRefresh} disabled={isRefreshing}>
           {isRefreshing ? 'Loading…' : 'Retry'}
         </button>
       </div>
@@ -236,7 +236,7 @@ function Weather() {
     return (
       <div className="text-center p-6">
         <p className="text-xl mb-3 text-yellow-400">Unexpected Data Format</p>
-        <button className="btn bg-blue-600 hover:bg-blue-700 border-blue-600 text-white" onClick={handleRefresh} disabled={isRefreshing}>
+        <button className="bg-blue-600 hover:bg-blue-700 border-blue-600 text-white" onClick={handleRefresh} disabled={isRefreshing}>
           {isRefreshing ? 'Loading…' : 'Retry'}
         </button>
       </div>

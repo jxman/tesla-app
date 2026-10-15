@@ -152,7 +152,7 @@ VITE_DEFAULT_LON=-71.038887
 
 ## Styling Architecture
 
-**CSS Framework**: Tailwind CSS + DaisyUI for structural layout; inline styles for design tokens
+**CSS Framework**: Tailwind CSS (no component library) for structural layout; inline styles for design tokens
 **Dark mode**: `darkMode: 'class'` in `tailwind.config.js`; ThemeContext applies/removes `.dark` on `<html>`
 **Theme tokens**: All color tokens are CSS custom properties defined in `src/index.css`. `:root` holds light values; `.dark` overrides to dark values. Components reference `var(--token)` in inline styles.
 
@@ -233,7 +233,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 
 **Core Dependencies**:
 - React 18.3.1 (hooks-based with useCallback/useMemo optimization)
-- Tailwind CSS 3.4.17 + DaisyUI 4.12.24 (structural layout; design-specific tokens use inline styles)
+- Tailwind CSS 3.4.x (structural layout; design-specific tokens use inline styles). DaisyUI was removed — its v5 never worked on Tailwind 3, so do not re-add it
 - React Icons 5.5.0 — Feather (`react-icons/fi`) for UI icons; `react-icons/bi` for BiCurrentLocation; **Weather Icons (`react-icons/wi`)** for all weather condition icons in Weather.jsx
 - opening_hours 3.12.0 (OSM opening_hours tag parser — used in Places)
 - DOMPurify 3.4.0 (URL sanitization in News thumbnails)
@@ -296,7 +296,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - Do not re-add Gas (`amenity=fuel`) — this is an EV-only app
 
 ### Updating Styling
-- Follow existing Tailwind + DaisyUI patterns with `dark:` variants for every color class
+- Follow existing Tailwind patterns with `dark:` variants for every color class
 - For inline styles, always use `var(--token)` — never hardcode hex values
 - To add a new color token: add it to both `:root` (light) and `.dark` blocks in `src/index.css`
 - Test both light and dark modes after any styling change

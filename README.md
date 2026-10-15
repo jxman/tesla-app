@@ -110,7 +110,6 @@ REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 ### Styling & UI
 - **Tailwind CSS 3.4.17** - Utility-first CSS framework
-- **DaisyUI 4.12.24** - Component library built on Tailwind
 - **React Icons 5.5.0** - Icon library with Tesla-appropriate icons
 
 ### APIs & Services
