@@ -31,9 +31,9 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 
 **Key Features:**
 - **Tabbed Navigation**: 4-tab interface (Weather, Traffic, News, Places) with Feather icon labels and white-pill active state
-- **Enhanced Weather**: Option B hero — insight cards (What to Expect, Driving) derived from live forecast data + 12-hour temperature sparkline; react-icons/wi weather icons (per-condition colors); 10-day forecast
+- **Enhanced Weather**: Option B hero with a Driving insight card (conditions + estimated cold-weather range loss) + 12-hour temperature sparkline; react-icons/wi weather icons (per-condition colors); 5-Day / 6-Hour forecast toggle
 - **Real Places Integration**: Geoapify Places (OpenStreetMap data) + OSRM — 2×3 image-grid layout (featured card spans 2 rows), 6 EV-specific categories (no Gas), opening hours parsing, brand panel with Wikidata logo lookup, attribute chips, OSM attribution
-- **Live News Feed**: 6 categories (Headlines, Tech, Business, Science, Sports, Entertainment) from free-to-read RSS feeds merged server-side; stacked icon-over-label category buttons so 6 fit at Tesla width; headline rows with DOMPurify-sanitized thumbnails
+- **Live News Feed**: 6 categories (Headlines, Tech, Business, Science, Sports, Entertainment) from free-to-read RSS feeds merged server-side; stacked icon-over-label category buttons so 6 fit at Tesla width; headline rows with DOMPurify-sanitized, lazy-loaded thumbnails (the function rewrites NPR/Variety/Deadline/CBS Sports image URLs to 240 px via `thumbnailUrl`)
 - **Server-side API layer**: one Netlify Function (`netlify/functions/api.mjs`, path `/api/*`) proxies OpenWeather, RSS, Geoapify and OSRM; keys stay server-side and the Netlify CDN caches responses
 - **Traffic Conditions**: full-width Traffic card (TomTom): drive times with arrival times to saved places (left column) + traffic near me (right column); no map embed
 - **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
@@ -102,10 +102,16 @@ src/
 │   ├── LocationSelector.jsx   # Header: Change location (zip / GPS) + sun/moon theme toggle
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
 │   ├── Traffic.jsx           # Traffic tab: location guard + full-width TrafficCard
-│   ├── TrafficCard.jsx       # Drive times to saved places + nearby incidents
+│   ├── TrafficCard.jsx       # Drive times, incidents near me, nearest charger
 │   ├── News.jsx             # News feed with categories
 │   └── Places.jsx           # OpenStreetMap places integration
+├── api/
+│   └── client.js            # Browser client for /api/*
 └── shared/
+    ├── placeCategories.js   # Category radii + Geoapify keys (shared with the function)
+    ├── charging.js          # Charger plugs/kW/stalls/rank (shared with the function)
+    ├── savedPlaces.js       # Traffic saved places (localStorage)
+    ├── savedLocation.js     # Last location set (localStorage)
     └── Spinner.jsx          # Loading component
 ```
 
@@ -137,7 +143,7 @@ All third-party calls go through **one Netlify Function**, `netlify/functions/ap
 - **Places timezone rule**: the function returns up to 20 nearest candidates with raw `opening_hours`; open/closed is evaluated **in the browser** (functions run in UTC)
 - **Weather errors** surface to `Weather.jsx` as an OWM-style `{ cod, message }` in context `data`
 - **TomTom key permissions**: each TomTom API (Traffic, Routing) must be enabled on the key in the TomTom dashboard; a missing product returns 403 "You are not allowed to access this endpoint". The legacy `routing/1/calculateRoute` endpoint is not available to new keys
-- **Traffic**: `TrafficCard.jsx` fills the tab: Drive times (left column) and Traffic near me (right column); the Waze embed was removed. Saved places (max 5) live **only in browser localStorage** (`src/shared/savedPlaces.js`, key `tesla.savedPlaces.v1`) — never stored server-side, because the site is public. Card auto-refreshes every 3 min. **Brand logos**: Wikidata is still called from the browser (allows CORS, 30-day localStorage cache)
+- **Traffic**: `TrafficCard.jsx` fills the tab: Drive times (left column) and Traffic near me (right column); the Waze embed was removed. Saved places (max 5) live **only in browser localStorage** (`src/shared/savedPlaces.js`, key `tesla.savedPlaces.v1`) — never stored server-side, because the site is public. Card refreshes every 3 min **only while the page is visible** (`visibilitychange`; refreshes on return if stale) to save TomTom quota. A **Nearest Tesla/fast charger** row (`useNearestCharger`) reuses `/api/places?cat=charging` (CDN-cached) and ranks with `chargingInfo` (Tesla plug, then CCS). **Brand logos**: Wikidata is still called from the browser (allows CORS, 30-day localStorage cache)
 
 ## Environment Configuration
 
@@ -180,7 +186,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - Persistent header across all tabs for unified experience
 
 ### Enhanced Weather Features
-- **Option B hero**: insight cards (What to Expect + Driving) derived from live OWM forecast; `deriveWhatToExpect` and `deriveDriving` are pure functions operating on `forecastData.list` (3-hour intervals); no new API calls
+- **Option B hero**: a Driving insight card from `deriveDriving` (a pure function of current conditions: wet roads, visibility, wind, plus estimated highway range loss below 70°F); no extra API calls. The "What to Expect" card was removed in Aug 2026
 - **12-hour sparkline**: SVG path built from `buildHourlyTemps()` which linearly interpolates between OWM 3-hour intervals; `linearGradient` fill + labeled markers every 3rd point
 - **Weather icons**: `react-icons/wi` (Erik Flowers Weather Icons) — SVG components, no CDN dependency. Mapped via `OWM_TO_WI` lookup in `Weather.jsx` (18 OWM codes → WI component + hex color). `WeatherIcon` takes `size` as px or any CSS length; hero and forecast rows pass viewport-scaled `clamp()` values. Each condition has a tuned color (e.g. `WiDaySunny` → `#FFB800`, `WiDayRain` → `#4A88C0`). Add new mappings to `OWM_TO_WI`; fallback is `WiDaySunny`.
 - Hero temperature: Inter 200, `clamp(64px, calc(30vh - 102px), 168px)`; `marginTop: auto` anchors temp block above insight content
@@ -191,7 +197,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - **Data sources**: `/api/places` (server-side Geoapify Places + OSRM `/table` ETA) + Wikidata P154 from the browser (brand logo, 30-day localStorage cache)
 - **Category definitions**: radius + Geoapify category keys live in `src/shared/placeCategories.js` (shared with the function); labels/icons in `CATEGORY_UI` in `Places.jsx`
 - **6 EV-specific categories**: Food, Charging, Hotels, Shopping, Fun, Services (Gas removed — Tesla app)
-- **Per-category search radius**: 2–16 km tuned to POI density (Charging = 16 km, Food = 2 km)
+- **Per-category search radius**: 4–16 km tuned to POI density (Charging = 16 km, Food = 5 km)
 - **10-minute query cache** keyed by `lat,lon,category`; in-flight dedup prevents double requests
 - **opening_hours.js** parses `opening_hours` OSM tag — renders open/closed pill only when tag exists and parses cleanly
 - **Place normalizer**: strips unnamed POIs, `disused:*`/`abandoned:*`/`fixme=*` entries, confirmed-closed places; sorts ascending by distance; caps at 5
@@ -204,8 +210,8 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - `Powered by Geoapify · © OpenStreetMap contributors · ODbL` attribution required (Geoapify free plan + ODbL) and rendered
 
 ### Location Management
-- GPS location detection with fallback to default (Boston)
-- Zip code search with OpenWeather geocoding
+- Startup order: GPS (10 s timeout, `GPS_OPTIONS`) → last location saved in localStorage (`src/shared/savedLocation.js`, key `tesla.lastLocation.v1`, written on every GPS fix or zip search) → Boston default. The Tesla browser often blocks GPS, so the saved location is what usually applies in the car
+- Zip code search with OpenWeather geocoding (header button labelled "Change location", map-pin icon; it sets the location, it does not search the site)
 - Context provides unified location state across components
 - Real-time location updates for Places component
 
@@ -232,20 +238,21 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - React 18.3.1 (hooks-based with useCallback/useMemo optimization)
 - Tailwind CSS 3.4.x (structural layout; design-specific tokens use inline styles). DaisyUI was removed — its v5 never worked on Tailwind 3, so do not re-add it
 - React Icons 5.5.0 — Feather (`react-icons/fi`) for UI icons; `react-icons/bi` for BiCurrentLocation; **Weather Icons (`react-icons/wi`)** for all weather condition icons in Weather.jsx
-- opening_hours 3.12.0 (OSM opening_hours tag parser — used in Places)
-- DOMPurify 3.4.0 (URL sanitization in News thumbnails)
-- Moment.js 2.29.1 (date formatting for weather eyebrow)
+- opening_hours 3.15 (OSM opening_hours tag parser — used in Places)
+- DOMPurify 3.4.x (URL sanitization in News thumbnails)
+- Moment.js 2.31 (date formatting for weather eyebrow)
 - fast-xml-parser 5.x (RSS/Atom parsing in the news function)
 
 **Design token approach**: Weather and Places components reference CSS custom properties via a `C` object at the top of each file (e.g. `C.ink = "var(--ink)"`). The actual values are defined in `src/index.css` and switch automatically with the `.dark` class. Do not hardcode hex values in inline styles.
 
 **Build Tools**:
-- Vite 7.3.2 (replaces CRA; `npm start` = `vite`, `npm run build` = `vite build`)
+- Vite 7.3.x (replaces CRA; `npm start` = `vite`, `npm run build` = `vite build`)
 - PostCSS + Autoprefixer (CSS processing)
 
 ## Testing & Quality
 
-- Vitest 4 — `tests/unit/functions/api.test.mjs` covers routing, validation, caching headers, key-leak safety, RSS parsing, Geoapify mapping and TomTom incidents/drive times (fetch is mocked)
+- Vitest 4 — `tests/unit/functions/api.test.mjs` covers routing, validation, caching headers, key-leak safety, RSS parsing, thumbnail URL rewriting, Geoapify mapping (incl. charger tags) and TomTom incidents/drive times (fetch is mocked); `tests/unit/shared/charging.test.js` covers charger plug/kW/stall parsing and ranking
+- **Dev double-requests**: `src/index.js` wraps the app in React StrictMode, so effects run twice in `npm start`/Vite dev; production makes one request per fetch
 - Manual testing recommended for API integrations (Geoapify, OWM, OSRM, Wikidata, RSS feeds)
 - Playwright MCP available in Claude Code sessions for browser screenshot verification
 
@@ -256,6 +263,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 **Build Output**: Static files in `build/` directory
 **Functions**: `netlify/functions/` (esbuild bundler, see `netlify.toml`)
 **Environment Variables**: `OPENWEATHER_API_KEY`, `GEOAPIFY_API_KEY`, `TOMTOM_API_KEY` in Netlify (Functions scope, secret, all contexts)
+**Docs**: `README.md` follows the readme-standard layout (Mermaid diagrams, validated with mermaid-cli) and describes the system as it is now; shipped work and design history go in `CHANGELOG.md`
 
 ## Common Development Tasks
 

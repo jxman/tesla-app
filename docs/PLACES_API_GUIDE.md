@@ -1,3 +1,5 @@
+> **Historical document.** This guide describes the Places options evaluated in 2025, when Places queried OpenStreetMap (Overpass) directly from the browser. Places now uses **Geoapify Places** (the same OpenStreetMap data) through the `/api/places` Netlify Function. See the README's [Places](../README.md#places) section for the current design and [PLACES_OVERPASS_406_ISSUE.md](PLACES_OVERPASS_406_ISSUE.md) for why it changed.
+
 # 🗺️ Tesla Dashboard Places API Implementation Guide
 
 **Real Location-Based Data for Your Tesla Dashboard**

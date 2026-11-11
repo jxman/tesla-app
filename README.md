@@ -1,312 +1,350 @@
-# 🚗 Tesla Dashboard - React Web App
+# Tesla Dashboard
 
-A modern React-based dashboard with tabbed navigation designed for Tesla vehicle browsers, providing location-based weather with hourly/daily forecasts, traffic conditions, news updates, and nearby points of interest. Features a sleek single-tab interface optimized for touch interaction.
-
-🌐 **[Live Demo](https://teslaweather.netlify.app/)** | 📱 Mobile Friendly | ⚡ Tesla Optimized
-
-[![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4.17-blue.svg)](https://tailwindcss.com/)
+[![Live site](https://img.shields.io/website?url=https%3A%2F%2Fteslaweather.netlify.app&label=live%20site&up_message=teslaweather.netlify.app&up_color=brightgreen)](https://teslaweather.netlify.app/)
 [![Netlify Status](https://api.netlify.com/api/v1/badges/ed22f193-b096-456c-b646-b7812700afb1/deploy-status)](https://app.netlify.com/projects/teslaweather/deploys)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![React](https://img.shields.io/badge/React_18-20232A?logo=react&logoColor=61DAFB)
+![Vite](https://img.shields.io/badge/Vite_7-646CFF?logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_3-06B6D4?logo=tailwindcss&logoColor=white)
+![Netlify Functions](https://img.shields.io/badge/Netlify_Functions-00C7B7?logo=netlify&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?logo=vitest&logoColor=white)
 
-## 🌟 Features
+A homepage for the Tesla in-car browser that shows weather, live traffic and drive times, news, and nearby EV chargers and places in a large, touch-friendly layout.
 
-### ✅ Currently Working
-- **🌤️ Enhanced Weather** - 12-hour and 10-day forecasts with horizontal scrolling, drag/touch support
-- **📰 Live News Feed** - Categorized news (Headlines, Tech, Business, Science, Sports, Entertainment) from free-to-read RSS feeds, with refresh  
-- **🚗 Traffic Conditions** - Live drive times (with arrival times) to your saved places, plus traffic incidents near you (TomTom)
-- **🗺️ Places Integration** - Nearby places in 6 EV-focused categories (OpenStreetMap data via Geoapify) with addresses, open/closed status and drive times; chargers show plug types, kW, stalls and fees, Tesla-compatible first
-- **📱 Tabbed Interface** - Single-tab navigation optimized for Tesla touchscreens
-- **📍 Location Services** - GPS location detection with zip code fallback search
-- **🎨 Tesla-themed UI** - Dark theme with Tesla-inspired design elements
-- **👆 Touch Optimized** - Drag scrolling, large touch targets, mobile-first design
+## What it does
 
-### 🚧 In Development
-- **🍽️ Premium Places** - Google Places API integration for enhanced data (ratings, hours, photos)
-- **⚡ Tesla Supercharger Locations** - Real-time charging station data
-- **🔋 EV-Optimized Routes** - Range-aware navigation planning
-- **🔄 Background Updates** - Auto-refresh for weather and places data
+- **Weather:** current conditions, a driving insight with estimated cold-weather range loss, a 12-hour temperature sparkline, and 5-day / 6-hour forecasts
+- **Traffic:** live drive times and arrival times to your saved places, traffic incidents near you, and the nearest Tesla charger
+- **News:** headlines in six categories from free-to-read RSS feeds, with small thumbnails
+- **Places:** the nearest places in six EV-focused categories, with addresses, open/closed status and drive times; chargers show plug types, speed and stalls, Tesla-compatible first
+- **Location:** GPS when the browser allows it, otherwise the last zip code or location you set
+- **Car-friendly UI:** 64 px touch targets, fonts sized for the ~773×601 Tesla viewport, light and dark mode
 
-## 🚀 Quick Start
+## Contents
 
-### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
-- API keys (see Configuration section)
+- [Architecture](#architecture)
+- [Tech stack](#tech-stack)
+- [Location](#location)
+- [Weather](#weather)
+- [Traffic](#traffic)
+- [News](#news)
+- [Places](#places)
+- [Data model](#data-model)
+- [Infrastructure and configuration](#infrastructure-and-configuration)
+- [Project structure](#project-structure)
+- [Local development](#local-development)
+- [Deployment](#deployment)
+- [Observability](#observability)
+- [Known constraints](#known-constraints)
+- [Roadmap](#roadmap)
 
-### Installation
+## Architecture
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/tesla-app.git
-   cd tesla-app
-   ```
+### System overview
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+```mermaid
+flowchart TB
+    subgraph client["Browser (Tesla in-car, desktop, mobile)"]
+        spa["React SPA<br/>Weather · Traffic · News · Places"]
+        ls[("localStorage<br/>saved places, last location,<br/>theme, logo cache")]
+    end
 
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   Add your OpenWeather key to `.env` (see Configuration below)
+    subgraph netlify["Netlify"]
+        cdn["CDN<br/>static build + cached /api responses"]
+        fn["api function<br/>/api/* · keys held as secrets"]
+    end
 
-4. **Start development server** (needs the Netlify CLI: `npm install -g netlify-cli`)
-   ```bash
-   npm start          # netlify dev: app + /api functions on http://localhost:3000
-   npm run dev:vite   # Vite only, no /api (weather, news and places won't load)
-   ```
+    subgraph external["External services"]
+        owm["OpenWeather<br/>weather + zip geocoding"]
+        rss["RSS feeds<br/>NPR, BBC, Guardian, …"]
+        geo["Geoapify<br/>places + address search"]
+        osrm["OSRM<br/>drive times to places"]
+        tt["TomTom<br/>incidents + routing"]
+        wd["Wikidata<br/>brand logos"]
+    end
 
-5. **Build for production**
-   ```bash
-   npm run build
-   ```
+    spa <--> ls
+    spa -->|"HTTPS"| cdn
+    cdn -->|"cache miss"| fn
+    fn --> owm
+    fn --> rss
+    fn --> geo
+    fn --> osrm
+    fn --> tt
+    spa -->|"logos only"| wd
+```
 
-## ⚙️ Configuration
+The browser only talks to its own origin, except for Wikidata brand logos. Each tab's data flow is described in the feature sections below.
 
-API keys never reach the browser. The React app calls its own `/api/*` endpoints
-(one Netlify Function, `netlify/functions/api.mjs`). The function holds the keys,
-calls the third-party APIs server-side, and the Netlify CDN caches its responses.
+### API routes
 
-| Endpoint | Upstream | CDN cache |
+All routes are served by one Netlify Function, `netlify/functions/api.mjs`, which dispatches to handlers in `netlify/lib/`.
+
+| Route | Handler | Upstream | CDN cache |
+|---|---|---|---|
+| `/api/weather?lat&lon` | `weather.mjs` | OpenWeather current + 5-day forecast | 10 min (+20 min stale) |
+| `/api/geocode?zip[&country]` | `weather.mjs` | OpenWeather zip geocoding | 30 days |
+| `/api/news?category` | `news.mjs` | 3–4 RSS/Atom feeds per category | 15 min (+30 min stale) |
+| `/api/places?lat&lon&cat` | `places.mjs` | Geoapify Places + OSRM `/table` | 10 min (+20 min stale) |
+| `/api/incidents?lat&lon` | `traffic.mjs` | TomTom Orbis traffic incidents (v2) | 2 min (+2 min stale) |
+| `/api/drive-times?lat&lon&to` | `traffic.mjs` | TomTom Orbis routing (v3), up to 5 destinations | 2 min (+2 min stale) |
+| `/api/search?text[&lat&lon]` | `traffic.mjs` | Geoapify address autocomplete | 1 day |
+
+Every route validates its input (coordinates range-checked and rounded, categories checked against fixed lists), and errors return `{ error, retryable }` without upstream URLs, which contain keys.
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| UI | React 18, React Context, Tailwind CSS 3 with CSS-variable theme tokens |
+| Icons | React Icons: Feather (UI) and Weather Icons |
+| Build | Vite 7 |
+| Server | One Netlify Function (Node, esbuild bundler) |
+| Caching | Netlify CDN (`Netlify-CDN-Cache-Control: durable`) |
+| Parsing | fast-xml-parser (RSS/Atom), opening_hours (OSM hours), DOMPurify (URL sanitising) |
+| Testing | Vitest 4 |
+| Quality | ESLint 9, Husky + lint-staged, ggshield secret scanning, commitlint |
+
+## Location
+
+- On startup the app asks for GPS (10 s timeout). If GPS is blocked, as it often is in the Tesla browser, it uses the last location you set; with nothing saved it falls back to Boston
+- **Change location** in the header takes a US zip code or a fresh GPS fix; either is saved for next time
+- Coordinates are rounded before each request (about 1.1 km for weather and incidents, 110 m for places) so nearby users share CDN cache entries
+
+```mermaid
+flowchart LR
+    start(["App opens"]) --> gps{"GPS allowed?"}
+    gps -->|yes| live["Use GPS fix<br/>and save it"]
+    gps -->|"no / timeout"| saved{"Saved location?"}
+    saved -->|yes| last["Use last zip code<br/>or GPS fix"]
+    saved -->|no| boston["Use Boston default"]
+```
+
+## Weather
+
+- **Hero:** temperature, condition icon, and a **Driving** insight from current conditions: wet roads, low visibility or strong wind, plus an estimated highway range loss in cold weather
+- **12-hour sparkline:** hourly temperatures interpolated from OpenWeather's 3-hour forecast intervals
+- **Conditions tiles** and a **5-Day / 6-Hour** forecast toggle
+- One `/api/weather` call returns both current conditions and the forecast; the function calls OpenWeather's two endpoints in parallel
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant C as Netlify CDN
+    participant F as api function
+    participant O as OpenWeather
+    B->>C: GET /api/weather?lat=42.24&lon=-71.21
+    alt cached (under 10 min)
+        C-->>B: current + forecast
+    else miss
+        C->>F: forward
+        par
+            F->>O: /data/2.5/weather
+        and
+            F->>O: /data/2.5/forecast
+        end
+        F-->>C: current + forecast (cache 10 min)
+        C-->>B: current + forecast
+    end
+```
+
+## Traffic
+
+- **Drive times** (left column): up to 5 saved places (Home, Work, …) with live minutes, traffic delay, distance and arrival time. Places are added by address search and stored **only in this browser**
+- **Traffic near me** (right column): up to 6 incidents within about 10 miles, most severe first, with road, from → to, delay and distance
+- **Nearest charger:** the closest Tesla charger (or CCS if there's none), with distance, drive time and speed; tap for directions
+- Refreshes every 3 minutes while the page is visible; it pauses while the screen is off or the tab is hidden, and refreshes on return if the data is stale
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant F as api function (via CDN)
+    participant T as TomTom
+    Note over B: saved places come from localStorage
+    par every 3 min while visible
+        B->>F: GET /api/incidents?lat&lon
+        F->>T: Orbis traffic incidents (bbox ~32 km)
+        T-->>F: incidents
+        F-->>B: top 6 by severity, then distance
+    and
+        B->>F: GET /api/drive-times?lat&lon&to=…
+        F->>T: Orbis routing, one request per place (live traffic)
+        T-->>F: duration, delay, length
+        F-->>B: minutes, delay, miles per place
+    end
+```
+
+## News
+
+- Six categories: Headlines, Tech, Business, Science, Sports, Entertainment
+- Sources (no paywalls): NPR, PBS NewsHour, The Guardian, BBC, Ars Technica, Engadget, CNBC, Phys.org, ScienceDaily, CBS Sports, Yahoo Sports, Variety, Deadline
+- The function fetches a category's 3–4 feeds in parallel, merges them newest first, removes duplicates, and keeps at most 4 per source and 10 in total. If one feed fails the others still show
+- Thumbnail URLs from NPR, Variety, Deadline and CBS Sports are rewritten to request 240 px images; thumbnails lazy-load
+
+```mermaid
+flowchart LR
+    req["GET /api/news?category=sports"] --> fetch["Fetch the category's feeds<br/>in parallel"]
+    fetch --> parse["Parse RSS / Atom<br/>(fast-xml-parser)"]
+    parse --> merge["Merge newest first<br/>de-duplicate"]
+    merge --> cap["Max 4 per source<br/>10 total"]
+    cap --> thumb["Resize thumbnails<br/>where the host supports it"]
+    thumb --> resp["JSON, CDN-cached 15 min"]
+```
+
+## Places
+
+- Six categories with search radii tuned to how dense each type is: Food 5 km, Charging 16 km, Hotels 8 km, Shopping 4 km, Fun 5 km, Services 4 km (definitions in `src/shared/placeCategories.js`). No Gas: this is an EV app
+- Five results in a 2×3 grid; the first card is featured and spans two rows. Tapping a card opens Google Maps directions
+- **Every card:** name, type, street address, distance and drive time, open/closed (when OpenStreetMap has hours), brand logo or monogram
+- **Chargers:** plug types (Tesla, CCS, CHAdeMO, J1772), maximum kW and stall count, plus Free / Customers only / network chips. Sorted Tesla plug → CCS → unknown → other plugs, then by distance
+- **Hotels:** star rating and room count when available
+- Opening hours are evaluated in the browser, because the function runs in UTC
+- Attribution: Powered by Geoapify · © OpenStreetMap contributors · ODbL
+
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant F as api function (via CDN)
+    participant G as Geoapify
+    participant O as OSRM
+    participant W as Wikidata
+    B->>F: GET /api/places?lat&lon&cat=charging
+    F->>G: places in radius (raw OSM tags)
+    G-->>F: up to 40 features
+    F->>O: /table drive times for the 20 nearest
+    O-->>F: durations
+    F-->>B: 20 candidates with trimmed tags + ETA
+    Note over B: evaluate hours, drop closed,<br/>rank chargers, keep 5
+    B->>W: brand logo (cached 30 days)
+```
+
+## Data model
+
+There is no database. User data lives only in the visitor's browser, so nothing personal is stored on the server.
+
+| localStorage key | Contents | Written by |
 |---|---|---|
-| `/api/weather?lat&lon` | OpenWeather current + forecast | 10 min |
-| `/api/geocode?zip` | OpenWeather zip geocoding | 30 days |
-| `/api/news?category` | Free-to-read RSS feeds for Headlines, Tech, Business, Science, Sports and Entertainment (NPR, PBS NewsHour, The Guardian, BBC, Ars Technica, Engadget, CNBC, Phys.org, ScienceDaily, CBS Sports, Yahoo Sports, Variety, Deadline) | 15 min |
-| `/api/places?lat&lon&cat` | Geoapify Places (OpenStreetMap data) + OSRM drive times | 10 min |
-| `/api/incidents?lat&lon` | TomTom Traffic Incidents (~10 mi around you) | 2 min |
-| `/api/drive-times?lat&lon&to` | TomTom Routing with live traffic, to up to 5 saved places | 2 min |
-| `/api/search?text` | Geoapify address autocomplete (adding saved places) | 1 day |
+| `tesla.savedPlaces.v1` | Up to 5 saved places: `{ id, label, address, lat, lon }` | Traffic card |
+| `tesla.lastLocation.v1` | Last location set: `{ lat, lon, label }` (4 dp) | Location (GPS or zip code) |
+| `tesla-theme` | `light` or `dark` | Theme toggle |
+| `wd_brand_{qid}` | Wikidata brand logo URL, 30-day expiry | Places |
+
+Server-side caching is entirely Netlify CDN entries keyed by each route's query parameters (see [API routes](#api-routes)).
+
+## Infrastructure and configuration
+
+| Piece | Role | Status |
+|---|---|---|
+| Netlify site `teslaweather` | Static hosting, CDN, function runtime | Live |
+| `api` Netlify Function | `/api/*` proxy; rate limit 120 requests / 60 s per IP | Live |
+| OpenWeather | Weather and zip geocoding | Free plan |
+| Geoapify | Places and address search | Free plan |
+| TomTom | Traffic incidents and routing (key needs **Traffic API** and **Routing API** enabled) | Free plan |
+| OSRM, Wikidata, RSS feeds | Drive times to places, logos, news | Public, no key |
 
 ### Environment variables
 
-| Variable | Where | Secret | Purpose |
-|---|---|---|---|
-| `OPENWEATHER_API_KEY` | Netlify (Functions scope, all deploy contexts) + local `.env` | Yes | OpenWeather API key |
-| `GEOAPIFY_API_KEY` | Netlify (Functions scope, all deploy contexts) + local `.env` | Yes | Geoapify Places + address search key |
-| `TOMTOM_API_KEY` | Netlify (Functions scope, all deploy contexts) + local `.env` | Yes | TomTom traffic incidents + routing key |
-| `VITE_DEFAULT_LAT` / `VITE_DEFAULT_LON` | Build | No | Fallback location (Boston) when GPS is unavailable |
+| Variable | Used by | Secret |
+|---|---|---|
+| `OPENWEATHER_API_KEY` | `/api/weather`, `/api/geocode` | Yes |
+| `GEOAPIFY_API_KEY` | `/api/places`, `/api/search` | Yes |
+| `TOMTOM_API_KEY` | `/api/incidents`, `/api/drive-times` | Yes |
+| `VITE_DEFAULT_LAT`, `VITE_DEFAULT_LON` | Browser build: fallback location (Boston) | No |
 
-In Netlify, mark all three keys as **Contains secret values** and give them a value in every deploy context (draft and preview deploys use the Deploy Previews context). Netlify's
-secrets scanning then fails any build that leaks it into `build/`. Never give a
-secret a `VITE_` prefix: Vite builds every `VITE_*` variable into the public bundle.
+In Netlify, set each secret with scope **Functions**, mark it **Contains secret values**, and give it a value in **every deploy context**: draft deploys run as Deploy Previews and get no value otherwise. Locally, `netlify dev` reads them from `.env` (template: `.env.example`). Never give a secret a `VITE_` prefix: Vite builds every `VITE_*` value into the public bundle.
 
-News uses free RSS feeds and needs no key. Get an OpenWeather key at
-[openweathermap.org/api](https://openweathermap.org/api) and a Geoapify key at
-[geoapify.com](https://www.geoapify.com/) (free plan).
-
-## 🛠️ Technologies Used
-
-### Core Framework
-- **React 18.3.1** - Modern React with hooks
-- **React Context** - State management for location and weather data
-
-### Styling & UI
-- **Tailwind CSS 3.4.17** - Utility-first CSS framework
-- **React Icons 5.5.0** - Icon library with Tesla-appropriate icons
-
-### APIs & Services
-- **OpenWeather API** - Weather data and geocoding
-- **RSS feeds** - News headlines (merged server-side)
-- **Geoapify Places + OSRM** - Nearby places (OpenStreetMap data) and drive times
-- **Netlify Functions + CDN** - Server-side API proxy with edge caching
-- **TomTom** - Traffic incidents and live-traffic routing
-- **Browser Geolocation** - GPS positioning
-
-### Build & Development
-- **Vite** - Build tooling and development server
-- **Netlify CLI** - Local functions (`netlify dev`)
-- **Vitest** - Unit tests for the API function (`npm test`)
-- **PostCSS & Autoprefixer** - CSS processing
-- **ESLint** - Code linting and formatting
-
-## 📁 Project Structure
+## Project structure
 
 ```
-tesla-app/
-├── public/
-│   ├── index.html
-│   └── favicon.ico
+TeslaApp/
+├── netlify/
+│   ├── functions/api.mjs        # /api/* router + rate limit
+│   └── lib/
+│       ├── http.mjs             # errors, JSON + cache headers, fetch timeout, validation
+│       ├── weather.mjs          # /api/weather, /api/geocode
+│       ├── news.mjs             # /api/news: feeds, RSS parsing, thumbnails
+│       ├── places.mjs           # /api/places: Geoapify + OSRM
+│       └── traffic.mjs          # /api/incidents, /api/drive-times, /api/search
 ├── src/
-│   ├── components/
-│   │   ├── LocationSelector.jsx    # Location input and current location
-│   │   ├── Weather.jsx             # Enhanced weather with forecasts
-│   │   ├── Traffic.jsx             # Traffic tab (location guard)
-│   │   ├── TrafficCard.jsx         # Drive times + traffic near me
-│   │   ├── News.jsx                # News feed with categories
-│   │   └── Places.jsx              # OpenStreetMap places integration
+│   ├── App.js                   # Tabs
+│   ├── index.js / index.css     # Entry point, theme tokens
+│   ├── api/client.js            # Browser client for /api/*
 │   ├── context/
-│   │   └── TeslaAppContext.js     # Global state management with forecast data
-│   ├── shared/
-│   │   └── Spinner.jsx            # Loading component
-│   ├── assets/                    # Images and static files
-│   ├── App.js                     # Tabbed interface main component
-│   ├── index.js                   # App entry point
-│   └── index.css                  # Global styles
-├── .env.example                   # Environment variables template
-├── package.json                   # Dependencies and scripts
-└── README.md                      # This file
+│   │   ├── TeslaAppContext.js   # Location + weather state
+│   │   └── ThemeContext.jsx     # Light/dark mode
+│   ├── components/
+│   │   ├── LocationSelector.jsx # Header: Change location, theme toggle
+│   │   ├── Weather.jsx
+│   │   ├── Traffic.jsx          # Location guard
+│   │   ├── TrafficCard.jsx      # Drive times, incidents, nearest charger
+│   │   ├── News.jsx
+│   │   └── Places.jsx
+│   └── shared/
+│       ├── placeCategories.js   # Category radii + Geoapify keys (shared with the function)
+│       ├── charging.js          # Charger plugs/kW/stalls (shared with the function)
+│       ├── savedPlaces.js       # Traffic saved places (localStorage)
+│       ├── savedLocation.js     # Last location (localStorage)
+│       └── Spinner.jsx
+├── tests/unit/
+│   ├── functions/api.test.mjs   # Routes, validation, caching, key-leak safety
+│   └── shared/charging.test.js
+├── docs/                        # Contributing, security notes, Places history
+├── public/                      # Icons, manifest
+├── netlify.toml                 # Build, functions, dev server, SPA redirect
+├── CHANGELOG.md
+└── CLAUDE.md                    # Instructions for Claude Code
 ```
 
-## 🎯 Tesla Integration
+## Local development
 
-### Original Purpose
-This app was designed as a homepage replacement for Tesla vehicle browsers, providing:
-- Location-aware weather without Tesla's built-in limitations
-- Real-time traffic conditions for trip planning
-- News updates during charging stops
-- Nearby amenities and points of interest
+Prerequisites: Node.js 20.19+ (or 22.12+), the Netlify CLI (`npm install -g netlify-cli`), and API keys in `.env` (`cp .env.example .env`). Commit hooks also need `brew install ggshield` and `ggshield auth login`.
 
-### Current Status
-- **⚠️ Tesla Browser Limitation**: Tesla has restricted geolocation API access in vehicle browsers
-- **✅ Works Perfectly**: On desktop, mobile, and tablet browsers
-- **🔄 Future Ready**: Prepared for potential Tesla browser updates
-
-### Usage in Tesla
-1. Connect to Tesla's WiFi or use Premium Connectivity
-2. Navigate to your deployed app URL
-3. Allow location permissions (when/if Tesla re-enables)
-4. Bookmark for easy access
-
-## 🚀 Deployment
-
-### 🌐 Live Demo
-**Access the app now: [https://teslaweather.netlify.app/](https://teslaweather.netlify.app/)**
-
-### Netlify (Recommended)
-1. Build the project: `npm run build`
-2. Deploy the `build` folder to Netlify
-3. Set environment variables in Netlify dashboard
-4. Custom domain optional
-
-### Vercel
-1. Connect GitHub repository to Vercel
-2. Add environment variables in Vercel dashboard  
-3. Auto-deploy on every commit
-
-### GitHub Pages
-1. Install gh-pages: `npm install --save-dev gh-pages`
-2. Add to package.json: `"homepage": "https://yourusername.github.io/tesla-app"`
-3. Deploy: `npm run build && npm run deploy`
-
-## 🎨 Customization
-
-### Tesla Theme Colors
-The app uses Tesla-inspired colors defined in Tailwind config:
-- **Tesla Red**: `#dc2626` - Primary brand color
-- **Dark Gray**: `#1a1a1a` - Background
-- **Light Gray**: `#9ca3af` - Secondary text
-
-### Layout Modifications
-Edit `src/App.js` to modify the tabbed interface:
-```javascript
-// Current layout: Single-tab interface with 4 tabs
-const tabs = [
-  { id: 'weather', name: 'Weather', icon: FiCloud, component: Weather },
-  { id: 'traffic', name: 'Traffic', icon: FiNavigation, component: Traffic },
-  { id: 'news', name: 'News', icon: FiRss, component: News },
-  { id: 'places', name: 'Places', icon: FiMapPin, component: Places }
-];
+```bash
+npm install          # also installs the Husky git hooks
+npm start            # netlify dev: app + /api on http://localhost:3000
+npm run dev:vite     # Vite only; /api routes won't respond
+npm test             # Vitest unit tests
+npm run lint         # ESLint
+npm run build        # production build to build/
 ```
 
-## 🔮 Roadmap
+## Deployment
 
-### Short Term (Next Release)
-- [ ] Google Places API integration for premium place data
-- [ ] Background auto-refresh for weather and places
-- [ ] Enhanced Tesla Supercharger location finder
-- [ ] Save favorite locations and preferences
+- Hosted on Netlify at [teslaweather.netlify.app](https://teslaweather.netlify.app/); every push to `main` builds and deploys to production
+- Netlify runs `npm run build`, publishes `build/`, and bundles `netlify/functions/` with esbuild
+- To test before production: `netlify deploy` creates a draft deploy with its own URL
+- Verify after a deploy: each `/api/*` route returns 200, and no API key string appears in the JavaScript files under `/assets/`
 
-### Medium Term
-- [ ] Tesla vehicle API integration (if available)
+## Observability
+
+| What | Where |
+|---|---|
+| Deploys and build logs | Netlify dashboard → Deploys |
+| Function logs (upstream errors, rejected keys) | Netlify dashboard → Logs → Functions |
+| CDN cache behaviour | `Cache-Status` response header (`"Netlify Durable"; hit`) |
+| API usage and quotas | OpenWeather, Geoapify and TomTom dashboards |
+| Dependency alerts | GitHub Dependabot |
+
+## Known constraints
+
+- **Tesla browser geolocation:** GPS is often blocked in the car, so the app relies on the saved location or a zip code
+- **TomTom free tier:** about 2,500 requests a day. Each traffic refresh costs 1 incidents call plus 1 routing call per saved place
+- **OpenStreetMap coverage:** opening hours, addresses and charger details are only as complete as the OSM data; places without hours show no open/closed pill
+- **No live charger availability:** OpenStreetMap has no stall-availability data
+- **Some thumbnails stay large:** Engadget, Yahoo Sports and PBS ignore resize parameters
+- **Bundle size:** about 184 KB gzipped app code plus 45 KB React (the `opening_hours` parser is a large share)
+- **Function 404s:** Netlify replaces a function's 404 body, so "location not found" is returned as 422
+
+## Roadmap
+
+Shipped work is listed in [CHANGELOG.md](CHANGELOG.md).
+
+- [ ] Rotate the OpenWeather key (it was committed to this public repo in 2022) and delete the unused `VITE_API_KEY`, `VITE_API_URL` and `VITE_DEFAULT_LAT` Netlify variables
+- [ ] Code-split `opening_hours` to shrink the initial bundle
 - [ ] Route planning with charging stops
-- [ ] Saved locations and preferences
-- [ ] Weather-aware range calculations
+- [ ] Offline mode
 
-### Long Term
-- [ ] Tesla owner community features
-- [ ] Integration with Tesla's in-car systems
-- [ ] Voice control compatibility
-- [ ] Offline mode support
+## Contributing and license
 
-## 🤝 Contributing
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) and [docs/SECURITY.md](docs/SECURITY.md). Licensed under the [MIT License](LICENSE). This is an unofficial project and is not affiliated with Tesla, Inc.
 
-Contributions are welcome! Here's how you can help:
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make your changes** and test thoroughly
-4. **Commit changes**: `git commit -m 'Add amazing feature'`
-5. **Push to branch**: `git push origin feature/amazing-feature`
-6. **Open a Pull Request**
-
-### Development Guidelines
-- Follow the existing code style and structure
-- Add comments for complex logic
-- Test on multiple devices and browsers
-- Update README if adding new features
-- Ensure build passes without warnings
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-**Location not working:**
-- Check browser permissions for location access
-- Verify GPS is enabled on device
-- Try entering zip code manually
-
-**Weather not loading:**
-- Verify OpenWeather API key in .env file
-- Check API key hasn't exceeded rate limits
-- Ensure internet connection is stable
-
-**News not updating:**
-- News comes from public RSS feeds; if one feed is down the others still load
-- Check if API key has reached daily limit
-- Try refreshing the component
-
-**Build warnings:**
-- Run `npm run build` to see specific issues
-- Most warnings are safe but should be addressed
-- Check ESLint configuration if needed
-
-## 📊 Performance
-
-### Optimization Features
-- **Smart Caching** - Weather and news data cached to reduce API calls
-- **Lazy Loading** - Components load only when needed
-- **Responsive Images** - Optimized for different screen sizes
-- **Minimal Bundle** - Only necessary dependencies included
-
-### Analytics
-- Built bundle size: ~76KB (gzipped)
-- Load time: <2 seconds on 3G
-- Lighthouse score: 95+ (Performance, Accessibility, Best Practices)
-- Touch-optimized for Tesla and mobile browsers
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **Tesla** - For inspiring the automotive technology revolution
-- **OpenWeather** - For reliable weather data APIs
-- **NPR, PBS NewsHour, The Guardian, BBC, Ars Technica, Engadget, CNBC, Phys.org, ScienceDaily, CBS Sports, Yahoo Sports, Variety, Deadline** - Free-to-read RSS news feeds
-- **React Community** - For excellent documentation and tools
-- **Tailwind CSS** - For the utility-first CSS framework
-
-## 📞 Support
-
-- **Issues**: Please use GitHub Issues for bug reports and feature requests
-- **Discussions**: Use GitHub Discussions for questions and ideas
-- **Email**: [your-email@domain.com](mailto:your-email@domain.com) for direct contact
-
----
-
-**⚡ Built with ❤️ for the Tesla community**
-
-*Note: This is an unofficial project and is not affiliated with Tesla, Inc.*
+_Maintained by John Xanthopoulos_

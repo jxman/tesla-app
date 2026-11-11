@@ -17,9 +17,9 @@ This project now features a modern tabbed interface with enhanced weather foreca
 2. Clone your fork: `git clone https://github.com/yourusername/tesla-app.git`
 3. Install dependencies: `npm install`
 4. Copy environment template: `cp .env.example .env`
-5. Add your API keys to `.env` (see PLACES_API_GUIDE.md for Places setup)
-6. Start development server: `npm start`
-7. Test on port 3002 for development: `PORT=3002 BROWSER=none npm start`
+5. Add your API keys to `.env` (OpenWeather, Geoapify, TomTom; see the README's [Infrastructure and configuration](../README.md#infrastructure-and-configuration))
+6. Install the Netlify CLI (`npm install -g netlify-cli`) and start the dev server: `npm start` (app + `/api` on port 3000)
+7. For commit hooks: `brew install ggshield` and `ggshield auth login`
 
 ### Making Changes
 1. Create a feature branch: `git checkout -b feature/amazing-feature`
@@ -27,12 +27,12 @@ This project now features a modern tabbed interface with enhanced weather foreca
 3. Test your changes thoroughly on multiple devices
 4. Test touch interactions for Tesla compatibility
 5. Update documentation if needed
-6. Ensure build passes without ESLint warnings: `npm run build`
+6. Ensure lint, tests and the build pass: `npm run lint`, `npm test`, `npm run build`
 7. Test tabbed navigation and component switching
 
 ### Pull Request Process
 1. Update README.md if you've added features
-2. Make sure all tests pass
+2. Make sure all tests pass (`npm test`) and use Conventional Commit messages (`feat:`, `fix:`, …), which the commit hook enforces
 3. Create pull request with clear description
 4. Link any related issues
 
@@ -51,42 +51,43 @@ This project now features a modern tabbed interface with enhanced weather foreca
 - Verify mobile and Tesla browser compatibility
 - Test touch interactions and drag scrolling
 - Test with and without location permissions
-- Validate API error handling for all APIs (Weather, News, Places)
+- Validate API error handling for all routes (Weather, News, Places, Traffic)
 - Test tabbed navigation switching
 - Verify forecast scrolling works on touch devices
 - Test with slow/intermittent network connections
 
 ## API Key Security
-- Never commit API keys to the repository
-- Use environment variables for all sensitive data (.env files)
-- Test with invalid/expired keys to ensure proper error handling
-- Follow Places API setup guide for proper key restrictions
-- Test the smart fallback system (Google Places → Foursquare → OpenStreetMap)
+- Never commit API keys; the `ggshield` pre-commit hook blocks commits containing secrets
+- Keys live only in the Netlify Function (`process.env`); never give a secret a `VITE_` prefix, because Vite builds those into the public bundle
+- Test with invalid/expired keys to ensure errors are generic and never include upstream URLs (which contain keys)
 
 ## Development Commands
 
 ### Essential Commands
-- **Development server**: `npm start` (port 3000)
-- **Testing server**: `PORT=3002 BROWSER=none npm start` (port 3002, no browser)
+- **Development server**: `npm start` (`netlify dev`, port 3000, includes `/api`)
+- **Second test server**: `netlify dev --port 3005 --target-port 5175 --command "npx vite --port 5175 --strictPort"`
 - **Production build**: `npm run build`
-- **Test build**: `npm test`
+- **Unit tests**: `npm test` (Vitest)
+- **Lint**: `npm run lint`
 
 ### Architecture Notes
 - **Tabbed Interface**: Single-tab navigation in App.js with state management
 - **Weather Component**: Enhanced with hourly/daily forecasts and drag scrolling
-- **Places Component**: OpenStreetMap integration with smart API fallback
+- **API layer**: one Netlify Function (`netlify/functions/api.mjs`) proxies every third-party service
+- **Places Component**: Geoapify Places (OpenStreetMap data) via `/api/places`
 - **Context**: TeslaAppContext manages location, weather, and forecast data
 
 ### Component Guidelines
 - Weather: Focus on forecast accuracy and touch interactions
 - Places: Ensure offline graceful degradation and location accuracy
-- Traffic: Maintain Waze integration while considering alternatives
+- Traffic: drive times, incidents and nearest charger via TomTom; keep refreshes paused while the page is hidden
 - News: Keep categorized feed with refresh functionality
 
 ## Questions?
 Open a GitHub Discussion or create an issue for any questions about contributing.
 
 ## Related Documentation
-- `PLACES_API_GUIDE.md` - Detailed Places API setup instructions
+- `PLACES_API_GUIDE.md` - Historical Places API comparison (superseded by Geoapify)
+- `../CHANGELOG.md` - Shipped work and design history
 - `CLAUDE.md` - Project-specific development guidelines
 - `README.md` - Complete project overview and setup
