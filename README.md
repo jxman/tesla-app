@@ -322,7 +322,7 @@ npm run build        # production build to build/
 | Function logs (upstream errors, rejected keys) | Netlify dashboard → Logs → Functions |
 | CDN cache behaviour | `Cache-Status` response header (`"Netlify Durable"; hit`) |
 | API usage and quotas | OpenWeather, Geoapify and TomTom dashboards |
-| Dependency alerts | GitHub Dependabot |
+| Dependency alerts and updates | GitHub Dependabot: security alerts + automated fix PRs; monthly version-update PRs (`.github/dependabot.yml`) |
 
 ## Known constraints
 

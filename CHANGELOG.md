@@ -53,6 +53,7 @@ Shipped work for the Tesla Dashboard, oldest first. For how the system works tod
 - **Traffic refresh pauses** while the page is hidden or the screen is off, and refreshes on return if the data is stale; saves TomTom quota
 - **Nearest charger on the Traffic tab:** the closest Tesla (or CCS) charger with distance, drive time and speed, one tap to directions
 - **Smaller News thumbnails:** NPR, Variety, Deadline and CBS Sports images are requested at 240 px wide (0.2–1.8 MB → 11–27 KB each); thumbnails lazy-load
+- Dependabot version updates: one monthly PR for npm patch/minor updates, separate PRs for major upgrades; removed the outdated `scripts/update-dependencies.sh`, which pinned old versions
 - Patch updates (commitlint, Vite 7.3.8, PostCSS, Autoprefixer, globals, user-event) and a `minimatch` advisory fix in ESLint's dependencies
 
 ## Design history
