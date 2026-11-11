@@ -107,6 +107,32 @@ function imageOf(item) {
   return html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? null;
 }
 
+// Thumbnails render at 80×64 CSS px; 240 px wide stays sharp on high-density
+// screens. Hosts below resize by URL (verified: 0.2–1.8 MB → 20–35 KB). Others
+// (Engadget, Yahoo, PBS) ignore resize parameters, so their URLs are untouched.
+const THUMB_WIDTH = 240;
+
+export function thumbnailUrl(raw) {
+  if (!raw) return raw;
+  let u;
+  try {
+    u = new URL(raw);
+  } catch {
+    return raw;
+  }
+  const host = u.hostname;
+  if (host === "npr.brightspotcdn.com" && /\/resize\/[^/]+\//.test(u.pathname)) {
+    u.pathname = u.pathname.replace(/\/resize\/[^/]+\//, `/resize/${THUMB_WIDTH}/`);
+  } else if (/(^|\.)(variety|deadline)\.com$/.test(host) && u.pathname.startsWith("/wp-content/")) {
+    u.searchParams.set("w", String(THUMB_WIDTH));
+  } else if (host === "sportshub.cbsistatic.com") {
+    u.searchParams.set("width", String(THUMB_WIDTH));
+  } else {
+    return raw;
+  }
+  return u.toString();
+}
+
 /** Parses one RSS 2.0 or Atom document into normalized articles. */
 export function parseFeed(xml, source) {
   const doc = parser.parse(xml);
@@ -119,7 +145,7 @@ export function parseFeed(xml, source) {
       return {
         title,
         url,
-        imageUrl: safeHttpUrl(imageOf(item)),
+        imageUrl: thumbnailUrl(safeHttpUrl(imageOf(item))),
         source,
         publishedAt: Number.isNaN(date.getTime()) ? null : date.toISOString(),
       };

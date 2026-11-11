@@ -3,6 +3,7 @@ import handler from "../../../netlify/functions/api.mjs";
 import { parseFeed, mergeArticles, safeHttpUrl } from "../../../netlify/lib/news.mjs";
 import { selectCandidates, buildGeoapifyUrl, featureToElement } from "../../../netlify/lib/places.mjs";
 import { summarizeRoute } from "../../../netlify/lib/traffic.mjs";
+import { thumbnailUrl } from "../../../netlify/lib/news.mjs";
 import { PLACE_CATEGORIES } from "../../../src/shared/placeCategories.js";
 
 const call = (path, init) => handler(new Request(`https://example.test${path}`, init));
@@ -291,5 +292,21 @@ describe("traffic card routes", () => {
     const resp = await call("/api/incidents?lat=42.36&lon=-71.04");
     expect(resp.status).toBe(500);
     expect((await resp.json()).error).toMatch(/not configured/);
+  });
+});
+
+describe("thumbnailUrl", () => {
+  it("asks resizing hosts for a 240 px image", () => {
+    expect(thumbnailUrl("https://npr.brightspotcdn.com/dims3/default/strip/false/crop/8054x5369+0+0/resize/8054x5369!/quality/85/format/webp/x.jpg"))
+      .toBe("https://npr.brightspotcdn.com/dims3/default/strip/false/crop/8054x5369+0+0/resize/240/quality/85/format/webp/x.jpg");
+    expect(thumbnailUrl("https://variety.com/wp-content/uploads/2026/11/a.jpg")).toBe("https://variety.com/wp-content/uploads/2026/11/a.jpg?w=240");
+    expect(thumbnailUrl("https://deadline.com/wp-content/uploads/a.jpg?w=1024")).toBe("https://deadline.com/wp-content/uploads/a.jpg?w=240");
+    expect(thumbnailUrl("https://sportshub.cbsistatic.com/i/2026/x.jpg")).toBe("https://sportshub.cbsistatic.com/i/2026/x.jpg?width=240");
+  });
+
+  it("leaves other hosts and bad input alone", () => {
+    expect(thumbnailUrl("https://media.zenfs.com/en/a.jpg")).toBe("https://media.zenfs.com/en/a.jpg");
+    expect(thumbnailUrl("https://evil-variety.com/wp-content/a.jpg")).toBe("https://evil-variety.com/wp-content/a.jpg");
+    expect(thumbnailUrl(null)).toBeNull();
   });
 });

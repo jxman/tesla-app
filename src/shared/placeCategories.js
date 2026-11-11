@@ -8,7 +8,7 @@
 
 export const PLACE_CATEGORIES = [
   {
-    id: "restaurants", radius: 2000,
+    id: "restaurants", radius: 5000,
     geoapify: [
       "catering.restaurant", "catering.fast_food", "catering.cafe", "catering.bar",
       "catering.pub", "catering.food_court", "catering.ice_cream",

@@ -1,9 +1,13 @@
 import { createContext, useState, useEffect, useCallback } from "react";
 import { getWeather, geocodeZip } from "../api/client";
+import { loadLastLocation, storeLastLocation } from "../shared/savedLocation";
 
 // Not secrets: just the fallback map position when geolocation is unavailable.
 const DEFAULT_LAT = parseFloat(import.meta.env.VITE_DEFAULT_LAT) || 42.364506;
 const DEFAULT_LON = parseFloat(import.meta.env.VITE_DEFAULT_LON) || -71.038887;
+
+// GPS can stall in some browsers; give up and use the saved/default location.
+const GPS_OPTIONS = { timeout: 10000, maximumAge: 5 * 60 * 1000 };
 
 const TeslaAppContext = createContext();
 
@@ -33,24 +37,29 @@ export const TeslaAppProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    const fallbackToDefault = (error) => {
+    // No GPS: use the last location the user set, then the Boston default
+    const fallbackToSaved = (error) => {
       if (error) console.log('Geolocation error:', error);
-      setLat(DEFAULT_LAT);
-      setLong(DEFAULT_LON);
-      setCurrentLocation('Boston, MA');
-      fetchWeatherByCoords({ latitude: DEFAULT_LAT, longitude: DEFAULT_LON });
+      const saved = loadLastLocation();
+      const latitude = saved?.lat ?? DEFAULT_LAT;
+      const longitude = saved?.lon ?? DEFAULT_LON;
+      setLat(latitude);
+      setLong(longitude);
+      setCurrentLocation(saved ? saved.label || 'Saved location' : 'Boston, MA');
+      fetchWeatherByCoords({ latitude, longitude });
     };
 
     if (!navigator.geolocation) {
-      fallbackToDefault();
+      fallbackToSaved();
       return;
     }
     navigator.geolocation.getCurrentPosition(({ coords }) => {
       setLat(coords.latitude);
       setLong(coords.longitude);
       setCurrentLocation('Current Location');
+      storeLastLocation({ lat: coords.latitude, lon: coords.longitude, label: null });
       fetchWeatherByCoords(coords);
-    }, fallbackToDefault);
+    }, fallbackToSaved, GPS_OPTIONS);
   }, [fetchWeatherByCoords]);
 
   const searchByZipCode = async (zipCode) => {
@@ -60,6 +69,7 @@ export const TeslaAppProvider = ({ children }) => {
       setLat(geo.lat);
       setLong(geo.lon);
       setCurrentLocation(`${geo.name}, ${geo.country}`);
+      storeLastLocation({ lat: geo.lat, lon: geo.lon, label: `${geo.name}, ${geo.country}` });
       await fetchWeatherByCoords({ latitude: geo.lat, longitude: geo.lon });
     } catch (error) {
       console.error('Zip code search error:', error);
@@ -80,13 +90,15 @@ export const TeslaAppProvider = ({ children }) => {
         setLat(coords.latitude);
         setLong(coords.longitude);
         setCurrentLocation('Current Location');
+        storeLastLocation({ lat: coords.latitude, lon: coords.longitude, label: null });
         await fetchWeatherByCoords(coords);
       },
       (error) => {
         console.log('Geolocation error:', error);
         setCurrentLocation('Location access denied');
         setIsLoading(false);
-      }
+      },
+      GPS_OPTIONS
     );
   };
 

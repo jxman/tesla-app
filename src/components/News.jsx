@@ -293,6 +293,10 @@ function News() {
                     <img
                       src={DOMPurify.sanitize(article.safeImageUrl, { ALLOWED_URI_REGEXP: /^https?:\/\// })}
                       alt=""
+                      width={80}
+                      height={64}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
                       onError={(e) => { e.target.parentElement.style.display = 'none'; }}
