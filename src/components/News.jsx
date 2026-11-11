@@ -1,9 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { FiFileText, FiCpu, FiTrendingUp, FiActivity, FiRefreshCw, FiAlertTriangle } from "react-icons/fi";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { FiFileText, FiCpu, FiTrendingUp, FiActivity, FiAward, FiFilm, FiRefreshCw, FiAlertTriangle } from "react-icons/fi";
 import DOMPurify from "dompurify";
-
-const NEWS_API_KEY = import.meta.env.VITE_NEWS_API_KEY;
-const NEWS_API_URL = import.meta.env.VITE_NEWS_API_URL;
+import { getNews } from "../api/client";
 
 function News() {
   const [isLoading, setIsLoading] = useState(true);
@@ -12,81 +10,47 @@ function News() {
   // Sanitized articles with XSS-safe URLs (validated at fetch time)
   // Prevents XSS (CWE-79) and Open Redirect (CWE-601) attacks
   const [sanitizedArticles, setSanitizedArticles] = useState([]);
+  // Only the newest request may update state: when categories are tapped
+  // quickly, an older, slower response must not overwrite a newer one.
+  const latestRequest = useRef(0);
 
   const categories = [
     { id: 'general',    name: 'Headlines', Icon: FiFileText   },
     { id: 'technology', name: 'Tech',      Icon: FiCpu        },
     { id: 'business',   name: 'Business',  Icon: FiTrendingUp },
     { id: 'science',    name: 'Science',   Icon: FiActivity   },
+    { id: 'sports',        name: 'Sports',        Icon: FiAward },
+    { id: 'entertainment', name: 'Entertainment', Icon: FiFilm  },
   ];
 
-  // Fetch news articles - memoized to prevent infinite re-renders
+  // Fetch news articles (RSS feeds merged server-side by /api/news)
   const fetchNews = useCallback(async (selectedCategory = category) => {
-    // Debug logging for deployment
-    console.log('News API Debug:', {
-      NEWS_API_KEY: NEWS_API_KEY ? 'Present' : 'Missing',
-      NEWS_API_URL: NEWS_API_URL || 'Missing',
-      selectedCategory
-    });
-    
-    if (!NEWS_API_KEY) {
-      console.error('NEWS_API_KEY is not configured');
-      setError('News API key not configured');
-      setIsLoading(false);
-      return;
-    }
-
-    if (!NEWS_API_URL) {
-      console.error('NEWS_API_URL is not configured');
-      setError('News API URL not configured');
-      setIsLoading(false);
-      return;
-    }
-
+    const requestId = ++latestRequest.current;
+    const isStale = () => requestId !== latestRequest.current;
     setIsLoading(true);
     setError(null);
 
     try {
-      const apiUrl = `${NEWS_API_URL}/top-headlines?country=us&category=${selectedCategory}&pageSize=8&apiKey=${NEWS_API_KEY}`;
-      console.log('Fetching news from:', apiUrl.replace(NEWS_API_KEY, 'API_KEY_HIDDEN'));
-      
-      const response = await fetch(apiUrl);
-      
-      console.log('News API Response status:', response.status);
-      
-      const data = await response.json();
-      console.log('News API Response data:', data);
-      
-      if (!response.ok) {
-        throw new Error(data.message || `HTTP error! status: ${response.status}`);
-      }
-      
-      if (data.status === 'ok') {
-        const rawArticles = data.articles || [];
+      const { articles = [] } = await getNews(selectedCategory);
+      if (isStale()) return;
 
-        // Sanitize ALL article URLs immediately (prevents XSS and Open Redirect attacks)
-        // This breaks the taint chain from API response to DOM rendering
-        const sanitized = rawArticles.map(article => ({
-          ...article,
-          // Replace with pre-validated, security-safe URLs
-          safeUrl: sanitizeUrl(article.url),           // Prevents Open Redirect (CWE-601)
-          safeImageUrl: sanitizeImageUrl(article.urlToImage)  // Prevents XSS (CWE-79)
-        }));
+      // Sanitize ALL article URLs immediately (prevents XSS and Open Redirect attacks).
+      // The server already accepts only http(s) URLs; this is a second layer.
+      const sanitized = articles.map(article => ({
+        ...article,
+        source: { name: article.source },
+        safeUrl: sanitizeUrl(article.url),                // Prevents Open Redirect (CWE-601)
+        safeImageUrl: sanitizeImageUrl(article.imageUrl)  // Prevents XSS (CWE-79)
+      }));
 
-        // Filter out articles with invalid URLs (security requirement)
-        const validArticles = sanitized.filter(article => article.safeUrl !== null);
-        setSanitizedArticles(validArticles);
-
-        console.log('News articles loaded:', validArticles.length, 'of', rawArticles.length);
-      } else {
-        throw new Error(data.message || 'Failed to fetch news');
-      }
+      setSanitizedArticles(sanitized.filter(article => article.safeUrl !== null));
     } catch (err) {
+      if (isStale()) return;
       console.error('News fetch error:', err);
       setError(err.message);
       setSanitizedArticles([]);
     } finally {
-      setIsLoading(false);
+      if (!isStale()) setIsLoading(false);
     }
   }, [category]);
 
@@ -95,10 +59,9 @@ function News() {
     fetchNews();
   }, [fetchNews]);
 
-  // Handle category change
+  // Handle category change (the effect above refetches when `category` changes)
   const handleCategoryChange = (newCategory) => {
-    setCategory(newCategory);
-    fetchNews(newCategory);
+    if (newCategory !== category) setCategory(newCategory);
   };
 
   // Handle refresh
@@ -110,9 +73,12 @@ function News() {
   const timeAgo = (dateString) => {
     const now = new Date();
     const articleDate = new Date(dateString);
-    const diffInHours = Math.floor((now - articleDate) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
+    const diffInMinutes = Math.floor((now - articleDate) / (1000 * 60));
+    const diffInHours = Math.floor(diffInMinutes / 60);
+
+    if (Number.isNaN(diffInMinutes)) return '';
+    if (diffInMinutes < 5) return 'Just now';
+    if (diffInHours < 1) return `${diffInMinutes} min ago`;
     if (diffInHours === 1) return '1 hour ago';
     if (diffInHours < 24) return `${diffInHours} hours ago`;
     
@@ -261,27 +227,27 @@ function News() {
     <div className="h-full flex flex-col gap-4">
       {/* Category tabs + refresh */}
       <div className="flex items-center gap-3 flex-shrink-0">
-        <div className="grid grid-cols-4 gap-2 flex-1">
+        <div className="grid grid-cols-6 gap-2 flex-1 min-w-0">
           {categories.map(({ id, name, Icon }) => (
             <button
               key={id}
               onClick={() => handleCategoryChange(id)}
-              className={`h-14 flex items-center justify-center gap-2.5 rounded-xl font-medium text-base transition-all ${
+              className={`h-16 min-w-0 px-1 flex flex-col items-center justify-center gap-1 rounded-xl font-medium text-[clamp(11px,1.6vw,15px)] transition-all ${
                 category === id
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-lg'
                   : 'bg-gray-100 dark:bg-gray-700/60 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
               tabIndex="0"
             >
-              <Icon className="w-5 h-5" />
-              <span>{name}</span>
+              <Icon className="w-5 h-5 flex-shrink-0" />
+              <span className="truncate max-w-full">{name}</span>
             </button>
           ))}
         </div>
         <button
           onClick={handleRefresh}
           disabled={isLoading}
-          className="h-14 w-14 flex items-center justify-center bg-gray-100 dark:bg-gray-700/60 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600/50 rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
+          className="h-16 w-14 flex items-center justify-center bg-gray-100 dark:bg-gray-700/60 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600/50 rounded-xl transition-all disabled:opacity-40 flex-shrink-0"
           title="Refresh"
         >
           <FiRefreshCw className={`w-5 h-5 text-gray-500 dark:text-gray-400 ${isLoading ? 'animate-spin' : ''}`} />
@@ -329,7 +295,6 @@ function News() {
                       alt=""
                       className="w-full h-full object-cover"
                       referrerPolicy="no-referrer"
-                      crossOrigin="anonymous"
                       onError={(e) => { e.target.parentElement.style.display = 'none'; }}
                     />
                   </div>

@@ -2,6 +2,21 @@
   command = "npm run build"
   publish = "build"
 
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+# `npm start` runs `netlify dev`: it serves the app on port 3000, proxies Vite
+# (on 5173), runs /api/* functions locally and loads keys from .env.
+[dev]
+  framework = "#custom"
+  command = "vite --port 5173 --strictPort"
+  targetPort = 5173
+  port = 3000
+  autoLaunch = false
+
+# SPA fallback. /api/* is served by netlify/functions/api.mjs (config.path),
+# which takes precedence over this rule.
 [[redirects]]
   from = "/*"
   to = "/index.html"

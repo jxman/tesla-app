@@ -13,8 +13,8 @@ A modern React-based dashboard with tabbed navigation designed for Tesla vehicle
 
 ### ✅ Currently Working
 - **🌤️ Enhanced Weather** - 12-hour and 10-day forecasts with horizontal scrolling, drag/touch support
-- **📰 Live News Feed** - Categorized news (Headlines, Tech, Business, Science) with refresh functionality  
-- **🚗 Traffic Conditions** - Live traffic view via Waze integration with current location
+- **📰 Live News Feed** - Categorized news (Headlines, Tech, Business, Science, Sports, Entertainment) from free-to-read RSS feeds, with refresh  
+- **🚗 Traffic Conditions** - Live drive times (with arrival times) to your saved places, plus traffic incidents near you (TomTom)
 - **🗺️ Places Integration** - OpenStreetMap-based nearby places with 7 categories and real location data
 - **📱 Tabbed Interface** - Single-tab navigation optimized for Tesla touchscreens
 - **📍 Location Services** - GPS location detection with zip code fallback search
@@ -51,11 +51,12 @@ A modern React-based dashboard with tabbed navigation designed for Tesla vehicle
    ```bash
    cp .env.example .env
    ```
-   Edit `.env` with your API keys (see Configuration section below)
+   Add your OpenWeather key to `.env` (see Configuration below)
 
-4. **Start development server**
+4. **Start development server** (needs the Netlify CLI: `npm install -g netlify-cli`)
    ```bash
-   npm start
+   npm start          # netlify dev: app + /api functions on http://localhost:3000
+   npm run dev:vite   # Vite only, no /api (weather, news and places won't load)
    ```
 
 5. **Build for production**
@@ -65,42 +66,36 @@ A modern React-based dashboard with tabbed navigation designed for Tesla vehicle
 
 ## ⚙️ Configuration
 
-### Required API Keys
+API keys never reach the browser. The React app calls its own `/api/*` endpoints
+(one Netlify Function, `netlify/functions/api.mjs`). The function holds the keys,
+calls the third-party APIs server-side, and the Netlify CDN caches its responses.
 
-Create a `.env` file in the root directory with the following:
+| Endpoint | Upstream | CDN cache |
+|---|---|---|
+| `/api/weather?lat&lon` | OpenWeather current + forecast | 10 min |
+| `/api/geocode?zip` | OpenWeather zip geocoding | 30 days |
+| `/api/news?category` | Free-to-read RSS feeds for Headlines, Tech, Business, Science, Sports and Entertainment (NPR, PBS NewsHour, The Guardian, BBC, Ars Technica, Engadget, CNBC, Phys.org, ScienceDaily, CBS Sports, Yahoo Sports, Variety, Deadline) | 15 min |
+| `/api/places?lat&lon&cat` | Geoapify Places (OpenStreetMap data) + OSRM drive times | 10 min |
+| `/api/incidents?lat&lon` | TomTom Traffic Incidents (~10 mi around you) | 2 min |
+| `/api/drive-times?lat&lon&to` | TomTom Routing with live traffic, to up to 5 saved places | 2 min |
+| `/api/search?text` | Geoapify address autocomplete (adding saved places) | 1 day |
 
-```env
-# OpenWeather API (for weather data)
-REACT_APP_API_URL=https://api.openweathermap.org/data/2.5
-REACT_APP_API_KEY=your_openweather_api_key_here
+### Environment variables
 
-# News API (for news feed)
-REACT_APP_NEWS_API_KEY=your_news_api_key_here
-REACT_APP_NEWS_API_URL=https://newsapi.org/v2
+| Variable | Where | Secret | Purpose |
+|---|---|---|---|
+| `OPENWEATHER_API_KEY` | Netlify (Functions scope, all deploy contexts) + local `.env` | Yes | OpenWeather API key |
+| `GEOAPIFY_API_KEY` | Netlify (Functions scope, all deploy contexts) + local `.env` | Yes | Geoapify Places + address search key |
+| `TOMTOM_API_KEY` | Netlify (Functions scope, all deploy contexts) + local `.env` | Yes | TomTom traffic incidents + routing key |
+| `VITE_DEFAULT_LAT` / `VITE_DEFAULT_LON` | Build | No | Fallback location (Boston) when GPS is unavailable |
 
-# Default location (Boston coordinates)
-REACT_APP_DEFAULT_LAT=42.364506
-REACT_APP_DEFAULT_LON=-71.038887
-```
+In Netlify, mark all three keys as **Contains secret values** and give them a value in every deploy context (draft and preview deploys use the Deploy Previews context). Netlify's
+secrets scanning then fails any build that leaks it into `build/`. Never give a
+secret a `VITE_` prefix: Vite builds every `VITE_*` variable into the public bundle.
 
-### How to Get API Keys
-
-1. **OpenWeather API** (Free)
-   - Visit [OpenWeatherMap](https://openweathermap.org/api)
-   - Sign up for free account
-   - Get API key from dashboard
-
-2. **News API** (Free tier available)
-   - Visit [NewsAPI](https://newsapi.org/)
-   - Register for free account
-   - Copy API key
-
-### Optional: Google Maps Integration
-For enhanced maps and places features:
-```env
-# Google Maps API (for enhanced maps and places)
-REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
-```
+News uses free RSS feeds and needs no key. Get an OpenWeather key at
+[openweathermap.org/api](https://openweathermap.org/api) and a Geoapify key at
+[geoapify.com](https://www.geoapify.com/) (free plan).
 
 ## 🛠️ Technologies Used
 
@@ -114,12 +109,16 @@ REACT_APP_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 
 ### APIs & Services
 - **OpenWeather API** - Weather data and geocoding
-- **News API** - Real-time news feeds
-- **Waze Embed** - Live traffic conditions
+- **RSS feeds** - News headlines (merged server-side)
+- **Geoapify Places + OSRM** - Nearby places (OpenStreetMap data) and drive times
+- **Netlify Functions + CDN** - Server-side API proxy with edge caching
+- **TomTom** - Traffic incidents and live-traffic routing
 - **Browser Geolocation** - GPS positioning
 
 ### Build & Development
-- **Create React App** - Build tooling and development server
+- **Vite** - Build tooling and development server
+- **Netlify CLI** - Local functions (`netlify dev`)
+- **Vitest** - Unit tests for the API function (`npm test`)
 - **PostCSS & Autoprefixer** - CSS processing
 - **ESLint** - Code linting and formatting
 
@@ -134,7 +133,8 @@ tesla-app/
 │   ├── components/
 │   │   ├── LocationSelector.jsx    # Location input and current location
 │   │   ├── Weather.jsx             # Enhanced weather with forecasts
-│   │   ├── Traffic.jsx             # Waze traffic integration
+│   │   ├── Traffic.jsx             # Traffic tab (location guard)
+│   │   ├── TrafficCard.jsx         # Drive times + traffic near me
 │   │   ├── News.jsx                # News feed with categories
 │   │   └── Places.jsx              # OpenStreetMap places integration
 │   ├── context/
@@ -264,7 +264,7 @@ Contributions are welcome! Here's how you can help:
 - Ensure internet connection is stable
 
 **News not updating:**
-- Confirm News API key is valid
+- News comes from public RSS feeds; if one feed is down the others still load
 - Check if API key has reached daily limit
 - Try refreshing the component
 
@@ -295,7 +295,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Tesla** - For inspiring the automotive technology revolution
 - **OpenWeather** - For reliable weather data APIs
-- **NewsAPI** - For comprehensive news coverage
+- **NPR, PBS NewsHour, The Guardian, BBC, Ars Technica, Engadget, CNBC, Phys.org, ScienceDaily, CBS Sports, Yahoo Sports, Variety, Deadline** - Free-to-read RSS news feeds
 - **React Community** - For excellent documentation and tools
 - **Tailwind CSS** - For the utility-first CSS framework
 

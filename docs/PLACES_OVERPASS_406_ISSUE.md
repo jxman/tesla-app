@@ -1,6 +1,6 @@
 # Places tab: Overpass API blocking browser requests (406 / "Failed to fetch")
 
-**Status:** Open — root cause confirmed, fix identified, not yet implemented (deferred by request 2026-08-23).
+**Status:** Resolved 2026-11-11 by switching Places to the Geoapify Places API (server-side, `netlify/lib/places.mjs`). Overpass is no longer used. Kept for history.
 
 ## Summary
 
@@ -67,11 +67,24 @@ Add a small **Netlify serverless function** (`netlify/functions/overpass.js`) th
 
 ## Next steps
 
-- [ ] Implement `netlify/functions/overpass.js` proxy
-- [ ] Point `Places.jsx`'s `fetchFromOverpass` at the new function
-- [ ] Verify locally with `netlify dev`
+- [x] Implement the proxy (`netlify/lib/places.mjs`, routed by `netlify/functions/api.mjs`)
+- [x] Point `Places.jsx` at `/api/places`
+- [x] Verify locally with `netlify dev`
 - [ ] Deploy and verify against the live site
-- [ ] Optionally re-check `overpass.kumi.systems` as a documented secondary mirror inside the proxy function
+- [x] Add `overpass.private.coffee` and `overpass.kumi.systems` as fallback mirrors
+
+## Update 2026-11-11
+
+Server-side tests from a residential IP using `TeslaDashboard/1.0 (+https://github.com/jxman/tesla-app)`:
+- `overpass-api.de` returned **406, 502 or timed out**, including requests with curl's default User-Agent, which returned 200 in August
+- `overpass.private.coffee`, `overpass.kumi.systems` and `maps.mail.ru` **timed out** (>15 s)
+
+The proxy finishes within its 7.5 s budget and returns a retryable 503, which the UI shows as "Places Unavailable". If this persists from Netlify's servers after deploy, the next step is a keyed POI provider (e.g. Geoapify Places, built on OSM data with a free tier). The key would live in the function like `OPENWEATHER_API_KEY`.
 
 ---
 *Investigated 2026-08-23.*
+
+
+## Resolution 2026-11-11
+
+Overpass also failed from Netlify's servers: a draft deploy logged `overpass-api.de` HTTP 502 and `overpass.private.coffee` timeouts. Places now uses the **Geoapify Places API**, which serves OpenStreetMap data with an API key held in the function (`GEOAPIFY_API_KEY`). Geoapify includes each place's raw OSM tags (`datasource.raw`), so opening hours, `brand:wikidata` logos and attribute chips work as before.

@@ -32,9 +32,10 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 **Key Features:**
 - **Tabbed Navigation**: 4-tab interface (Weather, Traffic, News, Places) with Feather icon labels and white-pill active state
 - **Enhanced Weather**: Option B hero — insight cards (What to Expect, Driving) derived from live forecast data + 12-hour temperature sparkline; react-icons/wi weather icons (per-condition colors); 10-day forecast
-- **Real Places Integration**: OpenStreetMap Overpass + OSRM — 2×3 image-grid layout (featured card spans 2 rows), 6 EV-specific categories (no Gas), opening hours parsing, brand panel with Wikidata logo lookup, attribute chips, OSM attribution
-- **Live News Feed**: Categorized content (Headlines, Tech, Business, Science) with headline rows and DOMPurify-sanitized thumbnails
-- **Traffic Conditions**: Waze iframe integration clipping vendor chrome
+- **Real Places Integration**: Geoapify Places (OpenStreetMap data) + OSRM — 2×3 image-grid layout (featured card spans 2 rows), 6 EV-specific categories (no Gas), opening hours parsing, brand panel with Wikidata logo lookup, attribute chips, OSM attribution
+- **Live News Feed**: 6 categories (Headlines, Tech, Business, Science, Sports, Entertainment) from free-to-read RSS feeds merged server-side; stacked icon-over-label category buttons so 6 fit at Tesla width; headline rows with DOMPurify-sanitized thumbnails
+- **Server-side API layer**: one Netlify Function (`netlify/functions/api.mjs`, path `/api/*`) proxies OpenWeather, RSS, Geoapify and OSRM; keys stay server-side and the Netlify CDN caches responses
+- **Traffic Conditions**: full-width Traffic card (TomTom): drive times with arrival times to saved places (left column) + traffic near me (right column); no map embed
 - **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
 - **Light/Dark Mode**: Sun/moon toggle in header; preference persisted in localStorage; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
 - **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography; light mode uses `#f0f4f8` background
@@ -45,22 +46,22 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 This project uses **Vite** for fast development and optimized production builds. Migrated from Create React App to resolve security vulnerabilities and improve performance.
 
 ### Essential Commands
-- **Start development server**: `npm start` or `npm run dev` (runs on port 3000)
+- **Start development server**: `npm start` or `npm run dev` — runs `netlify dev` on port 3000 (proxies Vite on 5173 and serves `/api/*` functions; loads `.env`). Requires the global Netlify CLI (`npm install -g netlify-cli`)
+- **Vite only (no /api)**: `npm run dev:vite`
 - **Build for production**: `npm run build` (output: `build/`)
 - **Preview production build**: `npm run preview` (runs on port 4173)
-- **Run tests**: `npm test` (Vitest)
+- **Run tests**: `npm test` (Vitest, `tests/unit/`; `npm run test:watch` for watch mode)
 - **Lint**: `npm run lint` (ESLint; also runs on staged files at commit time)
 
 ### Development Testing Protocol
 **For Claude Code development assistance:**
 - **User's server**: Always runs on port 3000 (`http://localhost:3000`)
-- **Testing changes**: Use a free port with `npx vite --port 3005` (Vite ignores the `PORT` env var; use the `--port` flag directly)
+- **Testing changes**: `netlify dev --port 3005 --target-port 5175 --command "npx vite --port 5175 --strictPort"` (needs `OPENWEATHER_API_KEY` in `.env` or the shell). Plain `npx vite --port 3005` works for UI-only changes, but `/api/*` won't respond
 - **Always test compilation** before asking user to verify changes
 
-### Environment Variables (Vite)
-- **Prefix**: All environment variables must use `VITE_` prefix
-- **Access**: Use `import.meta.env.VITE_VARIABLE_NAME` (not `process.env`)
-- **Example**: `import.meta.env.VITE_API_KEY`
+### Environment Variables
+- **Secrets are server-side only**: `OPENWEATHER_API_KEY`, `GEOAPIFY_API_KEY` and `TOMTOM_API_KEY` are read by the Netlify Function via `process.env`. Never give a secret a `VITE_` prefix — Vite builds every `VITE_*` variable into the public bundle
+- **Public build-time settings** use the `VITE_` prefix and `import.meta.env.VITE_*` (only `VITE_DEFAULT_LAT`/`VITE_DEFAULT_LON` today)
 
 ### Performance Improvements from Vite Migration
 - **Dev server startup**: ~20-30s → ~150ms (100x+ faster)
@@ -73,9 +74,9 @@ This project uses **Vite** for fast development and optimized production builds.
 - **ESLint 9** flat config in `eslint.config.mjs` (`@eslint/js` recommended + `eslint-plugin-react` + `react-hooks` rules-of-hooks/exhaustive-deps). `.js` files in `src/` contain JSX, so JSX parsing is enabled for both extensions. No TypeScript.
 - **Run lint**: `npm run lint`
 - **Husky hooks** (installed by `npm install` via `"prepare": "husky"`):
-  - `.husky/pre-commit`: blocks unresolved merge-conflict markers → `gitleaks protect --staged` secret scan (requires `brew install gitleaks`; fails closed if missing) → `lint-staged` (`eslint --fix` on staged `*.{js,jsx,mjs}`)
+  - `.husky/pre-commit`: blocks unresolved merge-conflict markers → `ggshield secret scan pre-commit` secret scan (requires `brew install ggshield` + `ggshield auth login`; fails closed if missing) → `lint-staged` (`eslint --fix` on staged `*.{js,jsx,mjs}`)
   - `.husky/commit-msg`: `commitlint` enforces Conventional Commits (`feat:`, `fix:`, `chore(deps):` …)
-- **Testing the secret hook**: gitleaks allowlists keys ending in `EXAMPLE`, so `AKIAIOSFODNN7EXAMPLE` passes — use a throwaway fake of `AKIA` + 16 random characters from A–Z/2–7 (don't commit it — this hook will block it)
+- **Testing the secret hook**: stage a throwaway fake of `AKIA` + 16 random characters from A–Z/2–7 (don't commit it — this hook will block it). Obvious placeholder keys such as `AKIAIOSFODNN7EXAMPLE` may not be flagged
 
 ## Project Architecture
 
@@ -99,7 +100,8 @@ src/
 ├── components/
 │   ├── LocationSelector.jsx   # Header with search + sun/moon theme toggle
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
-│   ├── Traffic.jsx           # Waze traffic embed
+│   ├── Traffic.jsx           # Traffic tab: location guard + full-width TrafficCard
+│   ├── TrafficCard.jsx       # Drive times to saved places + nearby incidents
 │   ├── News.jsx             # News feed with categories
 │   └── Places.jsx           # OpenStreetMap places integration
 └── shared/
@@ -115,40 +117,30 @@ The app uses a modern tabbed interface:
 
 ### API Integration Patterns
 
-**Weather API (OpenWeather)**:
-- Context manages API calls and caching
-- Handles both GPS coordinates and zip code geocoding
-- Error states for API failures and invalid keys
-- Automatic retry functionality
+All third-party calls go through **one Netlify Function**, `netlify/functions/api.mjs` (`config.path = "/api/*"`), which routes to handlers in `netlify/lib/`. The browser calls it through `src/api/client.js` (`getWeather`, `geocodeZip`, `getNews`, `getPlaces`).
 
-**News API**:
-- Component-level state management
-- Category-based filtering (general, technology, business, science)
-- Local caching with refresh timestamps
-- Comprehensive error handling for API limits
+| Route | Handler | Upstream | CDN cache (`Netlify-CDN-Cache-Control: durable`) |
+|---|---|---|---|
+| `/api/weather?lat&lon` | `lib/weather.mjs` | OWM `/weather` + `/forecast` in parallel → `{ current, forecast }` | 10 min + 20 min SWR, vary `lat\|lon` |
+| `/api/geocode?zip[&country]` | `lib/weather.mjs` | OWM `geo/1.0/zip` | 30 days, vary `zip\|country` |
+| `/api/news?category` | `lib/news.mjs` | 3–4 free-to-read RSS/Atom feeds per category (`FEEDS`; no paywalled sources such as NYT), parsed with `fast-xml-parser`, merged, de-duplicated, max 4 per source, 10 total | 15 min + 30 min SWR, vary `category` |
+| `/api/incidents?lat&lon` | `lib/traffic.mjs` | TomTom Orbis v2 incident details (key in `TomTom-Api-Key` header, `Attributes` header selects fields), ~16 km bbox; ranked by severity then distance, top 6 | 2 min + 2 min SWR, vary `lat\|lon` |
+| `/api/drive-times?lat&lon&to=lat,lon;…` | `lib/traffic.mjs` | TomTom Orbis Routing v3 `POST routes/calculate` (`traffic: live`, `Attributes: routes.summary`, key in header; summary read via `summarizeRoute`, which accepts v3 and legacy field names), one call per destination (max 5); per-destination `{ error }` so one failure doesn't blank the card | 2 min + 2 min SWR, vary `lat\|lon\|to` |
+| `/api/search?text[&lat&lon]` | `lib/traffic.mjs` | Geoapify geocode autocomplete (for adding saved places) | 1 day, vary `text\|lat\|lon` |
+| `/api/places?lat&lon&cat` | `lib/places.mjs` | Geoapify Places v2 (`categories` + `filter=circle` + `bias=proximity`; raw OSM tags from `datasource.raw` mapped to the old Overpass-style element shape) + OSRM `/table` | 10 min + 20 min SWR, vary `lat\|lon\|cat` |
 
-**Traffic Integration**:
-- Embedded Waze iframe using current coordinates
-- Updates automatically when location changes
+- **Why one function**: Free/Starter Netlify plans allow only 2 code-based rate-limit rules per site; one function = one rule (`120 req / 60 s per IP`)
+- **Validation**: lat/lon range-checked and rounded server-side (2 dp weather, 3 dp places); `cat`/`category` checked against fixed lists; zip regex. Nothing user-supplied is passed through as a URL
+- **Errors**: handlers throw `HttpError(status, safeMessage, { retryable })`; responses are `{ error, retryable }` with `Cache-Control: no-store`. Never include upstream URLs in errors (they contain the key)
+- **Don't return 404 from a handler**: Netlify treats a function 404 as "no route" and replaces the body. "Location not found" is returned as 422
+- **Places timezone rule**: the function returns up to 20 nearest candidates with raw `opening_hours`; open/closed is evaluated **in the browser** (functions run in UTC)
+- **Weather errors** surface to `Weather.jsx` as an OWM-style `{ cod, message }` in context `data`
+- **TomTom key permissions**: each TomTom API (Traffic, Routing) must be enabled on the key in the TomTom dashboard; a missing product returns 403 "You are not allowed to access this endpoint". The legacy `routing/1/calculateRoute` endpoint is not available to new keys
+- **Traffic**: `TrafficCard.jsx` fills the tab: Drive times (left column) and Traffic near me (right column); the Waze embed was removed. Saved places (max 5) live **only in browser localStorage** (`src/shared/savedPlaces.js`, key `tesla.savedPlaces.v1`) — never stored server-side, because the site is public. Card auto-refreshes every 3 min. **Brand logos**: Wikidata is still called from the browser (allows CORS, 30-day localStorage cache)
 
 ## Environment Configuration
 
-Required environment variables in `.env` (using **VITE_** prefix):
-```env
-# OpenWeather API
-VITE_API_URL=https://api.openweathermap.org/data/2.5
-VITE_API_KEY=your_openweather_api_key
-
-# News API
-VITE_NEWS_API_KEY=your_news_api_key
-VITE_NEWS_API_URL=https://newsapi.org/v2
-
-# Default location (Boston coordinates)
-VITE_DEFAULT_LAT=42.364506
-VITE_DEFAULT_LON=-71.038887
-```
-
-**Important**: Vite requires the `VITE_` prefix for all environment variables. Access them in code using `import.meta.env.VITE_VARIABLE_NAME`.
+See `.env.example`. Locally, `netlify dev` loads `.env`. In Netlify, set `OPENWEATHER_API_KEY`, `GEOAPIFY_API_KEY` and `TOMTOM_API_KEY` (scope: Functions, marked **Contains secret values** so secrets scanning fails any build that leaks them, with a value in **every deploy context** — draft deploys run as Deploy Previews and get no value otherwise). News needs no key (RSS).
 
 ## Styling Architecture
 
@@ -192,10 +184,11 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - **Weather icons**: `react-icons/wi` (Erik Flowers Weather Icons) — SVG components, no CDN dependency. Mapped via `OWM_TO_WI` lookup in `Weather.jsx` (18 OWM codes → WI component + hex color). `WeatherIcon` takes `size` as px or any CSS length; hero and forecast rows pass viewport-scaled `clamp()` values. Each condition has a tuned color (e.g. `WiDaySunny` → `#FFB800`, `WiDayRain` → `#4A88C0`). Add new mappings to `OWM_TO_WI`; fallback is `WiDaySunny`.
 - Hero temperature: Inter 200, `clamp(64px, calc(30vh - 102px), 168px)`; `marginTop: auto` anchors temp block above insight content
 - **Tesla viewport sizing**: the in-car browser is ~773×601 CSS px (Weather content area ~739×409). Across all tabs, font `clamp()` minimums keep the smallest text ≥11px there; verify at 773×601 and 1180×919 with no hero/forecast overflow after layout changes
-- 5-day and hourly forecasts from OpenWeather `/forecast` endpoint (3-hour intervals, 5-day window)
+- 5-day and hourly forecasts from OpenWeather `/forecast` endpoint (3-hour intervals, 5-day window), fetched via `/api/weather`
 
 ### Places Integration
-- **Data sources**: Overpass API (place discovery) + OSRM `/table` batch call (ETA) + Wikidata P154 (brand logo, 30-day localStorage cache)
+- **Data sources**: `/api/places` (server-side Geoapify Places + OSRM `/table` ETA) + Wikidata P154 from the browser (brand logo, 30-day localStorage cache)
+- **Category definitions**: radius + Geoapify category keys live in `src/shared/placeCategories.js` (shared with the function); labels/icons in `CATEGORY_UI` in `Places.jsx`
 - **6 EV-specific categories**: Food, Charging, Hotels, Shopping, Fun, Services (Gas removed — Tesla app)
 - **Per-category search radius**: 2–16 km tuned to POI density (Charging = 16 km, Food = 2 km)
 - **10-minute query cache** keyed by `lat,lon,category`; in-flight dedup prevents double requests
@@ -204,7 +197,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - **2×3 grid layout**: first card spans 2 rows (featured); brand panel with hash-derived gradient + 2-letter monogram (swaps to Wikidata logo when available) flexes to the height the card body leaves; distance+ETA pill and open/closed pill sit in the card body (small cards show just Open/Closed, featured adds hours); on short viewports (`max-height: 760px`) small cards hide chips and brand mark so the panel becomes a colour band; attribute chips (`yes`/`designated` → accent, `limited` → amber, `no` → omit)
 - **Brand logo rendering**: Wikidata logos render inside a white rounded tile (no CSS filter) — this handles both transparent-background SVGs and opaque-background JPEGs (e.g. Dunkin') correctly; monogram fallback used when no `brand:wikidata` tag exists in OSM or Wikidata has no P154 claim
 - **Whole card is the tap target** — opens Google Maps at place coordinates; navigate arrow in body row is decorative only
-- `© OpenStreetMap contributors · ODbL` attribution required and rendered
+- `Powered by Geoapify · © OpenStreetMap contributors · ODbL` attribution required (Geoapify free plan + ODbL) and rendered
 
 ### Location Management
 - GPS location detection with fallback to default (Boston)
@@ -238,6 +231,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - opening_hours 3.12.0 (OSM opening_hours tag parser — used in Places)
 - DOMPurify 3.4.0 (URL sanitization in News thumbnails)
 - Moment.js 2.29.1 (date formatting for weather eyebrow)
+- fast-xml-parser 5.x (RSS/Atom parsing in the news function)
 
 **Design token approach**: Weather and Places components reference CSS custom properties via a `C` object at the top of each file (e.g. `C.ink = "var(--ink)"`). The actual values are defined in `src/index.css` and switch automatically with the `.dark` class. Do not hardcode hex values in inline styles.
 
@@ -247,9 +241,8 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 
 ## Testing & Quality
 
-- Uses Vitest (migrated from Jest with CRA)
-- No additional testing configuration
-- Manual testing recommended for API integrations (Overpass, OWM, OSRM, Wikidata)
+- Vitest 4 — `tests/unit/functions/api.test.mjs` covers routing, validation, caching headers, key-leak safety, RSS parsing, Geoapify mapping and TomTom incidents/drive times (fetch is mocked)
+- Manual testing recommended for API integrations (Geoapify, OWM, OSRM, Wikidata, RSS feeds)
 - Playwright MCP available in Claude Code sessions for browser screenshot verification
 
 ## Deployment
@@ -257,7 +250,8 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 **Live Demo**: https://teslaweather.netlify.app/
 **Recommended Platform**: Netlify (auto-deploy from git)
 **Build Output**: Static files in `build/` directory
-**Environment Variables**: Configure in deployment platform dashboard
+**Functions**: `netlify/functions/` (esbuild bundler, see `netlify.toml`)
+**Environment Variables**: `OPENWEATHER_API_KEY`, `GEOAPIFY_API_KEY`, `TOMTOM_API_KEY` in Netlify (Functions scope, secret, all contexts)
 
 ## Common Development Tasks
 
@@ -289,7 +283,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - Test drag interactions on multiple device types
 
 ### Places Component Updates
-- Add/remove categories in the `CATEGORIES` array at the top of `Places.jsx` — each entry has `id`, `label`, `Icon`, `radius` (metres), and `filters` (array of `{key, rx}` Overpass tag filters)
+- Add/remove categories in `src/shared/placeCategories.js` (`id`, `radius` in metres, `geoapify` = Geoapify category keys — an invalid key makes Geoapify return 400) and add the label/icon to `CATEGORY_UI` in `Places.jsx`
 - Adjust `radius` per category to tune POI density (sparse types like Charging need larger radii)
 - Add new attribute chips in the `CHIP_DEFS` array (`tag` = OSM key, `label` = display string)
 - The query cache is module-level (`queryCache` Map); invalidated by the refresh button or cleared on app reload

@@ -5,6 +5,8 @@ import {
   FiCoffee, FiZap, FiHome, FiShoppingBag, FiStar, FiTool,
 } from "react-icons/fi";
 import TeslaAppContext from "../context/TeslaAppContext";
+import { PLACE_CATEGORIES } from "../shared/placeCategories";
+import { getPlaces } from "../api/client";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -38,39 +40,17 @@ const BRAND_PALETTE = [
 ];
 
 // ─── Category definitions ─────────────────────────────────────────────────────
-const CATEGORIES = [
-  {
-    id: "restaurants", label: "Food", Icon: FiCoffee, radius: 2000,
-    filters: [{ key: "amenity", rx: "restaurant|fast_food|cafe|bar|pub|food_court|ice_cream" }],
-  },
-  {
-    id: "charging", label: "Charging", Icon: FiZap, radius: 16000,
-    filters: [{ key: "amenity", rx: "charging_station" }],
-  },
-  {
-    id: "lodging", label: "Hotels", Icon: FiHome, radius: 8000,
-    filters: [
-      { key: "amenity", rx: "hotel|motel" },
-      { key: "tourism", rx: "hotel|motel|hostel|guest_house" },
-    ],
-  },
-  {
-    id: "shopping", label: "Shopping", Icon: FiShoppingBag, radius: 4000,
-    filters: [{ key: "shop", rx: "supermarket|convenience|department_store|mall|clothes|electronics" }],
-  },
-  {
-    id: "fun", label: "Fun", Icon: FiStar, radius: 5000,
-    filters: [
-      { key: "amenity", rx: "cinema|theatre|arts_centre|nightclub|bowling_alley" },
-      { key: "leisure", rx: "park|fitness_centre|swimming_pool|golf_course" },
-      { key: "tourism", rx: "attraction|museum|gallery|theme_park|zoo|aquarium" },
-    ],
-  },
-  {
-    id: "services", label: "Services", Icon: FiTool, radius: 4000,
-    filters: [{ key: "amenity", rx: "bank|atm|pharmacy|hospital|car_repair|post_office|dentist|doctors|police" }],
-  },
-];
+// Search radius + Geoapify category keys live in src/shared/placeCategories.js (shared
+// with the /api/places function); only UI labels and icons are defined here.
+const CATEGORY_UI = {
+  restaurants: { label: "Food",     Icon: FiCoffee      },
+  charging:    { label: "Charging", Icon: FiZap         },
+  lodging:     { label: "Hotels",   Icon: FiHome        },
+  shopping:    { label: "Shopping", Icon: FiShoppingBag },
+  fun:         { label: "Fun",      Icon: FiStar        },
+  services:    { label: "Services", Icon: FiTool        },
+};
+const CATEGORIES = PLACE_CATEGORIES.map((c) => ({ ...c, ...CATEGORY_UI[c.id] }));
 
 // Attribute chips: tag → label, rendered only for yes/designated (warn for limited)
 const CHIP_DEFS = [
@@ -173,9 +153,9 @@ function normalizePlace(el, userLat, userLon) {
   const tags = el.tags || {};
   if (!tags.name || isDisusedOrAbandoned(tags)) return null;
 
-  const lat = el.type === "node" ? el.lat : el.center?.lat;
-  const lon = el.type === "node" ? el.lon : el.center?.lon;
-  if (!lat || !lon) return null;
+  // /api/places already flattens way/relation centers into lat/lon
+  const { lat, lon } = el;
+  if (lat == null || lon == null) return null;
 
   const hours      = parseOpeningHours(tags.opening_hours);
   const distanceMi = haversine(userLat, userLon, lat, lon);
@@ -191,7 +171,7 @@ function normalizePlace(el, userLat, userLon) {
     address:      formatAddress(tags),
     lat, lon,
     distanceMi,
-    etaMinutes:   null,
+    etaMinutes:   el.etaMinutes ?? null,
     openNow:      hours ? hours.openNow : null,
     hoursLabel:   hours ? hours.label   : null,
     chips:        extractChips(tags),
@@ -203,65 +183,20 @@ function normalizePlace(el, userLat, userLon) {
   };
 }
 
-// ─── Overpass fetcher ─────────────────────────────────────────────────────────
-// The public overpass-api.de cluster rate-limits/errors under load, and its
-// error responses often omit CORS headers — the browser then reports a plain
-// "Failed to fetch" with no way to distinguish it from a real network outage.
-// Fall back across sibling nodes in the same cluster before giving up.
-const OVERPASS_URLS = [
-  "https://overpass-api.de/api/interpreter",
-  "https://z.overpass-api.de/api/interpreter",
-  "https://lz4.overpass-api.de/api/interpreter",
-];
-const OVERPASS_TIMEOUT_MS = 12000;
+// ─── Places fetcher ───────────────────────────────────────────────────────────
+// Geoapify + OSRM are queried server-side by /api/places (keys stay on the
+// server). The server returns up to 20 nearest candidates with drive
+// times; opening hours are evaluated here, in the user's local time.
 const CACHE_TTL_MS  = 10 * 60 * 1000; // 10 min
 const MAX_RESULTS   = 5;               // 1 featured + 4 regular
-
-function buildOverpassQuery(lat, lon, filters, radius) {
-  const stmts = filters
-    .map(({ key, rx }) => `nwr["${key}"~"${rx}"](around:${radius},${lat},${lon});`)
-    .join("\n  ");
-  return `[out:json][timeout:15][maxsize:5000000];\n(\n  ${stmts}\n);\nout body center qt ${MAX_RESULTS * 8};`;
-}
 
 function getCacheKey(lat, lon, categoryId) {
   return `${lat.toFixed(4)},${lon.toFixed(4)},${categoryId}`;
 }
 
-async function queryOverpassUrl(url, query) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
-  try {
-    const resp = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `data=${encodeURIComponent(query)}`,
-      signal: controller.signal,
-    });
-    if (!resp.ok) throw new Error(`Overpass HTTP ${resp.status}`);
-    return resp.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function fetchFromOverpass(lat, lon, categoryId) {
-  const cat   = CATEGORIES.find((c) => c.id === categoryId);
-  const query = buildOverpassQuery(lat, lon, cat.filters, cat.radius);
-
-  let json, lastErr;
-  for (const url of OVERPASS_URLS) {
-    try {
-      json = await queryOverpassUrl(url, query);
-      lastErr = null;
-      break;
-    } catch (err) {
-      lastErr = err;
-    }
-  }
-  if (lastErr) throw new Error("Map data service is temporarily unavailable. Please try again.");
-
-  return (json.elements || [])
+async function fetchFromApi(lat, lon, categoryId) {
+  const { places = [] } = await getPlaces(lat, lon, categoryId);
+  return places
     .map((el) => normalizePlace(el, lat, lon))
     .filter(Boolean)
     .filter((p) => p.openNow !== false) // exclude confirmed-closed; null (no tag) = keep
@@ -277,7 +212,7 @@ async function fetchPlacesWithCache(lat, lon, categoryId) {
 
   if (inflight.has(key)) return inflight.get(key);
 
-  const promise = fetchFromOverpass(lat, lon, categoryId)
+  const promise = fetchFromApi(lat, lon, categoryId)
     .then((data) => {
       queryCache.set(key, { data, expires: Date.now() + CACHE_TTL_MS });
       inflight.delete(key);
@@ -287,35 +222,6 @@ async function fetchPlacesWithCache(lat, lon, categoryId) {
 
   inflight.set(key, promise);
   return promise;
-}
-
-// ─── OSRM batch ETA ───────────────────────────────────────────────────────────
-async function fetchEtaBatch(userLat, userLon, places) {
-  if (!places.length) return new Map();
-  const coords = [
-    `${userLon},${userLat}`,
-    ...places.map((p) => `${p.lon},${p.lat}`),
-  ].join(";");
-
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
-    const resp = await fetch(
-      `https://router.project-osrm.org/table/v1/driving/${coords}?sources=0&annotations=duration`,
-      { signal: controller.signal }
-    );
-    clearTimeout(timer);
-    const json = await resp.json();
-    const durations = json.durations?.[0];
-    const map = new Map();
-    places.forEach((p, i) => {
-      const secs = durations?.[i + 1];
-      if (secs != null && secs > 0) map.set(p.id, Math.round(secs / 60));
-    });
-    return map;
-  } catch {
-    return new Map(); // ETA is best-effort; silence failures
-  }
 }
 
 // ─── Wikidata brand logo (P154 → Wikimedia Commons FilePath) ─────────────────
@@ -600,12 +506,6 @@ export default function Places() {
       const results = await fetchPlacesWithCache(lat, long, cat);
       if (cat !== categoryRef.current) return; // stale response
       setPlaces(results);
-
-      const etaMap = await fetchEtaBatch(lat, long, results);
-      if (cat !== categoryRef.current) return;
-      if (etaMap.size) {
-        setPlaces((prev) => prev.map((p) => ({ ...p, etaMinutes: etaMap.get(p.id) ?? null })));
-      }
     } catch (err) {
       if (cat !== categoryRef.current) return;
       setError(err.message || "Failed to load places");
@@ -724,12 +624,19 @@ export default function Places() {
           </div>
         )}
 
-        {/* OSM attribution */}
+        {/* Data attribution (required by Geoapify's free plan and the OSM ODbL licence) */}
         <div style={{
           flexShrink: 0, textAlign: "right",
           fontSize: 12, color: C.mute, paddingRight: 2,
         }}>
-          © <a
+          <a
+            href="https://www.geoapify.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: C.mute, textDecoration: "underline" }}
+          >
+            Powered by Geoapify
+          </a> · © <a
             href="https://www.openstreetmap.org/copyright"
             target="_blank"
             rel="noopener noreferrer"

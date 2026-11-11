@@ -4,7 +4,7 @@ import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 
 export default [
-  { ignores: ["build/", "dist/", "node_modules/", ".playwright-mcp/"] },
+  { ignores: ["build/", "dist/", "node_modules/", ".playwright-mcp/", ".netlify/"] },
 
   // App source — .js files contain JSX too (see vite.config.js esbuild loader)
   {
@@ -31,6 +31,17 @@ export default [
   {
     files: ["src/**/*.{test,spec}.{js,jsx}", "src/setupTests.js"],
     languageOptions: { globals: { ...globals.node, ...globals.vitest } },
+  },
+
+  // Netlify Functions (Node runtime) and their unit tests
+  {
+    files: ["netlify/**/*.mjs", "tests/**/*.{js,mjs}"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.node, ...globals.vitest },
+    },
+    rules: js.configs.recommended.rules,
   },
 
   // Root tooling config: ESM (vite) and CommonJS (tailwind, postcss, commitlint)

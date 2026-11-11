@@ -1,6 +1,7 @@
 import { useContext } from "react";
-import { FiMapPin, FiNavigation } from "react-icons/fi";
+import { FiMapPin } from "react-icons/fi";
 import TeslaAppContext from "../context/TeslaAppContext";
+import TrafficCard from "./TrafficCard";
 
 function Traffic() {
   const { lat, long, currentLocation } = useContext(TeslaAppContext);
@@ -22,39 +23,8 @@ function Traffic() {
     );
   }
 
-  const wazeUrl = `https://embed.waze.com/iframe?zoom=11&lat=${lat}&lon=${long}&pin=1&desc=1&ct=livemap`;
-
-  return (
-    <div className="h-full flex flex-col gap-3">
-      {/* Minimal header: just Open in Waze CTA */}
-      <div className="flex items-center justify-end flex-shrink-0">
-        <button
-          onClick={() => window.open(`https://www.waze.com/livemap?lat=${lat}&lon=${long}`, '_blank', 'noopener,noreferrer')}
-          className="h-11 px-5 flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-900 font-semibold text-base rounded-xl transition-all"
-        >
-          <FiNavigation className="w-5 h-5" />
-          Open in Waze
-        </button>
-      </div>
-
-      {/* Map — flush to card edges, Waze header clipped */}
-      <div className="flex-1 rounded-xl overflow-hidden relative" style={{ minHeight: 0 }}>
-        <iframe
-          src={wazeUrl}
-          width="100%"
-          title="Waze Traffic Map"
-          style={{
-            position: 'absolute',
-            top: '-56px',
-            left: 0,
-            width: '100%',
-            height: 'calc(100% + 56px)',
-            border: 'none',
-          }}
-        />
-      </div>
-    </div>
-  );
+  // Full-width traffic card: drive times to saved places + traffic near me
+  return <TrafficCard lat={lat} lon={long} />;
 }
 
 export default Traffic;
