@@ -75,3 +75,9 @@ lerna-debug.log*
 
 # Playwright MCP output
 .playwright-mcp/
+
+# ggshield (GitGuardian) local cache
+.cache_ggshield
+
+# Local Netlify folder
+.netlify
