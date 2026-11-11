@@ -310,6 +310,7 @@ npm run build        # production build to build/
 ## Deployment
 
 - Hosted on Netlify at [teslaweather.netlify.app](https://teslaweather.netlify.app/); every push to `main` builds and deploys to production
+- GitHub Actions CI (`.github/workflows/ci.yml`) runs lint, tests and the build on every push and pull request; it reports a check but doesn't block Netlify's deploy
 - Netlify runs `npm run build`, publishes `build/`, and bundles `netlify/functions/` with esbuild
 - To test before production: `netlify deploy` creates a draft deploy with its own URL
 - Verify after a deploy: each `/api/*` route returns 200, and no API key string appears in the JavaScript files under `/assets/`
@@ -322,7 +323,8 @@ npm run build        # production build to build/
 | Function logs (upstream errors, rejected keys) | Netlify dashboard → Logs → Functions |
 | CDN cache behaviour | `Cache-Status` response header (`"Netlify Durable"; hit`) |
 | API usage and quotas | OpenWeather, Geoapify and TomTom dashboards |
-| Dependency alerts and updates | GitHub Dependabot: security alerts + automated fix PRs; monthly version-update PRs (`.github/dependabot.yml`) |
+| CI results | GitHub → Actions → CI |
+| Dependency alerts and updates | GitHub Dependabot: security alerts + automated fix PRs; monthly npm and weekly GitHub Actions update PRs (`.github/dependabot.yml`) |
 
 ## Known constraints
 

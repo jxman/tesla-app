@@ -1,0 +1,35 @@
+name: CI
+
+# Lint, unit tests and a production build on every push to main and every pull
+# request (including Dependabot's), so a broken update shows a red check before
+# it is merged. Netlify deploys pushes to main on its own; this job does not
+# gate that deploy.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-checks:
+    name: ci-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      # Vitest; upstream APIs are mocked, so no API keys are needed
+      - run: npm test
+      - run: npm run build
