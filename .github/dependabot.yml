@@ -1,0 +1,23 @@
+# Dependabot version updates: opens PRs when npm dependencies have new
+# releases. Separate from Dependabot security alerts and automated security
+# fix PRs, which are enabled in the repo settings and arrive as soon as an
+# advisory is published.
+#
+# Merging a PR deploys to production (Netlify builds every push to main).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for all patch and minor updates; each major upgrade (React 19,
+      # Tailwind 4, Vite 8, ESLint 10, …) gets its own PR to review separately.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    commit-message:
+      prefix: chore
+      include: scope
