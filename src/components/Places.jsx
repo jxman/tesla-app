@@ -1,7 +1,8 @@
 import { useState, useEffect, useContext, useCallback, useRef } from "react";
 import opening_hours from "opening_hours";
+import { chargingInfo, chargingSummary } from "../shared/charging";
 import {
-  FiNavigation, FiRefreshCw, FiAlertCircle,
+  FiNavigation, FiRefreshCw, FiAlertCircle, FiMapPin,
   FiCoffee, FiZap, FiHome, FiShoppingBag, FiStar, FiTool,
 } from "react-icons/fi";
 import TeslaAppContext from "../context/TeslaAppContext";
@@ -98,12 +99,20 @@ function humanizeType(tags) {
   return raw.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// "679;681;697" → "679–697" (OSM lists every number on multi-unit buildings)
+function formatHouseNumber(raw) {
+  if (!raw) return null;
+  const nums = raw.split(/[;,]/).map((n) => n.trim()).filter(Boolean);
+  return nums.length > 1 ? `${nums[0]}–${nums[nums.length - 1]}` : nums[0] || null;
+}
+
+/** "840 Providence Highway, Dedham" — null when there's no real street. */
 function formatAddress(tags) {
-  const parts = [];
-  if (tags["addr:housenumber"]) parts.push(tags["addr:housenumber"]);
-  if (tags["addr:street"])      parts.push(tags["addr:street"]);
-  if (tags["addr:city"])        parts.push(tags["addr:city"]);
-  return parts.length ? parts.join(" ") : null;
+  const street = tags["addr:street"];
+  // Geoapify falls back to the place name when OSM has no street; skip that.
+  if (!street || street.toLowerCase() === (tags.name || "").toLowerCase()) return null;
+  const line = [formatHouseNumber(tags["addr:housenumber"]), street].filter(Boolean).join(" ");
+  return tags["addr:city"] ? `${line}, ${tags["addr:city"]}` : line;
 }
 
 function fmt12h(date) {
@@ -133,12 +142,24 @@ function parseOpeningHours(ohStr) {
   }
 }
 
-function extractChips(tags) {
-  return CHIP_DEFS.flatMap(({ tag, label }) => {
+function extractChips(tags, charging) {
+  const chips = CHIP_DEFS.flatMap(({ tag, label }) => {
     const val = tags[tag];
     if (!val || val === "no") return [];
     return [{ label, warn: val === "limited" }];
   });
+  if (charging) {
+    if (charging.free) chips.unshift({ label: "Free" });
+    if (charging.customersOnly) chips.push({ label: "Customers only", warn: true });
+    if (charging.network && !(tags.name || "").toLowerCase().includes(charging.network.toLowerCase())) {
+      chips.push({ label: charging.network });
+    }
+  }
+  const stars = Number.parseFloat(tags.stars);
+  if (Number.isFinite(stars) && stars > 0 && stars <= 5) chips.unshift({ label: `${stars}★` });
+  const rooms = Number.parseInt(tags.rooms, 10);
+  if (Number.isFinite(rooms) && rooms > 0) chips.push({ label: `${rooms} rooms` });
+  return chips;
 }
 
 function isDisusedOrAbandoned(tags) {
@@ -159,6 +180,7 @@ function normalizePlace(el, userLat, userLon) {
 
   const hours      = parseOpeningHours(tags.opening_hours);
   const distanceMi = haversine(userLat, userLon, lat, lon);
+  const charging   = chargingInfo(tags);
   const cuisine    = tags.cuisine
     ? tags.cuisine.split(/[;|]/)[0].replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : null;
@@ -166,7 +188,9 @@ function normalizePlace(el, userLat, userLon) {
   return {
     id:           `${el.type}_${el.id}`,
     name:         tags.name,
-    primaryType:  humanizeType(tags),
+    // Chargers: plugs, speed and stalls matter more than "Charging Station"
+    primaryType:  charging ? chargingSummary(charging) : humanizeType(tags),
+    chargeRank:   charging ? charging.rank : 0,
     cuisine,
     address:      formatAddress(tags),
     lat, lon,
@@ -174,7 +198,7 @@ function normalizePlace(el, userLat, userLon) {
     etaMinutes:   el.etaMinutes ?? null,
     openNow:      hours ? hours.openNow : null,
     hoursLabel:   hours ? hours.label   : null,
-    chips:        extractChips(tags),
+    chips:        extractChips(tags, charging),
     brandQid:     tags["brand:wikidata"] || null,
     brandColor:   hashBrand(tags.name),
     brandLogoUrl: null,
@@ -200,7 +224,9 @@ async function fetchFromApi(lat, lon, categoryId) {
     .map((el) => normalizePlace(el, lat, lon))
     .filter(Boolean)
     .filter((p) => p.openNow !== false) // exclude confirmed-closed; null (no tag) = keep
-    .sort((a, b) => a.distanceMi - b.distanceMi)
+    // Chargers: Tesla plugs first, then CCS (adapter), then unknown, then other
+    // plugs; nearest first within each group. Other categories: rank is 0.
+    .sort((a, b) => a.chargeRank - b.chargeRank || a.distanceMi - b.distanceMi)
     .slice(0, MAX_RESULTS);
 }
 
@@ -415,12 +441,14 @@ function CardBody({ place, featured }) {
         <div style={{ fontSize: "clamp(13px, 2.3vh, 15px)", color: C.mute, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{meta}</div>
       )}
 
-      {featured && place.address && (
-        <div style={{
-          fontSize: "clamp(13px, 2.3vh, 15px)", color: C.mute, lineHeight: 1.3,
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      {place.address && (
+        <div title={place.address} style={{
+          display: "flex", alignItems: "center", gap: 5,
+          fontSize: featured ? "clamp(13px, 2.3vh, 15px)" : "clamp(12px, 2.1vh, 14px)", color: C.mute, lineHeight: 1.3,
+          minWidth: 0,
         }}>
-          {place.address}
+          <FiMapPin size={12} style={{ flexShrink: 0 }} />
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{place.address}</span>
         </div>
       )}
 

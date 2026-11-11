@@ -1,5 +1,5 @@
 import { useState, useContext } from "react";
-import { FiSearch, FiX, FiSun, FiMoon } from "react-icons/fi";
+import { FiMapPin, FiX, FiSun, FiMoon } from "react-icons/fi";
 import { BiCurrentLocation } from "react-icons/bi";
 import TeslaAppContext from "../context/TeslaAppContext";
 import { useTheme } from "../context/ThemeContext";
@@ -41,6 +41,7 @@ function LocationSelector() {
             onClick={() => { getCurrentLocation(); setIsSearchOpen(false); }}
             className="h-12 w-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
             title="Use current location"
+            aria-label="Use current location"
           >
             <BiCurrentLocation className="text-xl text-green-500" />
           </button>
@@ -49,11 +50,13 @@ function LocationSelector() {
             disabled={!zip.trim() || isSearching}
             className="h-12 px-6 bg-gray-900 dark:bg-white hover:bg-gray-700 dark:hover:bg-gray-100 text-white dark:text-gray-900 rounded-xl font-semibold transition-all disabled:opacity-40 flex-shrink-0 text-base"
           >
-            {isSearching ? "Searching…" : "Go"}
+            {isSearching ? "Finding…" : "Go"}
           </button>
         </form>
         <button
           onClick={() => { setIsSearchOpen(false); setZip(""); }}
+          aria-label="Cancel"
+          title="Cancel"
           className="h-12 w-12 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
         >
           <FiX className="w-5 h-5 text-gray-500 dark:text-gray-300" />
@@ -77,10 +80,11 @@ function LocationSelector() {
       </div>
       <button
         onClick={() => setIsSearchOpen(true)}
-        className="h-11 w-11 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
-        title="Search location"
+        className="h-11 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center gap-2 transition-all flex-shrink-0 text-sm font-medium text-gray-700 dark:text-gray-300"
+        title="Change location (zip code or current location)"
       >
-        <FiSearch className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        <FiMapPin className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        Change location
       </button>
       <button
         onClick={toggle}

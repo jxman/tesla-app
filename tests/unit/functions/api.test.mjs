@@ -153,6 +153,17 @@ describe("/api/places", () => {
     expect(out[1].tags).not.toHaveProperty("addr:street"); // empty values dropped
   });
 
+  it("keeps charger tags and names unnamed chargers", () => {
+    const charger = {
+      type: "node", id: 9, lat: 42.36, lon: -71.04,
+      tags: { amenity: "charging_station", network: "ChargePoint", capacity: "2", fee: "no",
+        "socket:type1": "2", "socket:type1:output": "6.6 kW", "socket:type1:voltage": "208 V" },
+    };
+    const [out] = selectCandidates([charger], 42.365, -71.039);
+    expect(out.tags).toMatchObject({ name: "ChargePoint", network: "ChargePoint", capacity: "2", fee: "no", "socket:type1": "2", "socket:type1:output": "6.6 kW" });
+    expect(out.tags).not.toHaveProperty("socket:type1:voltage");
+  });
+
   it("builds a Geoapify request from the shared category definition", () => {
     const url = new URL(buildGeoapifyUrl(42.365, -71.039, PLACE_CATEGORIES.find((c) => c.id === "charging"), "k"));
     expect(url.searchParams.get("categories")).toBe("service.vehicle.charging_station");

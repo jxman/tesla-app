@@ -37,6 +37,7 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 - **Server-side API layer**: one Netlify Function (`netlify/functions/api.mjs`, path `/api/*`) proxies OpenWeather, RSS, Geoapify and OSRM; keys stay server-side and the Netlify CDN caches responses
 - **Traffic Conditions**: full-width Traffic card (TomTom): drive times with arrival times to saved places (left column) + traffic near me (right column); no map embed
 - **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
+- **Change location**: header button (map pin + "Change location") opens zip-code entry and a use-current-location button
 - **Light/Dark Mode**: Sun/moon toggle in header; preference persisted in localStorage; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
 - **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography; light mode uses `#f0f4f8` background
 
@@ -98,7 +99,7 @@ src/
 │   ├── TeslaAppContext.js     # Global state with forecast data
 │   └── ThemeContext.jsx       # Light/dark mode state; applies .dark to <html>
 ├── components/
-│   ├── LocationSelector.jsx   # Header with search + sun/moon theme toggle
+│   ├── LocationSelector.jsx   # Header: Change location (zip / GPS) + sun/moon theme toggle
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
 │   ├── Traffic.jsx           # Traffic tab: location guard + full-width TrafficCard
 │   ├── TrafficCard.jsx       # Drive times to saved places + nearby incidents
@@ -196,6 +197,9 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - **Place normalizer**: strips unnamed POIs, `disused:*`/`abandoned:*`/`fixme=*` entries, confirmed-closed places; sorts ascending by distance; caps at 5
 - **2×3 grid layout**: first card spans 2 rows (featured); brand panel with hash-derived gradient + 2-letter monogram (swaps to Wikidata logo when available) flexes to the height the card body leaves; distance+ETA pill and open/closed pill sit in the card body (small cards show just Open/Closed, featured adds hours); on short viewports (`max-height: 760px`) small cards hide chips and brand mark so the panel becomes a colour band; attribute chips (`yes`/`designated` → accent, `limited` → amber, `no` → omit)
 - **Brand logo rendering**: Wikidata logos render inside a white rounded tile (no CSS filter) — this handles both transparent-background SVGs and opaque-background JPEGs (e.g. Dunkin') correctly; monogram fallback used when no `brand:wikidata` tag exists in OSM or Wikidata has no P154 claim
+- **Addresses**: every card shows `house number + street, city`; multi-number values (`679;681;697`) render as a range, and Geoapify's fallback street (the place's own name) is hidden
+- **Charging details** (`src/shared/charging.js`, shared with the function): plug types (Tesla/NACS, CCS, CHAdeMO, J1772, Type 2), max kW, stalls on the type line, plus Free / Customers only / network chips. Chargers sort Tesla plug → CCS → unknown → other plugs, then by distance. Unnamed chargers are named from brand/network/operator server-side. The function keeps `socket:<type>` and `socket:<type>:output` tags only
+- **Hotels**: `stars` and `rooms` chips when OSM has them
 - **Whole card is the tap target** — opens Google Maps at place coordinates; navigate arrow in body row is decorative only
 - `Powered by Geoapify · © OpenStreetMap contributors · ODbL` attribution required (Geoapify free plan + ODbL) and rendered
 

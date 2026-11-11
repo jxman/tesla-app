@@ -1,3 +1,4 @@
+import { chargerName, isCharger, isKeptSocketTag } from "../../src/shared/charging.js";
 import { PLACE_CATEGORIES, PLACE_CATEGORY_IDS } from "../../src/shared/placeCategories.js";
 import { HttpError, fetchWithTimeout, haversineMi, json, parseCoord, parseEnum } from "./http.mjs";
 
@@ -20,6 +21,10 @@ const KEEP_TAGS = new Set([
   "addr:housenumber", "addr:street", "addr:city",
   "opening_hours", "brand:wikidata", "phone", "contact:phone",
   "takeaway", "drive_through", "delivery", "outdoor_seating", "wheelchair", "internet_access",
+  // EV chargers (socket:* tags are kept via isKeptSocketTag)
+  "brand", "network", "operator", "capacity", "fee", "access",
+  // Hotels
+  "stars", "rooms",
 ]);
 const OSM_TYPES = { n: "node", w: "way", r: "relation", node: "node", way: "way", relation: "relation" };
 
@@ -73,10 +78,12 @@ export function featureToElement(feature) {
 export function selectCandidates(elements, lat, lon) {
   return (elements || [])
     .map((el) => {
-      const tags = el.tags || {};
+      const tags = { ...(el.tags || {}) };
+      // Many chargers have no name in OSM; label them by brand/network/operator
+      if (!tags.name && isCharger(tags)) tags.name = chargerName(tags);
       if (!tags.name || isDisusedOrAbandoned(tags) || el.lat == null || el.lon == null) return null;
       const kept = Object.fromEntries(
-        Object.entries(tags).filter(([k, v]) => KEEP_TAGS.has(k) && v != null && v !== "")
+        Object.entries(tags).filter(([k, v]) => (KEEP_TAGS.has(k) || isKeptSocketTag(k)) && v != null && v !== "")
       );
       return { type: el.type, id: el.id, lat: el.lat, lon: el.lon, tags: kept, distanceMi: haversineMi(lat, lon, el.lat, el.lon) };
     })

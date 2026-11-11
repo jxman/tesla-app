@@ -15,7 +15,7 @@ A modern React-based dashboard with tabbed navigation designed for Tesla vehicle
 - **🌤️ Enhanced Weather** - 12-hour and 10-day forecasts with horizontal scrolling, drag/touch support
 - **📰 Live News Feed** - Categorized news (Headlines, Tech, Business, Science, Sports, Entertainment) from free-to-read RSS feeds, with refresh  
 - **🚗 Traffic Conditions** - Live drive times (with arrival times) to your saved places, plus traffic incidents near you (TomTom)
-- **🗺️ Places Integration** - OpenStreetMap-based nearby places with 7 categories and real location data
+- **🗺️ Places Integration** - Nearby places in 6 EV-focused categories (OpenStreetMap data via Geoapify) with addresses, open/closed status and drive times; chargers show plug types, kW, stalls and fees, Tesla-compatible first
 - **📱 Tabbed Interface** - Single-tab navigation optimized for Tesla touchscreens
 - **📍 Location Services** - GPS location detection with zip code fallback search
 - **🎨 Tesla-themed UI** - Dark theme with Tesla-inspired design elements
