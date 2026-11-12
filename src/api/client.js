@@ -54,6 +54,19 @@ export const getDriveTimes = (lat, lon, places) =>
     to: places.map((p) => `${round(p.lat, 4)},${round(p.lon, 4)}`).join(";"),
   });
 
+// Town for a traffic incident; cached in memory per ~1 km square (the CDN
+// caches it for 30 days too), so reopening incidents nearby costs nothing
+const townCache = new Map();
+export const getTown = (lat, lon) => {
+  const key = `${round(lat, 2)},${round(lon, 2)}`;
+  if (!townCache.has(key)) {
+    const p = getJson("town", { lat: round(lat, 2), lon: round(lon, 2) }).then((r) => r.town ?? null);
+    p.catch(() => townCache.delete(key)); // retry next time after a failure
+    townCache.set(key, p);
+  }
+  return townCache.get(key);
+};
+
 /** US towns for the Change location box: [{ label: "Medfield, MA", detail, lat, lon }] */
 export const searchTowns = (text, lat, lon) =>
   getJson("search", lat != null && lon != null

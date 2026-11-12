@@ -1,6 +1,7 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { FiExternalLink } from "react-icons/fi";
 import { useTheme } from "../context/ThemeContext";
+import { getTown } from "../api/client";
 import DetailSheet, { Stat, Block, C } from "./DetailSheet";
 
 // Set to false to drop the map (and the lazily loaded Leaflet chunk) from the
@@ -48,6 +49,18 @@ export function clearProgress(startIso, endIso, now = Date.now()) {
  */
 export default function IncidentSheet({ incident, icon: Icon, from, onClose }) {
   const { isDark } = useTheme();
+  // TomTom gives only cross streets; look up the town (OpenWeather reverse
+  // geocoding via /api/town, cached) so "Main Street → Holliston Street" has context
+  const [town, setTown] = useState(null);
+  useEffect(() => {
+    if (!Number.isFinite(incident?.lat) || !Number.isFinite(incident?.lon)) return undefined;
+    let cancelled = false;
+    setTown(null);
+    getTown(incident.lat, incident.lon)
+      .then((t) => { if (!cancelled) setTown(t); })
+      .catch(() => {}); // optional: the streets still show
+    return () => { cancelled = true; };
+  }, [incident?.lat, incident?.lon]);
 
   if (!incident) return null;
   const sev = SEVERITY[incident.magnitude] || SEVERITY.unknown;
@@ -83,9 +96,11 @@ export default function IncidentSheet({ incident, icon: Icon, from, onClose }) {
             <Stat label="Away" value={incident.distanceMi} unit="mi" />
           </div>
 
-          {(incident.road || route) && (
+          {(incident.road || route || town) && (
             <Block label="Where">
-              {incident.road && <div className="font-semibold">{incident.road}</div>}
+              {(incident.road || town) && (
+                <div className="font-semibold">{[incident.road, town].filter(Boolean).join(" · ")}</div>
+              )}
               {route && <div className="line-clamp-2">{route}</div>}
             </Block>
           )}

@@ -87,6 +87,7 @@ All routes are served by one Netlify Function, `netlify/functions/api.mjs`, whic
 | `/api/places?lat&lon&cat` | `places.mjs` | Geoapify Places + OSRM `/table` | 10 min (+20 min stale) |
 | `/api/incidents?lat&lon` | `traffic.mjs` | TomTom Orbis traffic incidents (v2) | 2 min (+2 min stale) |
 | `/api/drive-times?lat&lon&to` | `traffic.mjs` | TomTom Orbis routing (v3), up to 5 destinations | 2 min (+2 min stale) |
+| `/api/town?lat&lon` | `weather.mjs` | OpenWeather reverse geocoding: town for an incident ("Medway, MA") | 30 days |
 | `/api/search?text[&type=city][&lat&lon]` | `traffic.mjs` | Geoapify autocomplete: addresses (saved places) or US towns (`type=city`) | 1 day |
 
 Every route validates its input (coordinates range-checked and rounded, categories checked against fixed lists), and errors return `{ error, retryable }` without upstream URLs, which contain keys.
@@ -260,7 +261,7 @@ TeslaApp/
 │   ├── functions/api.mjs        # /api/* router + rate limit
 │   └── lib/
 │       ├── http.mjs             # errors, JSON + cache headers, fetch timeout, validation
-│       ├── weather.mjs          # /api/weather, /api/geocode
+│       ├── weather.mjs          # /api/weather, /api/geocode, /api/town
 │       ├── news.mjs             # /api/news: feeds, RSS parsing, thumbnails
 │       ├── places.mjs           # /api/places: Geoapify + OSRM
 │       └── traffic.mjs          # /api/incidents, /api/drive-times, /api/search

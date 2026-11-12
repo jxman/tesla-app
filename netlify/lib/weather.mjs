@@ -63,3 +63,42 @@ export async function geocode(params, env = process.env) {
     { cache: { cdn: 30 * 86400, swr: 86400, browser: 86400, vary: ["zip", "country"] } }
   );
 }
+
+const US_STATES = {
+  Alabama: "AL", Alaska: "AK", Arizona: "AZ", Arkansas: "AR", California: "CA", Colorado: "CO",
+  Connecticut: "CT", Delaware: "DE", "District of Columbia": "DC", Florida: "FL", Georgia: "GA",
+  Hawaii: "HI", Idaho: "ID", Illinois: "IL", Indiana: "IN", Iowa: "IA", Kansas: "KS", Kentucky: "KY",
+  Louisiana: "LA", Maine: "ME", Maryland: "MD", Massachusetts: "MA", Michigan: "MI", Minnesota: "MN",
+  Mississippi: "MS", Missouri: "MO", Montana: "MT", Nebraska: "NE", Nevada: "NV", "New Hampshire": "NH",
+  "New Jersey": "NJ", "New Mexico": "NM", "New York": "NY", "North Carolina": "NC", "North Dakota": "ND",
+  Ohio: "OH", Oklahoma: "OK", Oregon: "OR", Pennsylvania: "PA", "Rhode Island": "RI",
+  "South Carolina": "SC", "South Dakota": "SD", Tennessee: "TN", Texas: "TX", Utah: "UT", Vermont: "VT",
+  Virginia: "VA", Washington: "WA", "West Virginia": "WV", Wisconsin: "WI", Wyoming: "WY",
+};
+
+/** "Medway" + "Massachusetts" + "US" → "Medway, MA"; other countries → "Name, CC". */
+export function townLabel({ name, state, country } = {}) {
+  if (!name) return null;
+  if (country === "US") return US_STATES[state] ? `${name}, ${US_STATES[state]}` : name;
+  return country ? `${name}, ${country}` : name;
+}
+
+/**
+ * GET /api/town?lat&lon → { town: "Medway, MA" | null }
+ * Nearest named place, for the traffic incident details. Coordinates are
+ * rounded to 2 dp (~1 km) and cached for 30 days at the CDN, so OpenWeather
+ * is only called the first time an area is looked up.
+ */
+export async function town(params, env = process.env) {
+  const lat = parseCoord(params, "lat", -90, 90, 2);
+  const lon = parseCoord(params, "lon", -180, 180, 2);
+  const key = requireKey(env);
+
+  const qs = new URLSearchParams({ lat, lon, limit: "1", appid: key });
+  const [place] = await owmJson(`${OWM_BASE}/geo/1.0/reverse?${qs}`);
+
+  return json(
+    { town: townLabel(place) },
+    { cache: { cdn: 30 * 86400, swr: 86400, browser: 7 * 86400, vary: ["lat", "lon"] } }
+  );
+}

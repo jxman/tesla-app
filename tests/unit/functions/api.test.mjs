@@ -4,6 +4,7 @@ import { parseFeed, mergeArticles, safeHttpUrl } from "../../../netlify/lib/news
 import { selectCandidates, buildGeoapifyUrl, featureToElement } from "../../../netlify/lib/places.mjs";
 import { summarizeRoute, simplifyPath } from "../../../netlify/lib/traffic.mjs";
 import { thumbnailUrl } from "../../../netlify/lib/news.mjs";
+import { townLabel } from "../../../netlify/lib/weather.mjs";
 import { PLACE_CATEGORIES } from "../../../src/shared/placeCategories.js";
 
 const call = (path, init) => handler(new Request(`https://example.test${path}`, init));
@@ -347,6 +348,35 @@ describe("traffic card routes", () => {
     const resp = await call("/api/incidents?lat=42.36&lon=-71.04");
     expect(resp.status).toBe(500);
     expect((await resp.json()).error).toMatch(/not configured/);
+  });
+});
+
+describe("/api/town", () => {
+  it("returns the nearest town with a state abbreviation, cached 30 days per ~1 km", async () => {
+    vi.stubEnv("OPENWEATHER_API_KEY", "owm");
+    const fetchMock = vi.fn(async () => jsonResp([{ name: "Medway", state: "Massachusetts", country: "US" }]));
+    vi.stubGlobal("fetch", fetchMock);
+    const resp = await call("/api/town?lat=42.1449&lon=-71.4312");
+    expect(resp.status).toBe(200);
+    expect(await resp.json()).toEqual({ town: "Medway, MA" });
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toBe("/geo/1.0/reverse");
+    expect(url.searchParams.get("lat")).toBe("42.14");
+    expect(resp.headers.get("Netlify-CDN-Cache-Control")).toMatch(/max-age=2592000/);
+  });
+
+  it("returns null when nothing is nearby", async () => {
+    vi.stubEnv("OPENWEATHER_API_KEY", "owm");
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResp([])));
+    expect(await (await call("/api/town?lat=0&lon=-30")).json()).toEqual({ town: null });
+  });
+});
+
+describe("townLabel", () => {
+  it("abbreviates US states and keeps other countries", () => {
+    expect(townLabel({ name: "Wellesley", state: "Massachusetts", country: "US" })).toBe("Wellesley, MA");
+    expect(townLabel({ name: "Toronto", state: "Ontario", country: "CA" })).toBe("Toronto, CA");
+    expect(townLabel(undefined)).toBeNull();
   });
 });
 

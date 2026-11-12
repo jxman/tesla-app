@@ -2,7 +2,7 @@
 // lets a single rate-limit rule cover every route; Free/Starter Netlify plans
 // allow only 2 code-based rules per site.
 import { errorResponse, json } from "../lib/http.mjs";
-import { geocode, weather } from "../lib/weather.mjs";
+import { geocode, town, weather } from "../lib/weather.mjs";
 import { news } from "../lib/news.mjs";
 import { places } from "../lib/places.mjs";
 import { incidents, driveTimes, search } from "../lib/traffic.mjs";
@@ -10,6 +10,7 @@ import { incidents, driveTimes, search } from "../lib/traffic.mjs";
 export const routes = {
   weather,
   geocode,
+  town,
   news,
   places,
   incidents,

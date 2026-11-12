@@ -64,6 +64,7 @@ Shipped work for the Tesla Dashboard, oldest first. For how the system works tod
 - **Light-mode active tab:** dark pill with white text (it was white on white)
 - Removed unused `web-vitals` and `@testing-library/jest-dom`; Dependabot skips ESLint 10 until `eslint-plugin-react` supports it
 - **Theme follows the car:** Auto now uses the browser's light/dark setting, which the Tesla browser takes from the car's Day/Night display (tested in the car); sunrise/sunset is the fallback. Removed the temporary "Browser:" test pill
+- **Incident town:** the incident window's Where block names the town ("Medway, MA") above the cross streets, from OpenWeather reverse geocoding, cached 30 days per ~1 km
 - **Town search:** Change location also takes a town name, with up to 4 US suggestions as you type ("Medfield, MA", "Springfield, MA/VA/OH/IL"); the chosen town shows in the header and is remembered
 - **Consistent details windows:** place and drive-time details use the incident window's style (stat tiles for distance, drive time and open status, labelled blocks for the voice command, address and contact) through a shared `DetailSheet` frame; places have no map, since the name and address to say matter more
 - **Traffic incident details:** tapping a Traffic near me incident opens a window with severity, delay, length, when it started and is expected to clear, and a small map of the affected stretch (Leaflet + OpenStreetMap, loaded only when opened)
