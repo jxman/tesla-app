@@ -54,6 +54,12 @@ export const getDriveTimes = (lat, lon, places) =>
     to: places.map((p) => `${round(p.lat, 4)},${round(p.lon, 4)}`).join(";"),
   });
 
+/** US towns for the Change location box: [{ label: "Medfield, MA", detail, lat, lon }] */
+export const searchTowns = (text, lat, lon) =>
+  getJson("search", lat != null && lon != null
+    ? { text, type: "city", lat: round(lat, 1), lon: round(lon, 1) }
+    : { text, type: "city" });
+
 export const searchAddress = (text, lat, lon) =>
   getJson("search", lat != null && lon != null
     ? { text, lat: round(lat, 1), lon: round(lon, 1) }

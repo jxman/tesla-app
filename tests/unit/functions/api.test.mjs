@@ -324,6 +324,24 @@ describe("traffic card routes", () => {
     expect(results).toEqual([{ label: "1 Patriot Pl", detail: "Foxborough, MA 02035", lat: 42.09089, lon: -71.26417 }]);
   });
 
+  it("/api/search?type=city returns US towns labelled with the state", async () => {
+    vi.stubEnv("GEOAPIFY_API_KEY", "geo");
+    expect((await call("/api/search?text=medfield&type=street")).status).toBe(400);
+    const fetchMock = vi.fn(async () => jsonResp({
+      results: [
+        { result_type: "city", city: "Medfield", state_code: "MA", county: "Norfolk County", lat: 42.18765, lon: -71.306612 },
+        { result_type: "city", city: "Medfield", state_code: "MA", county: "Norfolk County", lat: 42.19, lon: -71.3 },
+        { result_type: "suburb", city: "Baltimore", state_code: "MD", lat: 39.3, lon: -76.6 },
+      ],
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const { results } = await (await call("/api/search?text=medf&type=city")).json();
+    expect(results).toEqual([{ label: "Medfield, MA", detail: "Norfolk County", lat: 42.18765, lon: -71.30661 }]);
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.searchParams.get("type")).toBe("city");
+    expect(url.searchParams.get("filter")).toBe("countrycode:us");
+  });
+
   it("reports missing TomTom configuration clearly", async () => {
     vi.stubEnv("TOMTOM_API_KEY", "");
     const resp = await call("/api/incidents?lat=42.36&lon=-71.04");

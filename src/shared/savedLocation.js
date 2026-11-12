@@ -1,4 +1,4 @@
-// Last location the user set (GPS fix or zip code), kept ONLY in this
+// Last location the user set (GPS fix, zip code or town), kept ONLY in this
 // browser's localStorage. Used at startup when GPS is unavailable, which is
 // common in the Tesla browser, so the app doesn't fall back to Boston every time.
 
@@ -8,7 +8,12 @@ export function loadLastLocation() {
   try {
     const v = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
     if (v && Number.isFinite(v.lat) && Number.isFinite(v.lon) && Math.abs(v.lat) <= 90 && Math.abs(v.lon) <= 180) {
-      return { lat: v.lat, lon: v.lon, label: typeof v.label === "string" ? v.label : null };
+      return {
+        lat: v.lat, lon: v.lon,
+        label: typeof v.label === "string" ? v.label : null,
+        // Town picked by name: shown in the header instead of the weather station name
+        town: typeof v.town === "string" ? v.town : null,
+      };
     }
   } catch {
     /* storage blocked or corrupt */
@@ -16,12 +21,12 @@ export function loadLastLocation() {
   return null;
 }
 
-export function storeLastLocation({ lat, lon, label }) {
+export function storeLastLocation({ lat, lon, label, town = null }) {
   try {
     // ~11 m precision is plenty for weather, places and traffic
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ lat: Number(lat.toFixed(4)), lon: Number(lon.toFixed(4)), label: label || null })
+      JSON.stringify({ lat: Number(lat.toFixed(4)), lon: Number(lon.toFixed(4)), label: label || null, town: town || null })
     );
   } catch {
     /* private mode / storage full: keep working without it */

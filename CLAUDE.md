@@ -37,7 +37,7 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 - **Server-side API layer**: one Netlify Function (`netlify/functions/api.mjs`, path `/api/*`) proxies OpenWeather, RSS, Geoapify and OSRM; keys stay server-side and the Netlify CDN caches responses
 - **Traffic Conditions**: full-width Traffic card (TomTom): drive times with arrival times to saved places (left column) + traffic near me (right column); no map embed
 - **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
-- **Change location**: header button (map pin + "Change location") opens zip-code entry and a use-current-location button
+- **Change location**: header button (map pin + "Change location") opens a "Zip code or town" box (5 digits → OpenWeather zip lookup; letters → up to 4 US town suggestions from `/api/search?type=city`, Enter picks the top one) and a use-current-location button. A town picked by name (`townName` in context, `town` in `tesla.lastLocation.v1`) replaces the weather station name in the header
 - **Light/Dark Mode**: Auto by default follows the browser's `prefers-color-scheme`, which the Tesla browser sets from the car's Day/Night display (confirmed in the car, Nov 2026), and updates live on change. Sunrise/sunset from the weather data (`src/shared/sunTheme.js`) is only a fallback when the browser reports no preference. The header theme button cycles **Auto → Light → Dark** (icon + word; `tesla.themeMode.v1`); Light and Dark stay until the user cycles back to Auto. `ThemeProvider` sits inside `TeslaAppProvider` to read `data.sys`; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
 - **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography; light mode uses `#f0f4f8` background
 
@@ -88,7 +88,7 @@ The application uses React Context API for global state management:
   - Location coordinates (lat/long) with GPS detection
   - Current weather data and 5-day forecast from OpenWeather API
   - Loading states and error handling for all APIs
-  - Location search functionality (GPS + zip code)
+  - Location search functionality (GPS, zip code, town via `selectTown`)
   - Forecast data for enhanced Weather component features
 
 ### Component Structure
@@ -99,7 +99,7 @@ src/
 │   ├── TeslaAppContext.js     # Global state with forecast data
 │   └── ThemeContext.jsx       # Auto (follows the car) + override theme; applies .dark to <html>
 ├── components/
-│   ├── LocationSelector.jsx   # Header: Change location (zip / GPS) + Auto/Light/Dark theme button
+│   ├── LocationSelector.jsx   # Header: Change location (zip / town / GPS) + Auto/Light/Dark theme button
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
 │   ├── Traffic.jsx           # Traffic tab: location guard + full-width TrafficCard
 │   ├── TrafficCard.jsx       # Drive times and incidents near me
@@ -140,7 +140,7 @@ All third-party calls go through **one Netlify Function**, `netlify/functions/ap
 | `/api/news?category` | `lib/news.mjs` | 3–4 free-to-read RSS/Atom feeds per category (`FEEDS`; no paywalled sources such as NYT), parsed with `fast-xml-parser`, merged, de-duplicated, max 4 per source, 10 total | 15 min + 30 min SWR, vary `category` |
 | `/api/incidents?lat&lon` | `lib/traffic.mjs` | TomTom Orbis v2 incident details (key in `TomTom-Api-Key` header, `Attributes` header selects fields), ~16 km bbox; ranked by severity then distance, top 6 | 2 min + 2 min SWR, vary `lat\|lon` |
 | `/api/drive-times?lat&lon&to=lat,lon;…` | `lib/traffic.mjs` | TomTom Orbis Routing v3 `POST routes/calculate` (`traffic: live`, `Attributes: routes.summary`, key in header; summary read via `summarizeRoute`, which accepts v3 and legacy field names), one call per destination (max 5); per-destination `{ error }` so one failure doesn't blank the card | 2 min + 2 min SWR, vary `lat\|lon\|to` |
-| `/api/search?text[&lat&lon]` | `lib/traffic.mjs` | Geoapify geocode autocomplete (for adding saved places) | 1 day, vary `text\|lat\|lon` |
+| `/api/search?text[&type=city][&lat&lon]` | `lib/traffic.mjs` | Geoapify geocode autocomplete: addresses (adding saved places) or, with `type=city`, US towns (`filter=countrycode:us`; keeps `result_type` city/district, drops suburbs, de-duplicates labels, max 5) | 1 day, vary `text\|type\|lat\|lon` |
 | `/api/places?lat&lon&cat` | `lib/places.mjs` | Geoapify Places v2 (`categories` + `filter=circle` + `bias=proximity`; raw OSM tags from `datasource.raw` mapped to the old Overpass-style element shape) + OSRM `/table` | 10 min + 20 min SWR, vary `lat\|lon\|cat` |
 
 - **Why one function**: Free/Starter Netlify plans allow only 2 code-based rate-limit rules per site; one function = one rule (`120 req / 60 s per IP`)
@@ -219,7 +219,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 
 ### Location Management
 - Startup order: GPS (10 s timeout, `GPS_OPTIONS`) → last location saved in localStorage (`src/shared/savedLocation.js`, key `tesla.lastLocation.v1`, written on every GPS fix or zip search) → Boston default. The Tesla browser often blocks GPS, so the saved location is what usually applies in the car
-- Zip code search with OpenWeather geocoding (header button labelled "Change location", map-pin icon; it sets the location, it does not search the site)
+- Zip code search with OpenWeather geocoding, or town search with Geoapify suggestions (header button labelled "Change location", map-pin icon; it sets the location, it does not search the site)
 - Context provides unified location state across components
 - Real-time location updates for Places component
 

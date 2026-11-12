@@ -3,7 +3,8 @@ import { HttpError, fetchWithTimeout, haversineMi, json, parseCoord } from "./ht
 // Traffic card data:
 //   /api/incidents   — TomTom Traffic Incident Details (Orbis v2) around the user
 //   /api/drive-times — TomTom Orbis Routing v3 (routes/calculate, live traffic) to saved places
-//   /api/search      — Geoapify address autocomplete, used when adding a saved place
+//   /api/search      — Geoapify autocomplete: addresses (adding a saved place) or,
+//                      with type=city, US towns (Change location)
 // Saved places live only in the browser (localStorage); the server never stores them.
 
 const TOMTOM_INCIDENTS_URL = "https://api.tomtom.com/maps/orbis/traffic/incidents/details";
@@ -251,13 +252,22 @@ export async function driveTimes(params, env = process.env) {
 
 // ─── Address search (for adding saved places) ─────────────────────────────────
 
-/** GET /api/search?text[&lat&lon] → { results: [{ label, detail, lat, lon }] } */
+/**
+ * GET /api/search?text[&type=city][&lat&lon] → { results: [{ label, detail, lat, lon }] }
+ * type=city: US towns and cities only, labelled "Medfield, MA" (Change location box).
+ */
 export async function search(params, env = process.env) {
   const text = (params.get("text") || "").trim();
   if (text.length < 3 || text.length > 120) throw new HttpError(400, "Search text must be 3–120 characters");
+  const type = params.get("type") || null;
+  if (type !== null && type !== "city") throw new HttpError(400, "Unknown search type");
   const key = requireEnv(env, "GEOAPIFY_API_KEY", "Address search");
 
-  const qs = new URLSearchParams({ text, limit: "5", format: "json", lang: "en", apiKey: key });
+  const qs = new URLSearchParams({ text, limit: type === "city" ? "8" : "5", format: "json", lang: "en", apiKey: key });
+  if (type === "city") {
+    qs.set("type", "city");
+    qs.set("filter", "countrycode:us");
+  }
   // Optional proximity bias (rounded to ~11 km so it doesn't fragment the cache)
   if (params.get("lat") && params.get("lon")) {
     const lat = parseCoord(params, "lat", -90, 90, 1);
@@ -266,17 +276,31 @@ export async function search(params, env = process.env) {
   }
 
   const data = await upstreamJson(`${GEOAPIFY_AUTOCOMPLETE_URL}?${qs}`, {}, "Address search");
+  const seen = new Set();
   const results = (data.results || [])
     .filter((r) => Number.isFinite(r.lat) && Number.isFinite(r.lon))
-    .map((r) => ({
-      label: r.address_line1 || r.name || r.formatted,
-      detail: r.address_line2 ? r.address_line2.replace(/, United States of America$/, "") : null,
-      lat: Number(r.lat.toFixed(5)),
-      lon: Number(r.lon.toFixed(5)),
-    }));
+    // Towns: Geoapify also returns suburbs labelled with their parent city
+    // ("Medfield" in Baltimore → "Baltimore, MD"); MA towns can be "district"
+    .filter((r) => type !== "city" || r.result_type === "city" || r.result_type === "district")
+    .map((r) => type === "city"
+      ? {
+          label: [r.city || r.name, r.state_code].filter(Boolean).join(", ") || r.formatted,
+          detail: r.county || null,
+          lat: Number(r.lat.toFixed(5)),
+          lon: Number(r.lon.toFixed(5)),
+        }
+      : {
+          label: r.address_line1 || r.name || r.formatted,
+          detail: r.address_line2 ? r.address_line2.replace(/, United States of America$/, "") : null,
+          lat: Number(r.lat.toFixed(5)),
+          lon: Number(r.lon.toFixed(5)),
+        })
+    // The same town can come back twice (town and village boundaries)
+    .filter((r) => (seen.has(r.label) ? false : seen.add(r.label)))
+    .slice(0, 5);
 
   return json(
     { results },
-    { cache: { cdn: 86400, swr: 86400, browser: 3600, vary: ["text", "lat", "lon"] } }
+    { cache: { cdn: 86400, swr: 86400, browser: 3600, vary: ["text", "type", "lat", "lon"] } }
   );
 }

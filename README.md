@@ -16,7 +16,7 @@ A homepage for the Tesla in-car browser that shows weather, live traffic and dri
 - **Traffic:** live drive times and arrival times to your saved places, and traffic incidents near you
 - **News:** headlines in six categories from free-to-read RSS feeds, with small thumbnails
 - **Places:** the nearest places in six EV-focused categories, with addresses, open/closed status and drive times; chargers show plug types, speed and stalls, Tesla-compatible first
-- **Location:** GPS when the browser allows it, otherwise the last zip code or location you set
+- **Location:** GPS when the browser allows it, otherwise the last zip code, town or location you set
 - **Car-friendly UI:** 64 px touch targets, fonts sized for the ~773×601 Tesla viewport, light and dark mode that follows the car's Day/Night display
 
 ## Contents
@@ -87,7 +87,7 @@ All routes are served by one Netlify Function, `netlify/functions/api.mjs`, whic
 | `/api/places?lat&lon&cat` | `places.mjs` | Geoapify Places + OSRM `/table` | 10 min (+20 min stale) |
 | `/api/incidents?lat&lon` | `traffic.mjs` | TomTom Orbis traffic incidents (v2) | 2 min (+2 min stale) |
 | `/api/drive-times?lat&lon&to` | `traffic.mjs` | TomTom Orbis routing (v3), up to 5 destinations | 2 min (+2 min stale) |
-| `/api/search?text[&lat&lon]` | `traffic.mjs` | Geoapify address autocomplete | 1 day |
+| `/api/search?text[&type=city][&lat&lon]` | `traffic.mjs` | Geoapify autocomplete: addresses (saved places) or US towns (`type=city`) | 1 day |
 
 Every route validates its input (coordinates range-checked and rounded, categories checked against fixed lists), and errors return `{ error, retryable }` without upstream URLs, which contain keys.
 
@@ -108,7 +108,7 @@ Every route validates its input (coordinates range-checked and rounded, categori
 ## Location
 
 - On startup the app asks for GPS (10 s timeout). If GPS is blocked, as it often is in the Tesla browser, it uses the last location you set; with nothing saved it falls back to Boston
-- **Change location** in the header takes a US zip code or a fresh GPS fix; either is saved for next time
+- **Change location** in the header takes a US zip code, a town name (suggestions such as "Medfield, MA" appear as you type, up to 4, kept above the Tesla keyboard) or a fresh GPS fix; any of them is saved for next time. A town picked by name is shown in the header
 - Coordinates are rounded before each request (about 1.1 km for weather and incidents, 110 m for places) so nearby users share CDN cache entries
 
 ```mermaid
@@ -116,7 +116,7 @@ flowchart LR
     start(["App opens"]) --> gps{"GPS allowed?"}
     gps -->|yes| live["Use GPS fix<br/>and save it"]
     gps -->|"no / timeout"| saved{"Saved location?"}
-    saved -->|yes| last["Use last zip code<br/>or GPS fix"]
+    saved -->|yes| last["Use last zip code,<br/>town or GPS fix"]
     saved -->|no| boston["Use Boston default"]
 ```
 
@@ -224,7 +224,7 @@ There is no database. User data lives only in the visitor's browser, so nothing 
 | localStorage key | Contents | Written by |
 |---|---|---|
 | `tesla.savedPlaces.v1` | Up to 4 saved places: `{ id, label, address, lat, lon }` | Traffic card |
-| `tesla.lastLocation.v1` | Last location set: `{ lat, lon, label }` (4 dp) | Location (GPS or zip code) |
+| `tesla.lastLocation.v1` | Last location set: `{ lat, lon, label, town }` (4 dp) | Location (GPS, zip code or town) |
 | `tesla.themeMode.v1` | `auto`, `light` or `dark` | Theme button (Auto follows the car's Day/Night display) |
 | `wd_brand_{qid}` | Wikidata brand logo URL, 30-day expiry | Places |
 
@@ -335,7 +335,7 @@ npm run build        # production build to build/
 
 ## Known constraints
 
-- **Tesla browser geolocation:** GPS is often blocked in the car, so the app relies on the saved location or a zip code
+- **Tesla browser geolocation:** GPS is often blocked in the car, so the app relies on the saved location, a zip code or a town
 - **TomTom free tier:** about 2,500 requests a day. Each traffic refresh costs 1 incidents call plus 1 routing call per saved place
 - **OpenStreetMap coverage:** opening hours, addresses and charger details are only as complete as the OSM data; places without hours show no open/closed pill
 - **No live charger availability:** OpenStreetMap has no stall-availability data

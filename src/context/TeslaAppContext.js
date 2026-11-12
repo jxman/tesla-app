@@ -18,6 +18,9 @@ export const TeslaAppProvider = ({ children }) => {
   const [forecastData, setForecastData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentLocation, setCurrentLocation] = useState('Boston, MA');
+  // Town chosen by name in Change location ("Medfield, MA"); the header shows it
+  // instead of OpenWeather's station name. Cleared by GPS and zip lookups.
+  const [townName, setTownName] = useState(null);
 
   // Fetches current weather + forecast through /api/weather.
   // On failure, `data` gets an OWM-style { cod, message } so Weather.jsx shows its error state.
@@ -46,6 +49,7 @@ export const TeslaAppProvider = ({ children }) => {
       setLat(latitude);
       setLong(longitude);
       setCurrentLocation(saved ? saved.label || 'Saved location' : 'Boston, MA');
+      setTownName(saved?.town ?? null);
       fetchWeatherByCoords({ latitude, longitude });
     };
 
@@ -57,6 +61,7 @@ export const TeslaAppProvider = ({ children }) => {
       setLat(coords.latitude);
       setLong(coords.longitude);
       setCurrentLocation('Current Location');
+      setTownName(null);
       storeLastLocation({ lat: coords.latitude, lon: coords.longitude, label: null });
       fetchWeatherByCoords(coords);
     }, fallbackToSaved, GPS_OPTIONS);
@@ -69,6 +74,7 @@ export const TeslaAppProvider = ({ children }) => {
       setLat(geo.lat);
       setLong(geo.lon);
       setCurrentLocation(`${geo.name}, ${geo.country}`);
+      setTownName(null);
       storeLastLocation({ lat: geo.lat, lon: geo.lon, label: `${geo.name}, ${geo.country}` });
       await fetchWeatherByCoords({ latitude: geo.lat, longitude: geo.lon });
     } catch (error) {
@@ -83,6 +89,16 @@ export const TeslaAppProvider = ({ children }) => {
     }
   };
 
+  /** Town picked from the Change location suggestions: { label: "Medfield, MA", lat, lon } */
+  const selectTown = async ({ label, lat: townLat, lon: townLon }) => {
+    setLat(townLat);
+    setLong(townLon);
+    setCurrentLocation(label);
+    setTownName(label);
+    storeLastLocation({ lat: townLat, lon: townLon, label, town: label });
+    await fetchWeatherByCoords({ latitude: townLat, longitude: townLon });
+  };
+
   const getCurrentLocation = () => {
     setIsLoading(true);
     navigator.geolocation.getCurrentPosition(
@@ -90,6 +106,7 @@ export const TeslaAppProvider = ({ children }) => {
         setLat(coords.latitude);
         setLong(coords.longitude);
         setCurrentLocation('Current Location');
+        setTownName(null);
         storeLastLocation({ lat: coords.latitude, lon: coords.longitude, label: null });
         await fetchWeatherByCoords(coords);
       },
@@ -118,6 +135,8 @@ export const TeslaAppProvider = ({ children }) => {
         isLoading,
         currentLocation,
         searchByZipCode,
+        selectTown,
+        townName,
         getCurrentLocation,
         refreshWeather,
       }}
