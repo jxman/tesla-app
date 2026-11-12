@@ -48,22 +48,34 @@
   --warn-fg:      #fbbf24;
 }
 
-/* ── Custom scrollbar ─────────────────────────────────────────────────────── */
-.custom-scrollbar::-webkit-scrollbar {
+/* ── Scrollbars ───────────────────────────────────────────────────────────── */
+/* color-scheme makes native scrollbars and form controls match the theme
+   (without it, Chromium draws a bright white scrollbar in dark mode). */
+:root { color-scheme: light; }
+.dark { color-scheme: dark; }
+
+/* Thin, token-coloured scrollbars everywhere. Chromium 121+ uses the standard
+   properties; older Chromium (possibly the Tesla browser) uses ::-webkit-*. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: var(--surface-deep);
-  border-radius: 3px;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
   background: var(--line);
   border-radius: 3px;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
   background: var(--mute);
 }
 

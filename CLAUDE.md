@@ -102,7 +102,7 @@ src/
 │   ├── LocationSelector.jsx   # Header: Change location (zip / GPS) + sun/moon theme toggle
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
 │   ├── Traffic.jsx           # Traffic tab: location guard + full-width TrafficCard
-│   ├── TrafficCard.jsx       # Drive times, incidents near me, nearest charger
+│   ├── TrafficCard.jsx       # Drive times and incidents near me
 │   ├── News.jsx             # News feed with categories
 │   └── Places.jsx           # OpenStreetMap places integration
 ├── api/
@@ -144,7 +144,7 @@ All third-party calls go through **one Netlify Function**, `netlify/functions/ap
 - **Places timezone rule**: the function returns up to 20 nearest candidates with raw `opening_hours`; open/closed is evaluated **in the browser** (functions run in UTC)
 - **Weather errors** surface to `Weather.jsx` as an OWM-style `{ cod, message }` in context `data`
 - **TomTom key permissions**: each TomTom API (Traffic, Routing) must be enabled on the key in the TomTom dashboard; a missing product returns 403 "You are not allowed to access this endpoint". The legacy `routing/1/calculateRoute` endpoint is not available to new keys
-- **Traffic**: `TrafficCard.jsx` fills the tab: Drive times (left column) and Traffic near me (right column); the Waze embed was removed. Saved places (max 5) live **only in browser localStorage** (`src/shared/savedPlaces.js`, key `tesla.savedPlaces.v1`) — never stored server-side, because the site is public. Card refreshes every 3 min **only while the page is visible** (`visibilitychange`; refreshes on return if stale) to save TomTom quota. A **Nearest Tesla/fast charger** row (`useNearestCharger`) reuses `/api/places?cat=charging` (CDN-cached) and ranks with `chargingInfo` (Tesla plug, then CCS). **Brand logos**: Wikidata is still called from the browser (allows CORS, 30-day localStorage cache)
+- **Traffic**: `TrafficCard.jsx` fills the tab: Drive times (left column) and Traffic near me (right column); the Waze embed was removed. Drive times are a **2×2 tile grid** (fixed two rows so it fits 773×601 without scrolling): up to 4 saved places (`MAX_SAVED_PLACES = 4`; the API still accepts 5), minutes coloured by `delayStyle`, tap a tile for Google Maps directions, a dashed Add place tile in the free slot, ✕ on each tile in edit mode. Saved places live **only in browser localStorage** (`src/shared/savedPlaces.js`, key `tesla.savedPlaces.v1`) — never stored server-side, because the site is public. Card refreshes every 3 min **only while the page is visible** (`visibilitychange`; refreshes on return if stale) to save TomTom quota. No nearest-charger row: it was removed because the car's own navigation already finds chargers (chargers remain on the Places tab). **Brand logos**: Wikidata is still called from the browser (allows CORS, 30-day localStorage cache)
 
 ## Environment Configuration
 

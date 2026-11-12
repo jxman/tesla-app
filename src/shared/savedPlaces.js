@@ -3,7 +3,8 @@
 // sent to /api/drive-times only when drive times are requested.
 
 const STORAGE_KEY = "tesla.savedPlaces.v1";
-export const MAX_SAVED_PLACES = 5;
+// 4 = the Traffic card's 2×2 tile grid (the API accepts up to 5)
+export const MAX_SAVED_PLACES = 4;
 
 function isValidPlace(p) {
   return (

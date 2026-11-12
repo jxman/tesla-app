@@ -80,7 +80,7 @@ This project now features a modern tabbed interface with enhanced weather foreca
 ### Component Guidelines
 - Weather: Focus on forecast accuracy and touch interactions
 - Places: Ensure offline graceful degradation and location accuracy
-- Traffic: drive times, incidents and nearest charger via TomTom; keep refreshes paused while the page is hidden
+- Traffic: drive times and incidents via TomTom; keep refreshes paused while the page is hidden
 - News: Keep categorized feed with refresh functionality
 
 ## Questions?

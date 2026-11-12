@@ -57,6 +57,9 @@ Shipped work for the Tesla Dashboard, oldest first. For how the system works tod
 - Dependabot version updates: one monthly PR for npm patch/minor updates, separate PRs for major upgrades; removed the outdated `scripts/update-dependencies.sh`, which pinned old versions
 - **Add-place form above the keyboard:** the Traffic tab's Add a place form is a panel pinned to the top of the screen, since the Tesla on-screen keyboard covers the bottom ~45% without resizing the page
 - **Auto light/dark mode:** switches at sunrise and sunset for the current location, like the car's Auto display; the sun/moon button overrides until the next sunrise or sunset
+- **Removed the nearest-charger row** from the Traffic tab: the car's own navigation already finds chargers, and the row crowded out saved places (chargers are still on the Places tab)
+- **Drive-time tiles:** saved places show as a 2×2 grid (up to 4, down from 5) that fits the Tesla screen without scrolling; the free slot is an Add place tile, minutes are coloured by delay, and tapping a tile opens directions
+- **Thin, theme-coloured scrollbars** everywhere (dark mode showed a bright white scrollbar)
 - Patch updates (commitlint, Vite 7.3.8, PostCSS, Autoprefixer, globals, user-event) and a `minimatch` advisory fix in ESLint's dependencies
 
 ## Design history

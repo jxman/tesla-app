@@ -2,10 +2,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   FiPlus, FiRefreshCw, FiX, FiEdit2, FiCheck, FiSearch, FiAlertTriangle, FiAlertOctagon,
   FiAlertCircle, FiSlash, FiTool, FiMinusCircle, FiCloudRain, FiTruck, FiActivity, FiHome,
-  FiBriefcase, FiMapPin, FiZap, FiChevronRight,
+  FiBriefcase, FiMapPin,
 } from "react-icons/fi";
-import { getDriveTimes, getIncidents, getPlaces, searchAddress } from "../api/client";
-import { chargingInfo, chargingSummary } from "../shared/charging";
+import { getDriveTimes, getIncidents, searchAddress } from "../api/client";
 import { loadSavedPlaces, storeSavedPlaces, makePlace, MAX_SAVED_PLACES } from "../shared/savedPlaces";
 
 // Design tokens (values live in src/index.css and switch with .dark)
@@ -23,71 +22,6 @@ const C = {
 
 const REFRESH_MS = 3 * 60 * 1000; // matches the 2-min CDN cache + margin
 const QUICK_LABELS = ["Home", "Work", "Gym"];
-
-/**
- * Nearest charger worth driving to: Tesla plugs first, then CCS (adapter).
- * Uses /api/places, the same CDN-cached data as the Places tab's Charging list.
- */
-function useNearestCharger(lat, lon) {
-  const [charger, setCharger] = useState(null);
-  // Round so small GPS jitter doesn't refetch (3 dp ≈ 110 m, same as the API)
-  const rLat = lat == null ? null : Number(lat.toFixed(3));
-  const rLon = lon == null ? null : Number(lon.toFixed(3));
-
-  useEffect(() => {
-    if (rLat == null || rLon == null) return undefined;
-    let cancelled = false;
-    getPlaces(rLat, rLon, "charging")
-      .then(({ places = [] }) => {
-        const best = places
-          .map((p) => ({ p, info: chargingInfo(p.tags || {}) }))
-          .filter(({ info }) => info && info.rank <= 1)
-          .sort((a, b) => a.info.rank - b.info.rank || a.p.distanceMi - b.p.distanceMi)[0];
-        if (!cancelled) {
-          setCharger(best ? {
-            name: best.p.tags.name,
-            summary: chargingSummary(best.info),
-            tesla: best.info.rank === 0,
-            distanceMi: best.p.distanceMi,
-            etaMinutes: best.p.etaMinutes ?? null,
-            lat: best.p.lat,
-            lon: best.p.lon,
-          } : null);
-        }
-      })
-      .catch(() => { if (!cancelled) setCharger(null); }); // optional extra; hide on failure
-    return () => { cancelled = true; };
-  }, [rLat, rLon]);
-
-  return charger;
-}
-
-function NearestCharger({ charger }) {
-  if (!charger) return null;
-  const meta = [
-    charger.distanceMi != null ? `${charger.distanceMi.toFixed(1)} mi` : null,
-    charger.etaMinutes != null ? `${charger.etaMinutes} min` : null,
-    charger.summary,
-  ].filter(Boolean).join(" · ");
-  return (
-    <button
-      onClick={() => window.open(`https://maps.google.com/?q=${charger.lat},${charger.lon}`, "_blank", "noopener,noreferrer")}
-      className="flex items-center gap-3 px-4 rounded-xl text-left w-full hover:bg-gray-100 dark:hover:bg-gray-700/40 transition-colors flex-shrink-0"
-      style={{ minHeight: 64, border: `1px solid ${C.line}` }}
-      aria-label={`Directions to ${charger.name}`}
-    >
-      <FiZap className="w-5 h-5 flex-shrink-0" style={{ color: C.ok }} />
-      <div className="flex-1 min-w-0">
-        <div style={{ color: C.mute, fontSize: "clamp(11px, 1.4vw, 12px)", letterSpacing: "0.04em" }}>
-          {charger.tesla ? "NEAREST TESLA CHARGER" : "NEAREST FAST CHARGER"}
-        </div>
-        <div className="font-semibold truncate" style={{ color: C.text, fontSize: "clamp(14px, 1.8vw, 17px)" }}>{charger.name}</div>
-        <div className="truncate" style={{ color: C.mute, fontSize: "clamp(11px, 1.45vw, 13px)" }}>{meta}</div>
-      </div>
-      <FiChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: C.dim }} />
-    </button>
-  );
-}
 
 const INCIDENT_ICONS = {
   accident: FiAlertTriangle,
@@ -271,7 +205,6 @@ export default function TrafficCard({ lat, lon }) {
   const [updatedAt, setUpdatedAt] = useState(null);
   const [mode, setMode] = useState("view"); // view | edit | add
   const latestRequest = useRef(0);
-  const nearestCharger = useNearestCharger(lat, lon);
 
   const refresh = useCallback(async () => {
     if (lat == null || lon == null) return;
@@ -342,34 +275,18 @@ export default function TrafficCard({ lat, lon }) {
         />
       )}
       <SectionTitle
-        right={
-          <>
-            {saved.length > 0 && (
-              <IconButton onClick={() => setMode(editing ? "view" : "edit")} label={editing ? "Done" : "Edit places"}>
-                {editing ? <FiCheck className="w-5 h-5" /> : <FiEdit2 className="w-4 h-4" />}
-              </IconButton>
-            )}
-            {saved.length < MAX_SAVED_PLACES && (
-              <IconButton onClick={() => setMode("add")} label="Add place"><FiPlus className="w-5 h-5" /></IconButton>
-            )}
-          </>
-        }
+        right={saved.length > 0 && (
+          <IconButton onClick={() => setMode(editing ? "view" : "edit")} label={editing ? "Done" : "Edit places"}>
+            {editing ? <FiCheck className="w-5 h-5" /> : <FiEdit2 className="w-4 h-4" />}
+          </IconButton>
+        )}
       >
         Drive times
       </SectionTitle>
 
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 pr-0.5">
-        {saved.length === 0 && (
-          <button
-            onClick={() => setMode("add")}
-            className="flex-1 flex flex-col items-center justify-center gap-2 px-4 rounded-xl text-center hover:bg-gray-100 dark:hover:bg-gray-700/40 transition-colors"
-            style={{ minHeight: 120, border: `1px dashed ${C.line}`, color: C.mute }}
-          >
-            <FiPlus className="w-7 h-7" />
-            <span style={{ fontSize: "clamp(13px, 1.7vw, 17px)" }}>Add Home or Work to see live drive times</span>
-          </button>
-        )}
-
+      {/* 2×2 tiles: up to 4 places, the free slot is an Add tile. Two fixed rows
+          so everything fits the ~773×601 Tesla viewport without scrolling. */}
+      <div className="flex-1 min-h-0 grid grid-cols-2 gap-2" style={{ gridTemplateRows: "repeat(2, minmax(0, 1fr))" }}>
         {saved.map((p, i) => {
           const r = routes[i];
           const Icon = placeIcon(p.label);
@@ -377,55 +294,77 @@ export default function TrafficCard({ lat, lon }) {
           const delay = ok ? delayStyle(r.delayMin) : null;
           const arrive = ok ? fmtTime(new Date(now.getTime() + r.minutes * 60000)) : null;
           const failed = r?.error || (!r && routesError);
+          const status = r?.error ? r.error
+            : !r && routesError ? routesError
+            : r?.here ? "You're here"
+            : loading ? "Updating…" : "—";
+          const openDirections = () => window.open(
+            `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`, "_blank", "noopener,noreferrer");
           return (
             <div
               key={p.id}
-              className="flex items-center gap-3 px-4 rounded-xl"
-              style={{ minHeight: 76, background: C.deep, border: `1px solid ${C.line}` }}
+              role={editing ? undefined : "button"}
+              tabIndex={editing ? undefined : 0}
+              onClick={editing ? undefined : openDirections}
+              onKeyDown={editing ? undefined : (e) => { if (e.key === "Enter") openDirections(); }}
+              aria-label={editing ? undefined : `Directions to ${p.label}`}
+              className={`relative min-h-0 flex flex-col justify-between px-3 py-2.5 rounded-xl overflow-hidden ${
+                editing ? "" : "cursor-pointer hover:brightness-110 active:scale-[0.98] transition"
+              }`}
+              style={{ background: C.deep, border: `1px solid ${C.line}`, opacity: r?.here ? 0.7 : 1 }}
             >
-              <Icon className="w-6 h-6 flex-shrink-0" style={{ color: C.mute }} />
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold truncate" style={{ color: C.text, fontSize: "clamp(15px, 2vw, 19px)" }}>{p.label}</div>
-                <div className="truncate" style={{ color: failed ? C.warn : C.mute, fontSize: "clamp(11px, 1.5vw, 14px)" }}>
-                  {r?.error ? r.error
-                    : !r && routesError ? routesError
-                    : r?.here ? "You're here"
-                    : ok ? (
-                      <>
-                        <span style={{ color: delay?.color }}>{delay?.text}</span>
-                        {r.miles != null && ` · ${r.miles} mi`}
-                      </>
-                    )
-                    : loading ? "Updating…" : "—"}
-                </div>
+              <div className="flex items-center gap-2 min-w-0 pr-8">
+                <Icon className="w-5 h-5 flex-shrink-0" style={{ color: C.mute }} />
+                <span className="font-semibold truncate" style={{ color: C.text, fontSize: "clamp(14px, 1.9vw, 18px)" }}>{p.label}</span>
               </div>
-              {editing ? (
+
+              {ok ? (
+                <>
+                  <div className="leading-none">
+                    <span className="font-light tabular-nums" style={{ color: delay?.color ?? C.text, fontSize: "clamp(30px, 4.6vw, 48px)" }}>{r.minutes}</span>
+                    <span style={{ color: C.mute, fontSize: "clamp(12px, 1.5vw, 15px)" }}> min</span>
+                  </div>
+                  <div style={{ color: C.mute, fontSize: "clamp(11px, 1.45vw, 13px)" }}>
+                    <div className="truncate">
+                      <span style={{ color: delay?.color }}>{delay?.text}</span>
+                      {r.miles != null && ` · ${r.miles} mi`}
+                    </div>
+                    {arrive && <div className="truncate">arrive {arrive}</div>}
+                  </div>
+                </>
+              ) : (
+                <div className="line-clamp-2" style={{ color: failed ? C.warn : C.mute, fontSize: "clamp(12px, 1.6vw, 15px)" }}>{status}</div>
+              )}
+
+              {editing && (
                 <button
                   onClick={() => removePlace(p.id)}
                   aria-label={`Remove ${p.label}`}
-                  className="w-11 h-11 flex items-center justify-center rounded-xl"
-                  style={{ color: C.bad, border: `1px solid ${C.line}` }}
+                  className="absolute top-1 right-1 w-11 h-11 flex items-center justify-center rounded-xl"
+                  style={{ color: C.bad, background: C.card, border: `1px solid ${C.line}` }}
                 >
                   <FiX className="w-5 h-5" />
                 </button>
-              ) : ok && (
-                <div className="text-right flex-shrink-0 leading-none">
-                  <span className="font-light tabular-nums" style={{ color: C.text, fontSize: "clamp(28px, 4.2vw, 44px)" }}>{r.minutes}</span>
-                  <span style={{ color: C.mute, fontSize: "clamp(12px, 1.5vw, 15px)" }}> min</span>
-                  {arrive && (
-                    <div className="mt-1" style={{ color: C.mute, fontSize: "clamp(11px, 1.4vw, 13px)" }}>arrive {arrive}</div>
-                  )}
-                </div>
               )}
             </div>
           );
         })}
+
+        {saved.length < MAX_SAVED_PLACES && (
+          <button
+            onClick={() => setMode("add")}
+            className={`min-h-0 flex flex-col items-center justify-center gap-1.5 px-3 rounded-xl text-center hover:bg-gray-100 dark:hover:bg-gray-700/40 transition-colors ${
+              saved.length === 0 ? "col-span-2 row-span-2" : ""
+            }`}
+            style={{ border: `1.5px dashed ${C.dim}`, color: C.mute }}
+          >
+            <FiPlus className="w-6 h-6" />
+            <span style={{ fontSize: "clamp(12px, 1.6vw, 16px)" }}>
+              {saved.length === 0 ? "Add Home or Work to see live drive times" : "Add place"}
+            </span>
+          </button>
+        )}
       </div>
-      {nearestCharger && (
-        <div className="pt-2 flex-shrink-0">
-          <NearestCharger charger={nearestCharger} />
-        </div>
-      )}
     </>
   );
 
