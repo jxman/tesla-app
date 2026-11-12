@@ -38,7 +38,7 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 - **Traffic Conditions**: full-width Traffic card (TomTom): drive times with arrival times to saved places (left column) + traffic near me (right column); no map embed
 - **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
 - **Change location**: header button (map pin + "Change location") opens zip-code entry and a use-current-location button
-- **Light/Dark Mode**: Auto by default follows the browser's `prefers-color-scheme`, which the Tesla browser sets from the car's Day/Night display (confirmed in the car, Nov 2026), and updates live on change. Sunrise/sunset from the weather data (`src/shared/sunTheme.js`) is only a fallback when the browser reports no preference. The sun/moon button overrides until Auto changes or 12 h pass (`tesla.themeOverride.v1` = `{ theme, basis, until }`); tapping back to the Auto value clears it; an "A" badge shows Auto. `ThemeProvider` sits inside `TeslaAppProvider` to read `data.sys`; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
+- **Light/Dark Mode**: Auto by default follows the browser's `prefers-color-scheme`, which the Tesla browser sets from the car's Day/Night display (confirmed in the car, Nov 2026), and updates live on change. Sunrise/sunset from the weather data (`src/shared/sunTheme.js`) is only a fallback when the browser reports no preference. The header theme button cycles **Auto → Light → Dark** (icon + word; `tesla.themeMode.v1`); Light and Dark stay until the user cycles back to Auto. `ThemeProvider` sits inside `TeslaAppProvider` to read `data.sys`; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
 - **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography; light mode uses `#f0f4f8` background
 
 ## Development Commands
@@ -99,7 +99,7 @@ src/
 │   ├── TeslaAppContext.js     # Global state with forecast data
 │   └── ThemeContext.jsx       # Auto (follows the car) + override theme; applies .dark to <html>
 ├── components/
-│   ├── LocationSelector.jsx   # Header: Change location (zip / GPS) + sun/moon theme toggle
+│   ├── LocationSelector.jsx   # Header: Change location (zip / GPS) + Auto/Light/Dark theme button
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
 │   ├── Traffic.jsx           # Traffic tab: location guard + full-width TrafficCard
 │   ├── TrafficCard.jsx       # Drive times and incidents near me

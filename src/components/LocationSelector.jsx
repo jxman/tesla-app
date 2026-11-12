@@ -1,15 +1,22 @@
 import { useState, useContext } from "react";
 import { FiMapPin, FiX, FiSun, FiMoon } from "react-icons/fi";
+import { LuSunMoon } from "react-icons/lu";
 import { BiCurrentLocation } from "react-icons/bi";
 import TeslaAppContext from "../context/TeslaAppContext";
 import { useTheme } from "../context/ThemeContext";
+
+// Header theme button cycles Auto → Light → Dark
+const THEME_LABEL = { auto: "Auto", light: "Light", dark: "Dark" };
+const THEME_ICON = { auto: LuSunMoon, light: FiSun, dark: FiMoon };
+const NEXT_MODE = { auto: "light", light: "dark", dark: "auto" };
 
 function LocationSelector() {
   const [zip, setZip] = useState("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const { searchByZipCode, getCurrentLocation, data, isLoading } = useContext(TeslaAppContext);
-  const { isDark, isAuto, followsCar, toggle } = useTheme();
+  const { mode, followsCar, cycle } = useTheme();
+  const ThemeIcon = THEME_ICON[mode];
 
   const locationName = data?.name || "Loading...";
 
@@ -87,22 +94,13 @@ function LocationSelector() {
         Change location
       </button>
       <button
-        onClick={toggle}
-        className="relative h-11 w-11 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
-        title={isAuto
-          ? `Auto (${followsCar ? "follows the car's display" : "sunrise/sunset"}). Tap for ${isDark ? "light" : "dark"}`
-          : `Manual until the ${followsCar ? "car's display changes" : "next sunrise/sunset"}. Tap to return to Auto`}
-        aria-label={isAuto ? "Theme: Auto. Tap to override" : "Theme: manual. Tap to return to Auto"}
+        onClick={cycle}
+        className="h-11 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center gap-2 transition-all flex-shrink-0 text-sm font-medium text-gray-700 dark:text-gray-300"
+        title={`Theme: ${THEME_LABEL[mode]}${mode === "auto" ? (followsCar ? " (follows the car's display)" : " (sunrise/sunset)") : ""}. Tap for ${THEME_LABEL[NEXT_MODE[mode]]}`}
+        aria-label={`Theme: ${THEME_LABEL[mode]}. Tap for ${THEME_LABEL[NEXT_MODE[mode]]}`}
       >
-        {isDark
-          ? <FiSun className="w-5 h-5 text-gray-400" />
-          : <FiMoon className="w-5 h-5 text-gray-500" />
-        }
-        {isAuto && (
-          <span className="absolute -top-1.5 -right-1.5 h-5 min-w-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold leading-5 text-center">
-            A
-          </span>
-        )}
+        <ThemeIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+        <span className="w-10 text-left">{THEME_LABEL[mode]}</span>
       </button>
     </div>
   );

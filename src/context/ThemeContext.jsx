@@ -4,27 +4,26 @@ import { sunTheme } from "../shared/sunTheme";
 
 const ThemeContext = createContext();
 
-// Manual override from the sun/moon button: { theme, basis, until }.
-// It lasts until Auto changes (the car switches Day/Night, or sunrise/sunset in
-// the fallback) or 12 hours pass, then Auto takes over again.
-const OVERRIDE_KEY = "tesla.themeOverride.v1";
-const OVERRIDE_MAX_MS = 12 * 60 * 60 * 1000;
+// Theme mode from the header button, cycled Auto → Light → Dark.
+// Light and Dark stay until the user cycles back to Auto.
+const MODE_KEY = "tesla.themeMode.v1";
+const MODES = ["auto", "light", "dark"];
 const TICK_MS = 60 * 1000;
 const DARK_QUERY = "(prefers-color-scheme: dark)";
 const LIGHT_QUERY = "(prefers-color-scheme: light)";
 
-function loadOverride() {
+function loadMode() {
   try {
-    const raw = JSON.parse(localStorage.getItem(OVERRIDE_KEY));
-    if (raw && (raw.theme === "light" || raw.theme === "dark") && raw.until > Date.now()) return raw;
-  } catch { /* storage blocked or bad JSON */ }
-  return null;
+    const saved = localStorage.getItem(MODE_KEY);
+    if (MODES.includes(saved)) return saved;
+  } catch { /* storage blocked */ }
+  return "auto";
 }
 
-function storeOverride(value) {
+function storeMode(mode) {
   try {
-    if (value) localStorage.setItem(OVERRIDE_KEY, JSON.stringify(value));
-    else localStorage.removeItem(OVERRIDE_KEY);
+    localStorage.setItem(MODE_KEY, mode);
+    localStorage.removeItem("tesla.themeOverride.v1"); // previous one-tap override, no longer used
   } catch { /* storage blocked */ }
 }
 
@@ -43,10 +42,10 @@ function readBrowserScheme() {
 export function ThemeProvider({ children }) {
   const { data } = useContext(TeslaAppContext);
   const [now, setNow] = useState(() => Date.now());
-  const [override, setOverride] = useState(loadOverride);
+  const [mode, setMode] = useState(loadMode);
   const [browserScheme, setBrowserScheme] = useState(readBrowserScheme);
 
-  // Re-evaluate every minute (sunrise/sunset fallback and override expiry)
+  // Re-evaluate every minute for the sunrise/sunset fallback
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), TICK_MS);
     return () => clearInterval(id);
@@ -63,28 +62,20 @@ export function ThemeProvider({ children }) {
 
   // Auto: the car's setting when the browser reports one, else sunrise/sunset
   const autoTheme = browserScheme ?? sunTheme(now, data?.sys?.sunrise, data?.sys?.sunset).theme;
-  const activeOverride = override && override.until > now && override.basis === autoTheme ? override : null;
-  const isDark = (activeOverride ? activeOverride.theme : autoTheme) === "dark";
+  const isDark = (mode === "auto" ? autoTheme : mode) === "dark";
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
-  // Override no longer applies (Auto changed or it expired): forget it
-  useEffect(() => {
-    if (override && !activeOverride) { setOverride(null); storeOverride(null); }
-  }, [override, activeOverride]);
-
-  // Flip the theme; flipping back to what Auto shows clears the override
-  const toggle = () => {
-    const next = isDark ? "light" : "dark";
-    const value = next === autoTheme ? null : { theme: next, basis: autoTheme, until: Date.now() + OVERRIDE_MAX_MS };
-    setOverride(value);
-    storeOverride(value);
+  const cycle = () => {
+    const next = MODES[(MODES.indexOf(mode) + 1) % MODES.length];
+    setMode(next);
+    storeMode(next);
   };
 
   return (
-    <ThemeContext.Provider value={{ isDark, isAuto: !activeOverride, followsCar: browserScheme != null, toggle }}>
+    <ThemeContext.Provider value={{ mode, isDark, followsCar: browserScheme != null, cycle }}>
       {children}
     </ThemeContext.Provider>
   );

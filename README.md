@@ -224,7 +224,7 @@ There is no database. User data lives only in the visitor's browser, so nothing 
 |---|---|---|
 | `tesla.savedPlaces.v1` | Up to 4 saved places: `{ id, label, address, lat, lon }` | Traffic card |
 | `tesla.lastLocation.v1` | Last location set: `{ lat, lon, label }` (4 dp) | Location (GPS or zip code) |
-| `tesla.themeOverride.v1` | `{ theme, basis, until }` | Manual light/dark choice from the sun/moon button; ends when the car's display switches Day/Night or after 12 h |
+| `tesla.themeMode.v1` | `auto`, `light` or `dark` | Theme button (Auto follows the car's Day/Night display) |
 | `wd_brand_{qid}` | Wikidata brand logo URL, 30-day expiry | Places |
 
 Server-side caching is entirely Netlify CDN entries keyed by each route's query parameters (see [API routes](#api-routes)).
@@ -269,9 +269,9 @@ TeslaApp/
 │   ├── api/client.js            # Browser client for /api/*
 │   ├── context/
 │   │   ├── TeslaAppContext.js   # Location + weather state
-│   │   └── ThemeContext.jsx     # Auto light/dark (follows the car) + manual override
+│   │   └── ThemeContext.jsx     # Auto (follows the car) / Light / Dark
 │   ├── components/
-│   │   ├── LocationSelector.jsx # Header: Change location, theme toggle
+│   │   ├── LocationSelector.jsx # Header: Change location, Auto/Light/Dark button
 │   │   ├── Weather.jsx
 │   │   ├── Traffic.jsx          # Location guard
 │   │   ├── TrafficCard.jsx      # Drive times and incidents near me
