@@ -180,69 +180,82 @@ function AddPlaceForm({ lat, lon, existingLabels, onAdd, onCancel }) {
   };
 
   const inputClass =
-    "w-full h-11 px-3 rounded-xl outline-none bg-transparent focus:ring-2 focus:ring-blue-500/60";
+    "h-11 px-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/60";
+  const inputStyle = { border: `1px solid ${C.line}`, color: C.text, background: C.deep, fontSize: 16 };
 
+  // Pinned to the top of the screen: the Tesla on-screen keyboard covers the
+  // bottom ~45% of the browser and doesn't resize the page, so everything you
+  // type into (and the first results) must sit in the top half.
   return (
-    <div className="flex flex-col gap-2 min-h-0">
-      <SectionTitle right={<IconButton onClick={onCancel} label="Cancel"><FiX className="w-5 h-5" /></IconButton>}>
-        Add a place
-      </SectionTitle>
+    <div className="fixed inset-0 z-50 flex flex-col" role="dialog" aria-label="Add a place">
+      <div
+        className="mx-auto w-full max-w-5xl flex flex-col gap-2 p-3 rounded-b-2xl shadow-2xl"
+        style={{ background: C.card, borderBottom: `1px solid ${C.line}` }}
+      >
+        <div className="flex items-center gap-1.5">
+          {QUICK_LABELS.map((l) => (
+            <button
+              key={l}
+              onClick={() => setLabel(l)}
+              className={`h-11 px-3 rounded-xl font-medium transition-colors flex-shrink-0 ${
+                label === l
+                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                  : "bg-gray-100 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300"
+              }`}
+              style={{ fontSize: 15 }}
+            >
+              {l}
+            </button>
+          ))}
+          <input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Name (e.g. School)"
+            maxLength={24}
+            aria-label="Place name"
+            className={`${inputClass} flex-1 min-w-0`}
+            style={inputStyle}
+          />
+          <IconButton onClick={onCancel} label="Cancel"><FiX className="w-5 h-5" /></IconButton>
+        </div>
 
-      <div className="flex gap-1.5 flex-wrap">
-        {QUICK_LABELS.map((l) => (
-          <button
-            key={l}
-            onClick={() => setLabel(l)}
-            className={`h-11 px-4 rounded-xl font-medium transition-colors ${
-              label === l
-                ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                : "bg-gray-100 text-gray-600 dark:bg-gray-700/60 dark:text-gray-300"
-            }`}
-            style={{ fontSize: "clamp(12px, 1.5vw, 15px)" }}
-          >
-            {l}
-          </button>
-        ))}
-      </div>
+        <div className="relative">
+          <FiSearch className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.mute }} />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search address or place"
+            aria-label="Search address or place"
+            autoFocus
+            className={`${inputClass} w-full pl-9`}
+            style={inputStyle}
+          />
+          {searching && (
+            <FiRefreshCw className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 animate-spin" style={{ color: C.mute }} />
+          )}
+        </div>
 
-      <input
-        value={label}
-        onChange={(e) => setLabel(e.target.value)}
-        placeholder="Name (e.g. School)"
-        maxLength={24}
-        className={inputClass}
-        style={{ border: `1px solid ${C.line}`, color: C.text, fontSize: 15 }}
-      />
-
-      <div className="relative">
-        <FiSearch className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: C.mute }} />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search address or place"
-          autoFocus
-          className={`${inputClass} pl-9`}
-          style={{ border: `1px solid ${C.line}`, color: C.text, fontSize: 15 }}
-        />
-        {searching && (
-          <FiRefreshCw className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 animate-spin" style={{ color: C.mute }} />
+        {(error || results.length > 0) && (
+          // Capped so the list ends above the keyboard (~53% of the screen
+          // height stays visible); scroll for more
+          <div className="overflow-y-auto flex flex-col gap-1" style={{ maxHeight: "max(110px, calc(52vh - 125px))" }}>
+            {error && <p style={{ color: C.mute, fontSize: 14 }} className="px-1 py-2">{error}</p>}
+            {results.map((r, i) => (
+              <button
+                key={`${r.lat},${r.lon},${i}`}
+                onClick={() => choose(r)}
+                className="text-left px-3 py-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/40 transition-colors flex-shrink-0"
+                style={{ minHeight: 48, border: `1px solid ${C.line}` }}
+              >
+                <div className="font-medium truncate" style={{ color: C.text, fontSize: 15 }}>{r.label}</div>
+                {r.detail && <div className="truncate" style={{ color: C.mute, fontSize: 12 }}>{r.detail}</div>}
+              </button>
+            ))}
+          </div>
         )}
       </div>
-
-      <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-1">
-        {error && <p style={{ color: C.mute, fontSize: 13 }} className="px-1 py-2">{error}</p>}
-        {results.map((r, i) => (
-          <button
-            key={`${r.lat},${r.lon},${i}`}
-            onClick={() => choose(r)}
-            className="text-left px-3 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/40 transition-colors"
-            style={{ minHeight: 48, border: `1px solid ${C.line}` }}
-          >
-            <div className="font-medium truncate" style={{ color: C.text, fontSize: 15 }}>{r.label}</div>
-            {r.detail && <div className="truncate" style={{ color: C.mute, fontSize: 12 }}>{r.detail}</div>}
-          </button>
-        ))}
-      </div>
+      {/* Tap outside the panel to cancel */}
+      <button className="flex-1 bg-black/50" onClick={onCancel} aria-label="Cancel" tabIndex={-1} />
     </div>
   );
 }
@@ -317,16 +330,17 @@ export default function TrafficCard({ lat, lon }) {
   const fmtTime = (d) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
   // ── Left column: drive times (or the add-place form) ──
-  const driveTimesColumn = mode === "add" ? (
-    <AddPlaceForm
-      lat={lat}
-      lon={lon}
-      existingLabels={saved.map((p) => p.label)}
-      onAdd={addPlace}
-      onCancel={() => setMode(saved.length ? "edit" : "view")}
-    />
-  ) : (
+  const driveTimesColumn = (
     <>
+      {mode === "add" && (
+        <AddPlaceForm
+          lat={lat}
+          lon={lon}
+          existingLabels={saved.map((p) => p.label)}
+          onAdd={addPlace}
+          onCancel={() => setMode(saved.length ? "edit" : "view")}
+        />
+      )}
       <SectionTitle
         right={
           <>
