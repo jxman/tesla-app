@@ -17,7 +17,7 @@ A homepage for the Tesla in-car browser that shows weather, live traffic and dri
 - **News:** headlines in six categories from free-to-read RSS feeds, with small thumbnails
 - **Places:** the nearest places in six EV-focused categories, with addresses, open/closed status and drive times; chargers show plug types, speed and stalls, Tesla-compatible first
 - **Location:** GPS when the browser allows it, otherwise the last zip code or location you set
-- **Car-friendly UI:** 64 px touch targets, fonts sized for the ~773×601 Tesla viewport, light and dark mode that switches automatically at sunrise and sunset
+- **Car-friendly UI:** 64 px touch targets, fonts sized for the ~773×601 Tesla viewport, light and dark mode that follows the car's Day/Night display
 
 ## Contents
 
@@ -149,7 +149,7 @@ sequenceDiagram
 
 ## Traffic
 
-- **Drive times** (left column): a 2×2 grid of up to 4 saved places (Home, Work, …) with live minutes (coloured by delay), distance and arrival time; tap a tile for Google Maps directions. A free slot shows an Add place tile. Places are added by address search and stored **only in this browser**
+- **Drive times** (left column): a 2×2 grid of up to 4 saved places (Home, Work, …) with live minutes (coloured by delay), distance and arrival time; tap a tile for its details and the voice command to navigate there. A free slot shows an Add place tile. Places are added by address search and stored **only in this browser**
 - **Traffic near me** (right column): up to 6 incidents within about 10 miles, most severe first, with road, from → to, delay and distance
 - Refreshes every 3 minutes while the page is visible; it pauses while the screen is off or the tab is hidden, and refreshes on return if the data is stale
 
@@ -192,7 +192,7 @@ flowchart LR
 ## Places
 
 - Six categories with search radii tuned to how dense each type is: Food 5 km, Charging 16 km, Hotels 8 km, Shopping 4 km, Fun 5 km, Services 4 km (definitions in `src/shared/placeCategories.js`). No Gas: this is an EV app
-- Five results in a 2×3 grid; the first card is featured and spans two rows. Tapping a card opens Google Maps driving directions from your current location
+- Five results in a 2×3 grid; the first card is featured and spans two rows. Tapping a card opens a details window with what to say to the car's voice assistant (“Navigate to …”), the address, hours, phone and website, and a Google Maps directions button
 - **Every card:** name, type, street address, distance and drive time, open/closed (when OpenStreetMap has hours), brand logo or monogram
 - **Chargers:** plug types (Tesla, CCS, CHAdeMO, J1772), maximum kW and stall count, plus Free / Customers only / network chips. Sorted Tesla plug → CCS → unknown → other plugs, then by distance
 - **Hotels:** star rating and room count when available
@@ -224,7 +224,7 @@ There is no database. User data lives only in the visitor's browser, so nothing 
 |---|---|---|
 | `tesla.savedPlaces.v1` | Up to 4 saved places: `{ id, label, address, lat, lon }` | Traffic card |
 | `tesla.lastLocation.v1` | Last location set: `{ lat, lon, label }` (4 dp) | Location (GPS or zip code) |
-| `tesla.themeOverride.v1` | `{ theme, until }` | Manual light/dark choice from the sun/moon button; expires at the next sunrise or sunset (Auto otherwise) |
+| `tesla.themeOverride.v1` | `{ theme, basis, until }` | Manual light/dark choice from the sun/moon button; ends when the car's display switches Day/Night or after 12 h |
 | `wd_brand_{qid}` | Wikidata brand logo URL, 30-day expiry | Places |
 
 Server-side caching is entirely Netlify CDN entries keyed by each route's query parameters (see [API routes](#api-routes)).
@@ -269,20 +269,23 @@ TeslaApp/
 │   ├── api/client.js            # Browser client for /api/*
 │   ├── context/
 │   │   ├── TeslaAppContext.js   # Location + weather state
-│   │   └── ThemeContext.jsx     # Auto light/dark (sunrise/sunset) + manual override
+│   │   └── ThemeContext.jsx     # Auto light/dark (follows the car) + manual override
 │   ├── components/
 │   │   ├── LocationSelector.jsx # Header: Change location, theme toggle
 │   │   ├── Weather.jsx
 │   │   ├── Traffic.jsx          # Location guard
 │   │   ├── TrafficCard.jsx      # Drive times and incidents near me
 │   │   ├── News.jsx
-│   │   └── Places.jsx
+│   │   ├── Places.jsx
+│   │   └── PlaceSheet.jsx       # Place details: voice command, address, hours, phone
 │   └── shared/
 │       ├── placeCategories.js   # Category radii + Geoapify keys (shared with the function)
 │       ├── charging.js          # Charger plugs/kW/stalls (shared with the function)
 │       ├── savedPlaces.js       # Traffic saved places (localStorage)
 │       ├── savedLocation.js     # Last location (localStorage)
-│       ├── sunTheme.js          # Light/dark from sunrise/sunset
+│       ├── sunTheme.js          # Light/dark from sunrise/sunset (fallback)
+│       ├── placeDetails.js      # Voice phrase, phone and website formatting
+│       ├── directions.js        # Google Maps directions link
 │       └── Spinner.jsx
 ├── tests/unit/
 │   ├── functions/api.test.mjs   # Routes, validation, caching, key-leak safety

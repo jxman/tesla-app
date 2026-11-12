@@ -1,3 +1,9 @@
+// What tapping a Places card or a drive-time tile does:
+//   "details"    — open the in-app details sheet (voice command, address,
+//                  phone, hours) with a Google Maps directions button
+//   "directions" — open Google Maps directions straight away (previous behaviour)
+export const PLACE_TAP_ACTION = "details";
+
 // Google Maps directions link from the app's current location to a place.
 // The origin is passed explicitly because the Tesla browser often can't share
 // GPS with Google Maps, which would otherwise ask for a starting point.

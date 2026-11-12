@@ -5,7 +5,8 @@ import {
   FiBriefcase, FiMapPin,
 } from "react-icons/fi";
 import { getDriveTimes, getIncidents, searchAddress } from "../api/client";
-import { openDirections } from "../shared/directions";
+import { openDirections, PLACE_TAP_ACTION } from "../shared/directions";
+import PlaceSheet from "./PlaceSheet";
 import { loadSavedPlaces, storeSavedPlaces, makePlace, MAX_SAVED_PLACES } from "../shared/savedPlaces";
 
 // Design tokens (values live in src/index.css and switch with .dark)
@@ -205,6 +206,8 @@ export default function TrafficCard({ lat, lon }) {
   const [incidentsError, setIncidentsError] = useState(null);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [mode, setMode] = useState("view"); // view | edit | add
+  const [selected, setSelected] = useState(null); // tile shown in the details sheet
+  const closeSheet = useCallback(() => setSelected(null), []);
   const latestRequest = useRef(0);
 
   const refresh = useCallback(async () => {
@@ -266,6 +269,7 @@ export default function TrafficCard({ lat, lon }) {
   // ── Left column: drive times (or the add-place form) ──
   const driveTimesColumn = (
     <>
+      {selected && <PlaceSheet place={selected} from={{ lat, lon }} onClose={closeSheet} />}
       {mode === "add" && (
         <AddPlaceForm
           lat={lat}
@@ -299,7 +303,20 @@ export default function TrafficCard({ lat, lon }) {
             : !r && routesError ? routesError
             : r?.here ? "You're here"
             : loading ? "Updating…" : "—";
-          const goTo = () => openDirections({ lat, lon }, p);
+          const goTo = () => {
+            if (PLACE_TAP_ACTION === "directions") { openDirections({ lat, lon }, p); return; }
+            setSelected({
+              name: p.label,
+              voiceName: null,
+              subtitle: "Saved place",
+              address: p.address,
+              lat: p.lat,
+              lon: p.lon,
+              travel: ok
+                ? [`${r.minutes} min`, delay?.text, r.miles != null ? `${r.miles} mi` : null, arrive ? `arrive ${arrive}` : null].filter(Boolean).join(" · ")
+                : r?.here ? "You're here" : null,
+            });
+          };
           return (
             <div
               key={p.id}
@@ -307,7 +324,7 @@ export default function TrafficCard({ lat, lon }) {
               tabIndex={editing ? undefined : 0}
               onClick={editing ? undefined : goTo}
               onKeyDown={editing ? undefined : (e) => { if (e.key === "Enter") goTo(); }}
-              aria-label={editing ? undefined : `Directions to ${p.label}`}
+              aria-label={editing ? undefined : `Details for ${p.label}`}
               className={`relative min-h-0 flex flex-col justify-between px-3 py-2.5 rounded-xl overflow-hidden ${
                 editing ? "" : "cursor-pointer hover:brightness-110 active:scale-[0.98] transition"
               }`}

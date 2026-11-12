@@ -1,5 +1,6 @@
 import { useState, useEffect, useContext, useCallback, useRef } from "react";
-import { openDirections } from "../shared/directions";
+import { openDirections, PLACE_TAP_ACTION } from "../shared/directions";
+import PlaceSheet from "./PlaceSheet";
 import opening_hours from "opening_hours";
 import { chargingInfo, chargingSummary } from "../shared/charging";
 import {
@@ -172,8 +173,12 @@ function isDisusedOrAbandoned(tags) {
 
 // ─── Place normalizer ─────────────────────────────────────────────────────────
 function normalizePlace(el, userLat, userLon) {
-  const tags = el.tags || {};
-  if (!tags.name || isDisusedOrAbandoned(tags)) return null;
+  // OSM tags are strings, but Geoapify can send numbers (and CDN-cached
+  // responses from before the server fix may still contain them)
+  const tags = Object.fromEntries(
+    Object.entries(el.tags || {}).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+  );
+  if (!tags.name || /^\d+$/.test(tags.name.trim()) || isDisusedOrAbandoned(tags)) return null;
 
   // /api/places already flattens way/relation centers into lat/lon
   const { lat, lon } = el;
@@ -205,6 +210,7 @@ function normalizePlace(el, userLat, userLon) {
     brandLogoUrl: null,
     monogram:     makeMonogram(tags.name),
     phone:        tags.phone || tags["contact:phone"] || null,
+    website:      tags.website || tags["contact:website"] || null,
   };
 }
 
@@ -523,6 +529,7 @@ export default function Places() {
   const [places,     setPlaces]     = useState([]);
   const [loading,    setLoading]    = useState(false);
   const [error,      setError]      = useState(null);
+  const [selected,   setSelected]   = useState(null);
   const categoryRef = useRef(categoryId);
   categoryRef.current = categoryId;
 
@@ -559,14 +566,30 @@ export default function Places() {
   }, [lat, long, categoryId, loadPlaces]);
 
   const navigate = useCallback((place) => {
-    openDirections({ lat, lon: long }, place);
+    if (PLACE_TAP_ACTION === "directions") openDirections({ lat, lon: long }, place);
+    else setSelected(place);
   }, [lat, long]);
+  const closeSheet = useCallback(() => setSelected(null), []);
 
   const showSkeletons = loading && places.length === 0;
 
   return (
     <>
       <style>{KEYFRAMES}</style>
+      {selected && (
+        <PlaceSheet
+          from={{ lat, lon: long }}
+          onClose={closeSheet}
+          place={{
+            ...selected,
+            subtitle: [selected.primaryType, selected.cuisine !== selected.primaryType ? selected.cuisine : null].filter(Boolean).join(" · "),
+            travel: [
+              selected.distanceMi != null ? `${selected.distanceMi.toFixed(1)} mi` : null,
+              selected.etaMinutes != null ? `about ${selected.etaMinutes} min drive` : null,
+            ].filter(Boolean).join(" · ") || null,
+          }}
+        />
+      )}
       <div style={{ height: "100%", display: "flex", flexDirection: "column", gap: "clamp(8px, 1.6vh, 14px)" }}>
 
         {/* Category chips + refresh */}

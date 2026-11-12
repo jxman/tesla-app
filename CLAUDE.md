@@ -38,7 +38,7 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 - **Traffic Conditions**: full-width Traffic card (TomTom): drive times with arrival times to saved places (left column) + traffic near me (right column); no map embed
 - **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
 - **Change location**: header button (map pin + "Change location") opens zip-code entry and a use-current-location button
-- **Light/Dark Mode**: Auto by default: light between sunrise and sunset from the weather data (`src/shared/sunTheme.js`; local clock 7:00–19:00 before weather loads), like the car's Auto display. The sun/moon button overrides until the next sunrise/sunset (`tesla.themeOverride.v1`); tapping back to the Auto value clears it; an "A" badge shows Auto. `ThemeProvider` sits inside `TeslaAppProvider` to read `data.sys`. A TEMPORARY dashed "Browser: …" pill in the header shows `prefers-color-scheme` for an in-car test of whether the Tesla browser follows the car's Day/Night setting — remove it after the test; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
+- **Light/Dark Mode**: Auto by default follows the browser's `prefers-color-scheme`, which the Tesla browser sets from the car's Day/Night display (confirmed in the car, Nov 2026), and updates live on change. Sunrise/sunset from the weather data (`src/shared/sunTheme.js`) is only a fallback when the browser reports no preference. The sun/moon button overrides until Auto changes or 12 h pass (`tesla.themeOverride.v1` = `{ theme, basis, until }`); tapping back to the Auto value clears it; an "A" badge shows Auto. `ThemeProvider` sits inside `TeslaAppProvider` to read `data.sys`; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
 - **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography; light mode uses `#f0f4f8` background
 
 ## Development Commands
@@ -97,14 +97,15 @@ src/
 ├── App.js                      # Tabbed interface with state-driven navigation
 ├── context/
 │   ├── TeslaAppContext.js     # Global state with forecast data
-│   └── ThemeContext.jsx       # Auto (sunrise/sunset) + override theme; applies .dark to <html>
+│   └── ThemeContext.jsx       # Auto (follows the car) + override theme; applies .dark to <html>
 ├── components/
 │   ├── LocationSelector.jsx   # Header: Change location (zip / GPS) + sun/moon theme toggle
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
 │   ├── Traffic.jsx           # Traffic tab: location guard + full-width TrafficCard
 │   ├── TrafficCard.jsx       # Drive times and incidents near me
 │   ├── News.jsx             # News feed with categories
-│   └── Places.jsx           # OpenStreetMap places integration
+│   ├── Places.jsx           # OpenStreetMap places integration
+│   └── PlaceSheet.jsx       # Place details sheet (voice command, address, phone, hours)
 ├── api/
 │   └── client.js            # Browser client for /api/*
 └── shared/
@@ -112,7 +113,9 @@ src/
     ├── charging.js          # Charger plugs/kW/stalls/rank (shared with the function)
     ├── savedPlaces.js       # Traffic saved places (localStorage)
     ├── savedLocation.js     # Last location set (localStorage)
-    ├── sunTheme.js          # Light/dark from sunrise/sunset
+    ├── sunTheme.js          # Light/dark from sunrise/sunset (theme fallback)
+    ├── placeDetails.js      # Voice phrase, phone and website formatting for PlaceSheet
+    ├── directions.js        # Google Maps directions link + PLACE_TAP_ACTION
     └── Spinner.jsx          # Loading component
 ```
 
@@ -144,7 +147,7 @@ All third-party calls go through **one Netlify Function**, `netlify/functions/ap
 - **Places timezone rule**: the function returns up to 20 nearest candidates with raw `opening_hours`; open/closed is evaluated **in the browser** (functions run in UTC)
 - **Weather errors** surface to `Weather.jsx` as an OWM-style `{ cod, message }` in context `data`
 - **TomTom key permissions**: each TomTom API (Traffic, Routing) must be enabled on the key in the TomTom dashboard; a missing product returns 403 "You are not allowed to access this endpoint". The legacy `routing/1/calculateRoute` endpoint is not available to new keys
-- **Traffic**: `TrafficCard.jsx` fills the tab: Drive times (left column) and Traffic near me (right column); the Waze embed was removed. Drive times are a **2×2 tile grid** (fixed two rows so it fits 773×601 without scrolling): up to 4 saved places (`MAX_SAVED_PLACES = 4`; the API still accepts 5), minutes coloured by `delayStyle`, tap a tile for Google Maps directions from the current location (`openDirections`), a dashed Add place tile in the free slot, ✕ on each tile in edit mode. Saved places live **only in browser localStorage** (`src/shared/savedPlaces.js`, key `tesla.savedPlaces.v1`) — never stored server-side, because the site is public. Card refreshes every 3 min **only while the page is visible** (`visibilitychange`; refreshes on return if stale) to save TomTom quota. No nearest-charger row: it was removed because the car's own navigation already finds chargers (chargers remain on the Places tab). **Brand logos**: Wikidata is still called from the browser (allows CORS, 30-day localStorage cache)
+- **Traffic**: `TrafficCard.jsx` fills the tab: Drive times (left column) and Traffic near me (right column); the Waze embed was removed. Drive times are a **2×2 tile grid** (fixed two rows so it fits 773×601 without scrolling): up to 4 saved places (`MAX_SAVED_PLACES = 4`; the API still accepts 5), minutes coloured by `delayStyle`, tap a tile to open the **place details sheet** (`PlaceSheet.jsx`, shared with Places): a "Say to your car" voice command (`voicePhrase` in `src/shared/placeDetails.js`; saved places say the address only), address, travel, hours, phone `(XXX) XXX-XXXX`, website, and a Google Maps directions button. The browser can't hand a destination to the car's navigation, so the voice command is the main path. `PLACE_TAP_ACTION` in `src/shared/directions.js` switches taps back to opening Google Maps directly (`"directions"`), a dashed Add place tile in the free slot, ✕ on each tile in edit mode. Saved places live **only in browser localStorage** (`src/shared/savedPlaces.js`, key `tesla.savedPlaces.v1`) — never stored server-side, because the site is public. Card refreshes every 3 min **only while the page is visible** (`visibilitychange`; refreshes on return if stale) to save TomTom quota. No nearest-charger row: it was removed because the car's own navigation already finds chargers (chargers remain on the Places tab). **Brand logos**: Wikidata is still called from the browser (allows CORS, 30-day localStorage cache)
 
 ## Environment Configuration
 
@@ -207,7 +210,8 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - **Addresses**: every card shows `house number + street, city`; multi-number values (`679;681;697`) render as a range, and Geoapify's fallback street (the place's own name) is hidden
 - **Charging details** (`src/shared/charging.js`, shared with the function): plug types (Tesla/NACS, CCS, CHAdeMO, J1772, Type 2), max kW, stalls on the type line, plus Free / Customers only / network chips. Chargers sort Tesla plug → CCS → unknown → other plugs, then by distance. Unnamed chargers are named from brand/network/operator server-side. The function keeps `socket:<type>` and `socket:<type>:output` tags only
 - **Hotels**: `stars` and `rooms` chips when OSM has them
-- **Whole card is the tap target** — opens Google Maps driving directions from the app's current location (`src/shared/directions.js`, shared with the Traffic tiles; origin is passed explicitly because the Tesla browser often can't share GPS with Google Maps, and the browser can't hand a destination to the car's own navigation); navigate arrow in body row is decorative only
+- **Whole card is the tap target** — opens the **place details sheet** (`PlaceSheet.jsx`, shared with Places): a "Say to your car" voice command (`voicePhrase` in `src/shared/placeDetails.js`; saved places say the address only), address, travel, hours, phone `(XXX) XXX-XXXX`, website, and a Google Maps directions button. The browser can't hand a destination to the car's navigation, so the voice command is the main path. `PLACE_TAP_ACTION` in `src/shared/directions.js` switches taps back to opening Google Maps directly (`"directions"`). Directions use the app's current location as the origin, because the Tesla browser often can't share GPS with Google Maps; navigate arrow in body row is decorative only
+- **Tag values are strings**: Geoapify's raw tags can be JSON numbers (a pitch named `2`), so the function and `normalizePlace` convert every value with `String()` and drop number-only names
 - `Powered by Geoapify · © OpenStreetMap contributors · ODbL` attribution required (Geoapify free plan + ODbL) and rendered
 
 ### Location Management

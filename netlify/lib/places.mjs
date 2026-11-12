@@ -19,7 +19,7 @@ export const MAX_CANDIDATES = 20;
 const KEEP_TAGS = new Set([
   "name", "amenity", "shop", "tourism", "leisure", "cuisine",
   "addr:housenumber", "addr:street", "addr:city",
-  "opening_hours", "brand:wikidata", "phone", "contact:phone",
+  "opening_hours", "brand:wikidata", "phone", "contact:phone", "website", "contact:website",
   "takeaway", "drive_through", "delivery", "outdoor_seating", "wheelchair", "internet_access",
   // EV chargers (socket:* tags are kept via isKeptSocketTag)
   "brand", "network", "operator", "capacity", "fee", "access",
@@ -78,12 +78,17 @@ export function featureToElement(feature) {
 export function selectCandidates(elements, lat, lon) {
   return (elements || [])
     .map((el) => {
-      const tags = { ...(el.tags || {}) };
+      // Geoapify's raw OSM tags can be JSON numbers (e.g. a pitch named 2);
+      // OSM tags are strings, so normalize before any string handling
+      const tags = Object.fromEntries(
+        Object.entries(el.tags || {}).filter(([, v]) => v != null && v !== "").map(([k, v]) => [k, String(v)])
+      );
       // Many chargers have no name in OSM; label them by brand/network/operator
       if (!tags.name && isCharger(tags)) tags.name = chargerName(tags);
-      if (!tags.name || isDisusedOrAbandoned(tags) || el.lat == null || el.lon == null) return null;
+      // Number-only names are numbered courts/fields, not places to drive to
+      if (!tags.name || /^\d+$/.test(tags.name.trim()) || isDisusedOrAbandoned(tags) || el.lat == null || el.lon == null) return null;
       const kept = Object.fromEntries(
-        Object.entries(tags).filter(([k, v]) => (KEEP_TAGS.has(k) || isKeptSocketTag(k)) && v != null && v !== "")
+        Object.entries(tags).filter(([k]) => KEEP_TAGS.has(k) || isKeptSocketTag(k))
       );
       return { type: el.type, id: el.id, lat: el.lat, lon: el.lon, tags: kept, distanceMi: haversineMi(lat, lon, el.lat, el.lon) };
     })

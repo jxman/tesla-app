@@ -165,6 +165,17 @@ describe("/api/places", () => {
     expect(out.tags).not.toHaveProperty("socket:type1:voltage");
   });
 
+  it("turns numeric tag values into strings and drops number-only names", () => {
+    const out = selectCandidates([
+      { type: "way", id: 1, lat: 42.36, lon: -71.04, tags: { name: 2, leisure: "pitch" } },
+      { type: "node", id: 2, lat: 42.36, lon: -71.04, tags: { name: 1855, amenity: "cafe", "addr:housenumber": 12 } },
+      { type: "node", id: 3, lat: 42.36, lon: -71.04, tags: { name: "Park", website: "https://park.example", phone: "+1 508 555 0100" } },
+    ], 42.365, -71.039);
+    expect(out.map((p) => p.id)).toEqual([3]);
+    expect(out[0].tags).toMatchObject({ website: "https://park.example", phone: "+1 508 555 0100" });
+    for (const v of Object.values(out[0].tags)) expect(typeof v).toBe("string");
+  });
+
   it("builds a Geoapify request from the shared category definition", () => {
     const url = new URL(buildGeoapifyUrl(42.365, -71.039, PLACE_CATEGORIES.find((c) => c.id === "charging"), "k"));
     expect(url.searchParams.get("categories")).toBe("service.vehicle.charging_station");
