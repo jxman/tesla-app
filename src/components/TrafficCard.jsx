@@ -7,6 +7,7 @@ import {
 import { getDriveTimes, getIncidents, searchAddress } from "../api/client";
 import { openDirections, PLACE_TAP_ACTION } from "../shared/directions";
 import PlaceSheet from "./PlaceSheet";
+import IncidentSheet from "./IncidentSheet";
 import { loadSavedPlaces, storeSavedPlaces, makePlace, MAX_SAVED_PLACES } from "../shared/savedPlaces";
 
 // Design tokens (values live in src/index.css and switch with .dark)
@@ -207,6 +208,8 @@ export default function TrafficCard({ lat, lon }) {
   const [updatedAt, setUpdatedAt] = useState(null);
   const [mode, setMode] = useState("view"); // view | edit | add
   const [selected, setSelected] = useState(null); // tile shown in the details sheet
+  const [selectedIncident, setSelectedIncident] = useState(null);
+  const closeIncident = useCallback(() => setSelectedIncident(null), []);
   const closeSheet = useCallback(() => setSelected(null), []);
   const latestRequest = useRef(0);
 
@@ -270,6 +273,14 @@ export default function TrafficCard({ lat, lon }) {
   const driveTimesColumn = (
     <>
       {selected && <PlaceSheet place={selected} from={{ lat, lon }} onClose={closeSheet} />}
+      {selectedIncident && (
+        <IncidentSheet
+          incident={selectedIncident}
+          icon={INCIDENT_ICONS[selectedIncident.category] || FiAlertCircle}
+          from={{ lat, lon }}
+          onClose={closeIncident}
+        />
+      )}
       {mode === "add" && (
         <AddPlaceForm
           lat={lat}
@@ -409,7 +420,13 @@ export default function TrafficCard({ lat, lon }) {
           const Icon = INCIDENT_ICONS[inc.category] || FiAlertCircle;
           const where = [inc.road, inc.from && inc.to ? `${inc.from} → ${inc.to}` : inc.from].filter(Boolean).join(" · ");
           return (
-            <div key={inc.id || i} className="flex items-start gap-3 px-3 py-2.5 rounded-xl" style={{ border: `1px solid ${C.line}` }}>
+            <button
+              key={inc.id || i}
+              onClick={() => setSelectedIncident(inc)}
+              aria-label={`Details: ${inc.title}${where ? `, ${where}` : ""}`}
+              className="flex items-start gap-3 px-3 py-2.5 rounded-xl text-left w-full hover:bg-gray-100 dark:hover:bg-gray-700/40 active:scale-[0.99] transition"
+              style={{ border: `1px solid ${C.line}` }}
+            >
               <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: severityColor(inc.magnitude) }} />
               <div className="flex-1 min-w-0">
                 <div className="font-medium" style={{ color: C.text, fontSize: "clamp(13px, 1.7vw, 16px)" }}>{inc.title}</div>
@@ -421,7 +438,7 @@ export default function TrafficCard({ lat, lon }) {
                 {inc.delayMin ? <div style={{ color: severityColor(inc.magnitude) }}>+{inc.delayMin} min</div> : null}
                 <div style={{ color: C.mute }}>{inc.distanceMi} mi</div>
               </div>
-            </div>
+            </button>
           );
         })}
         {incidentsError && (

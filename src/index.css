@@ -86,3 +86,18 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ── Leaflet (incident map) ───────────────────────────────────────────────── */
+/* Tailwind's preflight sets img { max-width: 100%; height: auto }, which
+   distorts Leaflet's map tiles */
+.leaflet-container img {
+  max-width: none !important;
+  max-height: none !important;
+}
+.leaflet-container {
+  font-family: inherit;
+}
+/* Dark mode: invert the light OSM tiles (keeps roads readable, water stays blue-ish) */
+.incident-map-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
+}

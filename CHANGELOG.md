@@ -64,6 +64,7 @@ Shipped work for the Tesla Dashboard, oldest first. For how the system works tod
 - **Light-mode active tab:** dark pill with white text (it was white on white)
 - Removed unused `web-vitals` and `@testing-library/jest-dom`; Dependabot skips ESLint 10 until `eslint-plugin-react` supports it
 - **Theme follows the car:** Auto now uses the browser's light/dark setting, which the Tesla browser takes from the car's Day/Night display (tested in the car); sunrise/sunset is the fallback. Removed the temporary "Browser:" test pill
+- **Traffic incident details:** tapping a Traffic near me incident opens a window with severity, delay, length, when it started and is expected to clear, and a small map of the affected stretch (Leaflet + OpenStreetMap, loaded only when opened)
 - **Theme button:** cycles Auto → Light → Dark and shows the current mode as a word, replacing the sun/moon toggle and its blue "A" badge; Light and Dark stay until you switch back to Auto
 - **Place details window:** tapping a Places card or drive-time tile opens a window with the voice command to say ("Navigate to …"), address, hours, phone and website, instead of leaving the app for Google Maps; Google Maps directions is a button in the window, and `PLACE_TAP_ACTION` restores the old behaviour
 - **Places crash fixed:** Geoapify sent some OpenStreetMap names as numbers (numbered fields and courts), which crashed the list with "toLowerCase is not a function"; tag values are now converted to text and number-only names are skipped

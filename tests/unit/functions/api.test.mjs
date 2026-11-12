@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import handler from "../../../netlify/functions/api.mjs";
 import { parseFeed, mergeArticles, safeHttpUrl } from "../../../netlify/lib/news.mjs";
 import { selectCandidates, buildGeoapifyUrl, featureToElement } from "../../../netlify/lib/places.mjs";
-import { summarizeRoute } from "../../../netlify/lib/traffic.mjs";
+import { summarizeRoute, simplifyPath } from "../../../netlify/lib/traffic.mjs";
 import { thumbnailUrl } from "../../../netlify/lib/news.mjs";
 import { PLACE_CATEGORIES } from "../../../src/shared/placeCategories.js";
 
@@ -248,6 +248,32 @@ describe("traffic card routes", () => {
     expect(url).not.toContain("tt-secret");
     expect(init.headers["TomTom-Api-Key"]).toBe("tt-secret");
     expect(new URL(url).searchParams.get("bbox").split(",")).toHaveLength(4);
+  });
+
+  it("/api/incidents adds details and the road path for the details sheet", async () => {
+    vi.stubEnv("TOMTOM_API_KEY", "tt-secret");
+    vi.stubGlobal("fetch", vi.fn(async () => jsonResp({
+      incidents: [{
+        geometry: { type: "LineString", coordinates: [[-71.1, 42.4], [-71.09, 42.41]] },
+        properties: { id: "c", iconCategory: "jam", magnitudeOfDelay: "moderate",
+          events: [{ description: "Stationary traffic" }, { description: "Accident" }, { description: "Accident" }],
+          startTime: "2026-11-12T14:00:00Z", endTime: null, numberOfReports: 3, probabilityOfOccurrence: "certain" },
+      }],
+    })));
+    const { incidents: [inc] } = await (await call("/api/incidents?lat=42.36&lon=-71.04")).json();
+    expect(inc).toMatchObject({
+      title: "Stationary traffic", details: ["Accident"], startTime: "2026-11-12T14:00:00Z", endTime: null,
+      reports: 3, probability: "certain", path: [[42.4, -71.1], [42.41, -71.09]],
+    });
+  });
+
+  it("simplifyPath thins long roads to 60 points and keeps both ends", () => {
+    const coords = Array.from({ length: 305 }, (_, i) => [-71 + i / 1000, 42 + i / 1000]);
+    const path = simplifyPath({ type: "LineString", coordinates: coords });
+    expect(path.length).toBeLessThanOrEqual(61);
+    expect(path[0]).toEqual([42, -71]);
+    expect(path[path.length - 1]).toEqual([42.304, -70.696]);
+    expect(simplifyPath({ type: "Point", coordinates: [-71.1, 42.4] })).toEqual([[42.4, -71.1]]);
   });
 
   it("/api/drive-times returns per-destination results in order and survives one failure", async () => {

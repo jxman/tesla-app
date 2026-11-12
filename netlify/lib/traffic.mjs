@@ -65,6 +65,22 @@ function nearestPoint(geometry, lat, lon) {
   return best ? { lat: best[1], lon: best[0], distanceMi: bestD } : null;
 }
 
+const MAX_PATH_POINTS = 60;
+
+/**
+ * Incident geometry → [[lat, lon], …] for the details map: evenly thinned to
+ * at most MAX_PATH_POINTS (TomTom sends up to ~300), keeping both ends.
+ */
+export function simplifyPath(geometry) {
+  if (!geometry?.coordinates) return [];
+  const coords = (geometry.type === "Point" ? [geometry.coordinates] : geometry.coordinates)
+    .filter((c) => Array.isArray(c) && Number.isFinite(c[0]) && Number.isFinite(c[1]));
+  const step = Math.max(1, Math.ceil((coords.length - 1) / (MAX_PATH_POINTS - 1)));
+  const picked = coords.filter((_, i) => i % step === 0);
+  if (coords.length > 1 && picked[picked.length - 1] !== coords[coords.length - 1]) picked.push(coords[coords.length - 1]);
+  return picked.map(([lo, la]) => [Number(la.toFixed(5)), Number(lo.toFixed(5))]);
+}
+
 /** TomTom incident features → compact, display-ready incidents, most important first. */
 export function normalizeIncidents(features, lat, lon) {
   return (features || [])
@@ -72,7 +88,8 @@ export function normalizeIncidents(features, lat, lon) {
       const p = f.properties || {};
       const at = nearestPoint(f.geometry, lat, lon);
       if (!at) return null;
-      const description = p.events?.find((e) => e?.description)?.description || null;
+      const descriptions = [...new Set((p.events || []).map((e) => e?.description).filter(Boolean))];
+      const description = descriptions[0] || null;
       return {
         id: p.id ?? null,
         category: p.iconCategory || "unknown",
@@ -86,6 +103,14 @@ export function normalizeIncidents(features, lat, lon) {
         distanceMi: Number(at.distanceMi.toFixed(1)),
         lat: at.lat,
         lon: at.lon,
+        // Details sheet
+        details: descriptions.slice(1),
+        startTime: p.startTime || null,
+        endTime: p.endTime || null,
+        lastReportTime: p.lastReportTime || null,
+        reports: p.numberOfReports > 0 ? p.numberOfReports : null,
+        probability: p.probabilityOfOccurrence || null,
+        path: simplifyPath(f.geometry),
       };
     })
     .filter(Boolean)
@@ -121,7 +146,7 @@ export async function incidents(params, env = process.env) {
         "Accept-Language": "en-US",
         Accept: "application/json",
         Attributes:
-          "incidents(geometry(type,coordinates),properties(id,iconCategory,magnitudeOfDelay,events(description),from,to,delayInSeconds,lengthInMeters,roadNumbers))",
+          "incidents(geometry(type,coordinates),properties(id,iconCategory,magnitudeOfDelay,events(description),from,to,delayInSeconds,lengthInMeters,roadNumbers,startTime,endTime,lastReportTime,numberOfReports,probabilityOfOccurrence))",
       },
     },
     "Traffic service"

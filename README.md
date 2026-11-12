@@ -96,7 +96,8 @@ Every route validates its input (coordinates range-checked and rounded, categori
 | Layer | Technology |
 |---|---|
 | UI | React 18, React Context, Tailwind CSS 3 with CSS-variable theme tokens |
-| Icons | React Icons: Feather (UI) and Weather Icons |
+| Icons | React Icons: Feather (UI), Lucide (theme Auto) and Weather Icons |
+| Maps | Leaflet 1.9 with OpenStreetMap tiles (incident details only, lazy-loaded) |
 | Build | Vite 7 |
 | Server | One Netlify Function (Node, esbuild bundler) |
 | Caching | Netlify CDN (`Netlify-CDN-Cache-Control: durable`) |
@@ -150,7 +151,7 @@ sequenceDiagram
 ## Traffic
 
 - **Drive times** (left column): a 2×2 grid of up to 4 saved places (Home, Work, …) with live minutes (coloured by delay), distance and arrival time; tap a tile for its details and the voice command to navigate there. A free slot shows an Add place tile. Places are added by address search and stored **only in this browser**
-- **Traffic near me** (right column): up to 6 incidents within about 10 miles, most severe first, with road, from → to, delay and distance
+- **Traffic near me** (right column): up to 6 incidents within about 10 miles, most severe first, with road, from → to, delay and distance. Tap one for a details window (severity, delay and length, when it started and is expected to clear) with a small map of the affected stretch (Leaflet + OpenStreetMap tiles, loaded only when opened)
 - Refreshes every 3 minutes while the page is visible; it pauses while the screen is off or the tab is hidden, and refreshes on return if the data is stale
 
 ```mermaid
@@ -277,7 +278,9 @@ TeslaApp/
 │   │   ├── TrafficCard.jsx      # Drive times and incidents near me
 │   │   ├── News.jsx
 │   │   ├── Places.jsx
-│   │   └── PlaceSheet.jsx       # Place details: voice command, address, hours, phone
+│   │   ├── PlaceSheet.jsx       # Place details: voice command, address, hours, phone
+│   │   ├── IncidentSheet.jsx    # Traffic incident details
+│   │   └── IncidentMap.jsx      # Leaflet map of the incident (lazy-loaded)
 │   └── shared/
 │       ├── placeCategories.js   # Category radii + Geoapify keys (shared with the function)
 │       ├── charging.js          # Charger plugs/kW/stalls (shared with the function)
@@ -335,6 +338,7 @@ npm run build        # production build to build/
 - **TomTom free tier:** about 2,500 requests a day. Each traffic refresh costs 1 incidents call plus 1 routing call per saved place
 - **OpenStreetMap coverage:** opening hours, addresses and charger details are only as complete as the OSM data; places without hours show no open/closed pill
 - **No live charger availability:** OpenStreetMap has no stall-availability data
+- **Incident map tiles:** standard OpenStreetMap tiles, allowed for light use with attribution under the OSM tile policy; heavy use would need a tile provider (CARTO's free basemaps now require a key). Dark mode inverts the tiles with a CSS filter
 - **Some thumbnails stay large:** Engadget, Yahoo Sports and PBS ignore resize parameters
 - **Bundle size:** about 184 KB gzipped app code plus 45 KB React (the `opening_hours` parser is a large share)
 - **Function 404s:** Netlify replaces a function's 404 body, so "location not found" is returned as 422
