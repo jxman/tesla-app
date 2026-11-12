@@ -123,7 +123,8 @@ flowchart LR
 
 ## Weather
 
-- **Hero:** temperature, condition icon, and a **Driving** insight from current conditions: wet roads, low visibility or strong wind, plus an estimated highway range loss in cold weather
+- **Hero:** temperature, condition icon, and a **Driving** insight from current conditions: wet roads, low visibility, strong wind or gusts over 30 mph, plus an estimated highway range loss in cold weather
+- **Wind tile:** speed, compass direction the wind comes from ("14 mph NW") with an arrow pointing downwind, and gusts when they run 5+ mph above the steady wind
 - **12-hour sparkline:** hourly temperatures interpolated from OpenWeather's 3-hour forecast intervals
 - **Conditions tiles** and a **5-Day / 6-Hour** forecast toggle
 - One `/api/weather` call returns both current conditions and the forecast; the function calls OpenWeather's two endpoints in parallel
@@ -289,6 +290,7 @@ TeslaApp/
 │       ├── savedPlaces.js       # Traffic saved places (localStorage)
 │       ├── savedLocation.js     # Last location (localStorage)
 │       ├── sunTheme.js          # Light/dark from sunrise/sunset (fallback)
+│       ├── wind.js              # Wind mph, compass direction, gusts
 │       ├── placeDetails.js      # Voice phrase, phone and website formatting
 │       ├── directions.js        # Google Maps directions link
 │       └── Spinner.jsx

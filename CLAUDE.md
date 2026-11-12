@@ -117,6 +117,7 @@ src/
     ├── savedPlaces.js       # Traffic saved places (localStorage)
     ├── savedLocation.js     # Last location set (localStorage)
     ├── sunTheme.js          # Light/dark from sunrise/sunset (theme fallback)
+    ├── wind.js              # Wind speed (mph), compass direction, gusts
     ├── placeDetails.js      # Voice phrase, phone and website formatting for PlaceSheet
     ├── directions.js        # Google Maps directions link + PLACE_TAP_ACTION
     └── Spinner.jsx          # Loading component
@@ -194,7 +195,8 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 - Persistent header across all tabs for unified experience
 
 ### Enhanced Weather Features
-- **Option B hero**: a Driving insight card from `deriveDriving` (a pure function of current conditions: wet roads, visibility, wind, plus estimated highway range loss below 70°F); no extra API calls. The "What to Expect" card was removed in Aug 2026
+- **Option B hero**: a Driving insight card from `deriveDriving` (a pure function of current conditions: wet roads, visibility, wind and gusts > 30 mph, plus estimated highway range loss below 70°F; its sub-line must stay one row at 773×601 or the sparkline overflows, so wind direction lives in the Wind tile only); no extra API calls. The "What to Expect" card was removed in Aug 2026
+- **Wind tile**: `describeWind` in `src/shared/wind.js` (mph, 8-point compass from `wind.deg`, downwind arrow angle, gust kept only when ≥ 5 mph above the steady wind) → "↘ 14 mph NW" with a "gusts 33" note
 - **12-hour sparkline**: SVG path built from `buildHourlyTemps()` which linearly interpolates between OWM 3-hour intervals; `linearGradient` fill + labeled markers every 3rd point
 - **Weather icons**: `react-icons/wi` (Erik Flowers Weather Icons) — SVG components, no CDN dependency. Mapped via `OWM_TO_WI` lookup in `Weather.jsx` (18 OWM codes → WI component + hex color). `WeatherIcon` takes `size` as px or any CSS length; hero and forecast rows pass viewport-scaled `clamp()` values. Each condition has a tuned color (e.g. `WiDaySunny` → `#FFB800`, `WiDayRain` → `#4A88C0`). Add new mappings to `OWM_TO_WI`; fallback is `WiDaySunny`.
 - Hero temperature: Inter 200, `clamp(64px, calc(30vh - 102px), 168px)`; `marginTop: auto` anchors temp block above insight content

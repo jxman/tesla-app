@@ -1,6 +1,6 @@
 import { useContext, useState, useMemo } from "react";
 import moment from "moment";
-import { FiRefreshCw } from "react-icons/fi";
+import { FiRefreshCw, FiArrowUp } from "react-icons/fi";
 import {
   WiDaySunny, WiNightClear,
   WiDayCloudy, WiNightPartlyCloudy,
@@ -14,6 +14,7 @@ import {
 } from "react-icons/wi";
 import TeslaAppContext from "../context/TeslaAppContext";
 import Spinner from "../shared/Spinner";
+import { describeWind } from "../shared/wind";
 
 // OWM icon code → { Icon component, color }
 const OWM_TO_WI = {
@@ -53,7 +54,8 @@ function toF(c) { return Math.round(c * 9 / 5 + 32); }
 
 function deriveDriving(data) {
   const tempF = toF(data.main.temp);
-  const windMph = Math.round((data.wind?.speed || 0) * 2.237);
+  const wind = describeWind(data.wind);
+  const windMph = wind.speed;
   const currentPrecip = PRECIP_MAINS.has(data.weather[0].main);
   const visMi = data.visibility ? data.visibility / 1609 : 10;
   const rangeImpact = tempF < 70 ? Math.round((70 - tempF) / 5) : 0;
@@ -62,8 +64,12 @@ function deriveDriving(data) {
   if (currentPrecip && visMi < 5) headline = 'Wet roads, low visibility';
   else if (currentPrecip) headline = 'Wet roads ahead';
   else if (windMph > 20) headline = `Strong winds — ${windMph} mph`;
+  // Gusts push the car around on the highway even when the steady wind is light
+  else if (wind.gust > 30) headline = `Gusty winds — up to ${wind.gust} mph`;
   else headline = 'Good driving conditions';
 
+  // Direction and gusts live in the Wind tile; this line must stay on one row
+  // at 773×601 or it pushes the 12-hour chart out of the hero card
   const parts = windMph > 0 ? [`Wind ${windMph} mph`] : [];
   parts.push(rangeImpact > 0 ? `Range −${rangeImpact}% on highway` : 'Range unaffected');
 
@@ -87,15 +93,33 @@ function buildHourlyTemps(forecastList) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-function StatTile({ label, value, unit }) {
+function StatTile({ label, value, unit, note }) {
   return (
     <div className="flex items-center justify-between gap-2 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl overflow-hidden" style={{ padding: 'clamp(6px, 1.3vh, 12px) clamp(8px, 1.6vh, 14px)' }}>
-      <span className="text-gray-500 dark:text-gray-400 font-mono tracking-wide uppercase whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(11px, 1.9vh, 14px)' }}>{label}</span>
-      <span className="font-semibold text-gray-900 dark:text-white leading-none whitespace-nowrap" style={{ fontSize: 'clamp(17px, 3vh, 24px)' }}>
+      <span className="flex flex-col min-w-0">
+        <span className="text-gray-500 dark:text-gray-400 font-mono tracking-wide uppercase whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(11px, 1.9vh, 14px)' }}>{label}</span>
+        {note && <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(11px, 1.8vh, 13px)' }}>{note}</span>}
+      </span>
+      <span className="font-semibold text-gray-900 dark:text-white leading-none whitespace-nowrap flex items-baseline" style={{ fontSize: 'clamp(17px, 3vh, 24px)' }}>
         {value}
         {unit && <span className="text-gray-500 dark:text-gray-400 font-normal ml-0.5" style={{ fontSize: 'clamp(12px, 2vh, 16px)' }}>{unit}</span>}
       </span>
     </div>
+  );
+}
+
+/** "12 mph" with a downwind arrow and the compass point the wind comes from. */
+function WindValue({ wind }) {
+  return (
+    <span className="flex items-center gap-1">
+      {wind.arrowDeg != null && (
+        <FiArrowUp aria-hidden className="text-blue-600 dark:text-blue-300 self-center" style={{ width: '0.8em', height: '0.8em', transform: `rotate(${wind.arrowDeg}deg)` }} />
+      )}
+      {wind.speed}
+      <span className="text-gray-500 dark:text-gray-400 font-normal" style={{ fontSize: 'clamp(12px, 2vh, 16px)' }}>
+        mph{wind.from ? ` ${wind.from}` : ''}
+      </span>
+    </span>
   );
 }
 
@@ -261,7 +285,7 @@ function Weather() {
   const feelsF = Math.floor(data.main.feels_like * 9 / 5 + 32);
   const highF = Math.floor(data.main.temp_max * 9 / 5 + 32);
   const lowF = Math.floor(data.main.temp_min * 9 / 5 + 32);
-  const windMph = Math.round((data.wind?.speed || 0) * 2.237);
+  const wind = describeWind(data.wind);
   const sunriseTime = new Date(data.sys.sunrise * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   const sunsetTime = new Date(data.sys.sunset * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   const currentIcon = data.weather[0].icon;
@@ -328,7 +352,11 @@ function Weather() {
 
         {/* Conditions — single-line tiles, no header row, to leave height for the forecast */}
         <div className="grid grid-cols-2 flex-shrink-0" style={{ gap: 'clamp(6px, 1vh, 10px)' }}>
-          <StatTile label="Wind" value={windMph} unit=" mph" />
+          <StatTile
+            label="Wind"
+            value={<WindValue wind={wind} />}
+            note={wind.gust ? `gusts ${wind.gust}` : null}
+          />
           <StatTile label="Humidity" value={`${data.main.humidity}`} unit="%" />
           <StatTile label="Sunrise" value={sunriseTime} />
           <StatTile label="Sunset" value={sunsetTime} />
