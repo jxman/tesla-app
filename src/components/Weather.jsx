@@ -190,17 +190,31 @@ function Weather() {
 
   const dailyForecast = useMemo(() => {
     if (!forecastData?.list) return [];
+    // Group by calendar day at the forecast location (city.timezone = UTC offset
+    // in seconds), so a zip code in another time zone still splits days correctly
+    const tz = forecastData.city?.timezone ?? -new Date().getTimezoneOffset() * 60;
+    const local = (unix) => moment.unix(unix + tz).utc();
+    const today = local(Math.floor(Date.now() / 1000)).format('YYYY-MM-DD');
     const dailyData = {};
     forecastData.list.forEach(item => {
-      const day = moment.unix(item.dt).format('YYYY-MM-DD');
-      if (!dailyData[day]) dailyData[day] = { date: item.dt, temps: [], weather: item.weather[0], pop: item.pop };
+      const day = local(item.dt).format('YYYY-MM-DD');
+      if (!dailyData[day]) {
+        dailyData[day] = {
+          isToday: day === today,
+          label: local(item.dt).format('ddd'),
+          temps: [], weather: item.weather[0], pop: item.pop,
+        };
+      }
       dailyData[day].temps.push(item.main.temp);
       // Prefer a midday reading for the day's icon — the first interval is often a night slot (moon icon)
-      const hour = moment.unix(item.dt).hour();
+      const hour = local(item.dt).hour();
       if (hour >= 11 && hour <= 14) dailyData[day].weather = item.weather[0];
       if (item.pop > dailyData[day].pop) dailyData[day].pop = item.pop;
     });
-    return Object.values(dailyData);
+    // OWM's forecast starts at the next 3-hour slot, so late in the evening there
+    // is no slot left for today and the first day is tomorrow. Label rows by date
+    // (not position) and show 5 days; a 6th group is a partial day.
+    return Object.values(dailyData).slice(0, 5);
   }, [forecastData]);
 
   const driving = useMemo(() => data?.main ? deriveDriving(data) : null, [data]);
@@ -386,14 +400,13 @@ function Weather() {
             ) : (
               <div className="flex flex-col gap-0.5 h-full">
                 {dailyForecast.map((day, i) => {
-                  const isToday = i === 0;
                   const hi = Math.round(Math.max(...day.temps) * 9 / 5 + 32);
                   const lo = Math.round(Math.min(...day.temps) * 9 / 5 + 32);
                   return (
                     <ForecastRow
                       key={i}
-                      label={isToday ? 'Today' : moment.unix(day.date).format('ddd')}
-                      isActive={isToday}
+                      label={day.isToday ? 'Today' : day.label}
+                      isActive={day.isToday}
                       icon={<WeatherIcon code={day.weather.icon} size="clamp(24px, 4.2vh, 36px)" />}
                       description={day.weather.description}
                       primary={`${hi}°`}

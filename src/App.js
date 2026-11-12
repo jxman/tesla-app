@@ -40,7 +40,7 @@ function App() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`flex-1 h-14 px-6 gap-3 flex items-center justify-center transition-all duration-200 rounded-xl ${
                       activeTab === tab.id
-                        ? 'bg-white dark:bg-white text-gray-900 shadow-lg font-semibold'
+                        ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-lg font-semibold'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700/50'
                     }`}
                     tabIndex="0"

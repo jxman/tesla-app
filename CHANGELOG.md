@@ -60,6 +60,8 @@ Shipped work for the Tesla Dashboard, oldest first. For how the system works tod
 - **Removed the nearest-charger row** from the Traffic tab: the car's own navigation already finds chargers, and the row crowded out saved places (chargers are still on the Places tab)
 - **Drive-time tiles:** saved places show as a 2×2 grid (up to 4, down from 5) that fits the Tesla screen without scrolling; the free slot is an Add place tile, minutes are coloured by delay, and tapping a tile opens directions
 - **Directions from your location:** tapping a Places card or a drive-time tile opens Google Maps driving directions starting at the app's current location (Places previously opened only the pin)
+- **5-day forecast labels:** rows are labelled by date at the forecast location instead of by position; late in the evening OpenWeather has no slots left for today, so tomorrow was shown as "Today" and appeared to be missing
+- **Light-mode active tab:** dark pill with white text (it was white on white)
 - **Thin, theme-coloured scrollbars** everywhere (dark mode showed a bright white scrollbar)
 - Patch updates (commitlint, Vite 7.3.8, PostCSS, Autoprefixer, globals, user-event) and a `minimatch` advisory fix in ESLint's dependencies
 
