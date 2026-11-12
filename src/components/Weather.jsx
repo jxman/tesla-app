@@ -93,13 +93,10 @@ function buildHourlyTemps(forecastList) {
 
 // ── Sub-components ─────────────────────────────────────────────────────────
 
-function StatTile({ label, value, unit, note }) {
+function StatTile({ label, value, unit, title }) {
   return (
-    <div className="flex items-center justify-between gap-2 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl overflow-hidden" style={{ padding: 'clamp(6px, 1.3vh, 12px) clamp(8px, 1.6vh, 14px)' }}>
-      <span className="flex flex-col min-w-0">
-        <span className="text-gray-500 dark:text-gray-400 font-mono tracking-wide uppercase whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(11px, 1.9vh, 14px)' }}>{label}</span>
-        {note && <span className="text-gray-500 dark:text-gray-400 whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(11px, 1.8vh, 13px)' }}>{note}</span>}
-      </span>
+    <div title={title} className="flex items-center justify-between gap-2 bg-gray-100 dark:bg-gray-900/60 border border-gray-200 dark:border-gray-700/60 rounded-xl overflow-hidden" style={{ padding: 'clamp(6px, 1.3vh, 12px) clamp(8px, 1.6vh, 14px)' }}>
+      <span className="text-gray-500 dark:text-gray-400 font-mono tracking-wide uppercase whitespace-nowrap overflow-hidden text-ellipsis" style={{ fontSize: 'clamp(11px, 1.9vh, 14px)' }}>{label}</span>
       <span className="font-semibold text-gray-900 dark:text-white leading-none whitespace-nowrap flex items-baseline" style={{ fontSize: 'clamp(17px, 3vh, 24px)' }}>
         {value}
         {unit && <span className="text-gray-500 dark:text-gray-400 font-normal ml-0.5" style={{ fontSize: 'clamp(12px, 2vh, 16px)' }}>{unit}</span>}
@@ -108,17 +105,27 @@ function StatTile({ label, value, unit, note }) {
   );
 }
 
-/** "12 mph" with a downwind arrow and the compass point the wind comes from. */
+/**
+ * "↘ 14 mph NW"; with gusts the small text stacks ("mph NW" over an amber
+ * "gust 33") so the tile keeps one row and the same height as the tiles below.
+ */
 function WindValue({ wind }) {
+  const small = { fontSize: 'clamp(11px, 1.85vh, 15px)', lineHeight: 1 };
+  const dir = `mph${wind.from ? ` ${wind.from}` : ''}`;
   return (
     <span className="flex items-center gap-1">
       {wind.arrowDeg != null && (
         <FiArrowUp aria-hidden className="text-blue-600 dark:text-blue-300 self-center" style={{ width: '0.8em', height: '0.8em', transform: `rotate(${wind.arrowDeg}deg)` }} />
       )}
       {wind.speed}
-      <span className="text-gray-500 dark:text-gray-400 font-normal" style={{ fontSize: 'clamp(12px, 2vh, 16px)' }}>
-        mph{wind.from ? ` ${wind.from}` : ''}
-      </span>
+      {wind.gust ? (
+        <span className="flex flex-col font-normal ml-0.5" style={small}>
+          <span className="text-gray-500 dark:text-gray-400">{dir}</span>
+          <span style={{ color: 'var(--warn-fg)' }}>gust {wind.gust}</span>
+        </span>
+      ) : (
+        <span className="text-gray-500 dark:text-gray-400 font-normal" style={{ fontSize: 'clamp(12px, 2vh, 16px)' }}>{dir}</span>
+      )}
     </span>
   );
 }
@@ -351,11 +358,12 @@ function Weather() {
       <div className="flex flex-col min-h-0 min-w-0" style={{ gap: 'clamp(8px, 1.6vh, 16px)' }}>
 
         {/* Conditions — single-line tiles, no header row, to leave height for the forecast */}
-        <div className="grid grid-cols-2 flex-shrink-0" style={{ gap: 'clamp(6px, 1vh, 10px)' }}>
+        {/* gridAutoRows 1fr: both rows match the tallest tile (Wind with gusts), so they line up */}
+        <div className="grid grid-cols-2 flex-shrink-0" style={{ gap: 'clamp(6px, 1vh, 10px)', gridAutoRows: '1fr' }}>
           <StatTile
             label="Wind"
             value={<WindValue wind={wind} />}
-            note={wind.gust ? `gusts ${wind.gust}` : null}
+            title={`Wind ${wind.speed} mph${wind.from ? ` from the ${wind.from}` : ''}${wind.gust ? `, gusts to ${wind.gust} mph` : ''}`}
           />
           <StatTile label="Humidity" value={`${data.main.humidity}`} unit="%" />
           <StatTile label="Sunrise" value={sunriseTime} />
