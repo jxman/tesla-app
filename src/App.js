@@ -21,8 +21,9 @@ function App() {
   const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component || Weather;
 
   return (
-    <ThemeProvider>
-      <TeslaAppProvider>
+    <TeslaAppProvider>
+      {/* Inside TeslaAppProvider: Auto theme uses the weather's sunrise/sunset */}
+      <ThemeProvider>
         <div className="h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white p-4 overflow-hidden">
           <div className="flex-shrink-0">
             <LocationSelector />
@@ -59,8 +60,8 @@ function App() {
             </div>
           </div>
         </div>
-      </TeslaAppProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </TeslaAppProvider>
   );
 }
 export default App;

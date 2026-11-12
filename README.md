@@ -17,7 +17,7 @@ A homepage for the Tesla in-car browser that shows weather, live traffic and dri
 - **News:** headlines in six categories from free-to-read RSS feeds, with small thumbnails
 - **Places:** the nearest places in six EV-focused categories, with addresses, open/closed status and drive times; chargers show plug types, speed and stalls, Tesla-compatible first
 - **Location:** GPS when the browser allows it, otherwise the last zip code or location you set
-- **Car-friendly UI:** 64 px touch targets, fonts sized for the ~773×601 Tesla viewport, light and dark mode
+- **Car-friendly UI:** 64 px touch targets, fonts sized for the ~773×601 Tesla viewport, light and dark mode that switches automatically at sunrise and sunset
 
 ## Contents
 
@@ -225,7 +225,7 @@ There is no database. User data lives only in the visitor's browser, so nothing 
 |---|---|---|
 | `tesla.savedPlaces.v1` | Up to 5 saved places: `{ id, label, address, lat, lon }` | Traffic card |
 | `tesla.lastLocation.v1` | Last location set: `{ lat, lon, label }` (4 dp) | Location (GPS or zip code) |
-| `tesla-theme` | `light` or `dark` | Theme toggle |
+| `tesla.themeOverride.v1` | `{ theme, until }` | Manual light/dark choice from the sun/moon button; expires at the next sunrise or sunset (Auto otherwise) |
 | `wd_brand_{qid}` | Wikidata brand logo URL, 30-day expiry | Places |
 
 Server-side caching is entirely Netlify CDN entries keyed by each route's query parameters (see [API routes](#api-routes)).
@@ -270,7 +270,7 @@ TeslaApp/
 │   ├── api/client.js            # Browser client for /api/*
 │   ├── context/
 │   │   ├── TeslaAppContext.js   # Location + weather state
-│   │   └── ThemeContext.jsx     # Light/dark mode
+│   │   └── ThemeContext.jsx     # Auto light/dark (sunrise/sunset) + manual override
 │   ├── components/
 │   │   ├── LocationSelector.jsx # Header: Change location, theme toggle
 │   │   ├── Weather.jsx
@@ -283,6 +283,7 @@ TeslaApp/
 │       ├── charging.js          # Charger plugs/kW/stalls (shared with the function)
 │       ├── savedPlaces.js       # Traffic saved places (localStorage)
 │       ├── savedLocation.js     # Last location (localStorage)
+│       ├── sunTheme.js          # Light/dark from sunrise/sunset
 │       └── Spinner.jsx
 ├── tests/unit/
 │   ├── functions/api.test.mjs   # Routes, validation, caching, key-leak safety

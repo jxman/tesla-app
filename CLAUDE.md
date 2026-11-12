@@ -38,7 +38,7 @@ Tesla Dashboard is a React-based web application with a modern tabbed interface 
 - **Traffic Conditions**: full-width Traffic card (TomTom): drive times with arrival times to saved places (left column) + traffic near me (right column); no map embed
 - **Touch-Optimized**: 64 px chip/tab targets, whole-card tap targets on Places, Tesla browser compatible
 - **Change location**: header button (map pin + "Change location") opens zip-code entry and a use-current-location button
-- **Light/Dark Mode**: Sun/moon toggle in header; preference persisted in localStorage; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
+- **Light/Dark Mode**: Auto by default: light between sunrise and sunset from the weather data (`src/shared/sunTheme.js`; local clock 7:00–19:00 before weather loads), like the car's Auto display. The sun/moon button overrides until the next sunrise/sunset (`tesla.themeOverride.v1`); tapping back to the Auto value clears it; an "A" badge shows Auto. `ThemeProvider` sits inside `TeslaAppProvider` to read `data.sys`. A TEMPORARY dashed "Browser: …" pill in the header shows `prefers-color-scheme` for an in-car test of whether the Tesla browser follows the car's Day/Night setting — remove it after the test; CSS custom properties switch all color tokens; Tailwind `dark:` class strategy
 - **Tesla-themed UI**: Dark ink theme (`#0e1014` background) with Inter + JetBrains Mono typography; light mode uses `#f0f4f8` background
 
 ## Development Commands
@@ -97,7 +97,7 @@ src/
 ├── App.js                      # Tabbed interface with state-driven navigation
 ├── context/
 │   ├── TeslaAppContext.js     # Global state with forecast data
-│   └── ThemeContext.jsx       # Light/dark mode state; applies .dark to <html>
+│   └── ThemeContext.jsx       # Auto (sunrise/sunset) + override theme; applies .dark to <html>
 ├── components/
 │   ├── LocationSelector.jsx   # Header: Change location (zip / GPS) + sun/moon theme toggle
 │   ├── Weather.jsx           # Enhanced weather with forecasts & drag scroll
@@ -112,6 +112,7 @@ src/
     ├── charging.js          # Charger plugs/kW/stalls/rank (shared with the function)
     ├── savedPlaces.js       # Traffic saved places (localStorage)
     ├── savedLocation.js     # Last location set (localStorage)
+    ├── sunTheme.js          # Light/dark from sunrise/sunset
     └── Spinner.jsx          # Loading component
 ```
 

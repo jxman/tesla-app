@@ -9,7 +9,7 @@ function LocationSelector() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const { searchByZipCode, getCurrentLocation, data, isLoading } = useContext(TeslaAppContext);
-  const { isDark, toggle } = useTheme();
+  const { isDark, isAuto, toggle, browserScheme } = useTheme();
 
   const locationName = data?.name || "Loading...";
 
@@ -86,15 +86,31 @@ function LocationSelector() {
         <FiMapPin className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         Change location
       </button>
+      {/* TEMPORARY: in-car test of whether the Tesla browser reports the car's
+          Day/Night display setting (prefers-color-scheme). Remove after testing. */}
+      <span
+        className="h-11 px-3 rounded-xl flex items-center border border-dashed border-amber-500/60 text-amber-600 dark:text-amber-400 font-mono text-xs uppercase tracking-wider flex-shrink-0"
+        title="What the browser reports for prefers-color-scheme"
+      >
+        Browser: {browserScheme}
+      </span>
       <button
         onClick={toggle}
-        className="h-11 w-11 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
-        title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        className="relative h-11 w-11 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center transition-all flex-shrink-0"
+        title={isAuto
+          ? `Auto (${isDark ? "dark after sunset" : "light after sunrise"}). Tap for ${isDark ? "light" : "dark"} until the next sunrise/sunset`
+          : `Manual until the next sunrise/sunset. Tap to return to Auto`}
+        aria-label={isAuto ? "Theme: Auto. Tap to override" : "Theme: manual. Tap to return to Auto"}
       >
         {isDark
           ? <FiSun className="w-5 h-5 text-gray-400" />
           : <FiMoon className="w-5 h-5 text-gray-500" />
         }
+        {isAuto && (
+          <span className="absolute -top-1.5 -right-1.5 h-5 min-w-5 px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold leading-5 text-center">
+            A
+          </span>
+        )}
       </button>
     </div>
   );
