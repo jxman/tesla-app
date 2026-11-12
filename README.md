@@ -192,7 +192,7 @@ flowchart LR
 ## Places
 
 - Six categories with search radii tuned to how dense each type is: Food 5 km, Charging 16 km, Hotels 8 km, Shopping 4 km, Fun 5 km, Services 4 km (definitions in `src/shared/placeCategories.js`). No Gas: this is an EV app
-- Five results in a 2×3 grid; the first card is featured and spans two rows. Tapping a card opens Google Maps directions
+- Five results in a 2×3 grid; the first card is featured and spans two rows. Tapping a card opens Google Maps driving directions from your current location
 - **Every card:** name, type, street address, distance and drive time, open/closed (when OpenStreetMap has hours), brand logo or monogram
 - **Chargers:** plug types (Tesla, CCS, CHAdeMO, J1772), maximum kW and stall count, plus Free / Customers only / network chips. Sorted Tesla plug → CCS → unknown → other plugs, then by distance
 - **Hotels:** star rating and room count when available

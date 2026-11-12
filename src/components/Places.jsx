@@ -1,4 +1,5 @@
 import { useState, useEffect, useContext, useCallback, useRef } from "react";
+import { openDirections } from "../shared/directions";
 import opening_hours from "opening_hours";
 import { chargingInfo, chargingSummary } from "../shared/charging";
 import {
@@ -558,8 +559,8 @@ export default function Places() {
   }, [lat, long, categoryId, loadPlaces]);
 
   const navigate = useCallback((place) => {
-    window.open(`https://maps.google.com/?q=${place.lat},${place.lon}`, "_blank");
-  }, []);
+    openDirections({ lat, lon: long }, place);
+  }, [lat, long]);
 
   const showSkeletons = loading && places.length === 0;
 

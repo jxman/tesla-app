@@ -5,6 +5,7 @@ import {
   FiBriefcase, FiMapPin,
 } from "react-icons/fi";
 import { getDriveTimes, getIncidents, searchAddress } from "../api/client";
+import { openDirections } from "../shared/directions";
 import { loadSavedPlaces, storeSavedPlaces, makePlace, MAX_SAVED_PLACES } from "../shared/savedPlaces";
 
 // Design tokens (values live in src/index.css and switch with .dark)
@@ -298,15 +299,14 @@ export default function TrafficCard({ lat, lon }) {
             : !r && routesError ? routesError
             : r?.here ? "You're here"
             : loading ? "Updating…" : "—";
-          const openDirections = () => window.open(
-            `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}`, "_blank", "noopener,noreferrer");
+          const goTo = () => openDirections({ lat, lon }, p);
           return (
             <div
               key={p.id}
               role={editing ? undefined : "button"}
               tabIndex={editing ? undefined : 0}
-              onClick={editing ? undefined : openDirections}
-              onKeyDown={editing ? undefined : (e) => { if (e.key === "Enter") openDirections(); }}
+              onClick={editing ? undefined : goTo}
+              onKeyDown={editing ? undefined : (e) => { if (e.key === "Enter") goTo(); }}
               aria-label={editing ? undefined : `Directions to ${p.label}`}
               className={`relative min-h-0 flex flex-col justify-between px-3 py-2.5 rounded-xl overflow-hidden ${
                 editing ? "" : "cursor-pointer hover:brightness-110 active:scale-[0.98] transition"
