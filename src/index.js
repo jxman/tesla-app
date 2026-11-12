@@ -1,6 +1,3 @@
-// import reportWebVitals from "./reportWebVitals";
-// import "semantic-ui-css/semantic.min.css";
-
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";

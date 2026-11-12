@@ -264,7 +264,7 @@ Tailwind components use `dark:` prefixed classes (e.g. `bg-white dark:bg-gray-80
 **Build Output**: Static files in `build/` directory
 **Functions**: `netlify/functions/` (esbuild bundler, see `netlify.toml`)
 **Environment Variables**: `OPENWEATHER_API_KEY`, `GEOAPIFY_API_KEY`, `TOMTOM_API_KEY` in Netlify (Functions scope, secret, all contexts)
-**CI**: `.github/workflows/ci.yml` (lint, `npm test`, build; Node 24) on push to `main` and PRs; doesn't gate the Netlify deploy. `.github/dependabot.yml`: monthly npm (patch/minor grouped, majors separate) + weekly github-actions
+**CI**: `.github/workflows/ci.yml` (lint, `npm test`, build; Node 24) on push to `main` and PRs; doesn't gate the Netlify deploy. `.github/dependabot.yml`: monthly npm (patch/minor grouped, majors separate); ESLint/`@eslint/js` majors ignored until `eslint-plugin-react` supports ESLint 10 + weekly github-actions
 **Docs**: `README.md` follows the readme-standard layout (Mermaid diagrams, validated with mermaid-cli) and describes the system as it is now; shipped work and design history go in `CHANGELOG.md`
 
 ## Common Development Tasks

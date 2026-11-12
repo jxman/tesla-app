@@ -18,6 +18,13 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # ESLint 10: eslint-plugin-react (7.37.x) only supports ESLint up to 9,
+      # so the install fails. Remove once eslint-plugin-react supports 10.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
     commit-message:
       prefix: chore
       include: scope

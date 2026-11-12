@@ -62,6 +62,7 @@ Shipped work for the Tesla Dashboard, oldest first. For how the system works tod
 - **Directions from your location:** tapping a Places card or a drive-time tile opens Google Maps driving directions starting at the app's current location (Places previously opened only the pin)
 - **5-day forecast labels:** rows are labelled by date at the forecast location instead of by position; late in the evening OpenWeather has no slots left for today, so tomorrow was shown as "Today" and appeared to be missing
 - **Light-mode active tab:** dark pill with white text (it was white on white)
+- Removed unused `web-vitals` and `@testing-library/jest-dom`; Dependabot skips ESLint 10 until `eslint-plugin-react` supports it
 - **Thin, theme-coloured scrollbars** everywhere (dark mode showed a bright white scrollbar)
 - Patch updates (commitlint, Vite 7.3.8, PostCSS, Autoprefixer, globals, user-event) and a `minimatch` advisory fix in ESLint's dependencies
 
