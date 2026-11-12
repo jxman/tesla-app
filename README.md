@@ -278,7 +278,8 @@ TeslaApp/
 │   │   ├── TrafficCard.jsx      # Drive times and incidents near me
 │   │   ├── News.jsx
 │   │   ├── Places.jsx
-│   │   ├── PlaceSheet.jsx       # Place details: voice command, address, hours, phone
+│   │   ├── DetailSheet.jsx      # Shared details-window frame, stat tiles, blocks
+│   │   ├── PlaceSheet.jsx       # Place details: stats, voice command, address, contact
 │   │   ├── IncidentSheet.jsx    # Traffic incident details
 │   │   └── IncidentMap.jsx      # Leaflet map of the incident (lazy-loaded)
 │   └── shared/

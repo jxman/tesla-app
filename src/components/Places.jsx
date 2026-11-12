@@ -583,10 +583,16 @@ export default function Places() {
           place={{
             ...selected,
             subtitle: [selected.primaryType, selected.cuisine !== selected.primaryType ? selected.cuisine : null].filter(Boolean).join(" · "),
-            travel: [
-              selected.distanceMi != null ? `${selected.distanceMi.toFixed(1)} mi` : null,
-              selected.etaMinutes != null ? `about ${selected.etaMinutes} min drive` : null,
-            ].filter(Boolean).join(" · ") || null,
+            stats: [
+              selected.distanceMi != null && { label: "Distance", value: selected.distanceMi.toFixed(1), unit: "mi" },
+              selected.etaMinutes != null && { label: "Drive", value: selected.etaMinutes, unit: "min" },
+              selected.openNow != null && {
+                label: "Status",
+                value: selected.openNow ? "Open" : "Closed",
+                color: selected.openNow ? "var(--open-fg)" : "var(--closed-fg)",
+                note: selected.hoursLabel,
+              },
+            ].filter(Boolean),
           }}
         />
       )}

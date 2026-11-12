@@ -323,9 +323,13 @@ export default function TrafficCard({ lat, lon }) {
               address: p.address,
               lat: p.lat,
               lon: p.lon,
-              travel: ok
-                ? [`${r.minutes} min`, delay?.text, r.miles != null ? `${r.miles} mi` : null, arrive ? `arrive ${arrive}` : null].filter(Boolean).join(" · ")
-                : r?.here ? "You're here" : null,
+              stats: ok
+                ? [
+                    { label: "Drive", value: r.minutes, unit: "min", color: delay?.color, note: delay?.text },
+                    r.miles != null && { label: "Distance", value: r.miles, unit: "mi" },
+                    arrive && { label: "Arrive", value: arrive.replace(/\s?[AP]M$/i, ""), unit: arrive.match(/[AP]M$/i)?.[0] },
+                  ].filter(Boolean)
+                : r?.here ? [{ label: "Status", value: "You're here" }] : [],
             });
           };
           return (
